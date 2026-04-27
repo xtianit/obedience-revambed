@@ -57,251 +57,190 @@ type ScriptureDB = Record<string, BibleVersions>;
 
 
 
+
 const initialScriptureDB: ScriptureDB = {
-  "Amos 3:3": {
-    "KJV": "Can two walk together, except they be agreed?",
-    "NKJV": "Can two walk together, unless they are agreed?",
-    "NIV": "Do two walk together unless they have agreed to do so?",
-    "ESV": "Do two walk together, unless they have agreed to meet?",
-    "AMP": "Do two walk together unless they have made an appointment and have agreed?",
-    "NLT": "Can two walk together without agreeing on the direction?",
-    "MSG": "Do two people walk hand in hand if they aren't going to the same place?"
+  "Phil. 2:8": {
+    "KJV": "And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross.",
+    "NKJV": "And being found in appearance as a man, He humbled Himself and became obedient to the point of death, even the death of the cross.",
+    "NIV": "And being found in appearance as a man, he humbled himself by becoming obedient to death— even death on a cross!",
+    "ESV": "And being found in human form, he humbled himself by becoming obedient to the point of death, even death on a cross.",
+    "AMP": "After He had appeared in human form, He self-centeredly humbled Himself by becoming obedient to the point of death, even death on a cross.",
+    "NLT": "When he appeared in human form, he humbled himself in obedience to God and died a criminal’s death on a cross.",
+    "MSG": "Having become human, he stayed human. It was an incredibly humbling process. He didn’t claim special privileges. Instead, he lived a selfless, obedient life and then died a selfless, obedient death—and the worst kind of death at that: a crucifixion."
   },
 
-  "Mark 12:28-30": {
-    "KJV": "28 And one of the scribes came, and having heard them reasoning together, and perceiving that he had answered them well, asked him, Which is the first commandment of all? 29 And Jesus answered him, The first of all the commandments is, Hear, O Israel; The Lord our God is one Lord: 30 And thou shalt love the Lord thy God with all thy heart, and with all thy soul, and with all thy mind, and with all thy strength: this is the first commandment.",
-    "NKJV": "28 Then one of the scribes came, and having heard them reasoning together, perceiving that He had answered them well, asked Him, “Which is the first commandment of all?” 29 Jesus answered him, “The first of all the commandments is: ‘Hear, O Israel, the Lord our God, the Lord is one. 30 And you shall love the Lord your God with all your heart, with all your soul, with all your mind, and with all your strength.’ This is the first commandment.",
-    "NIV": "28 One of the teachers of the law came and heard them debating. Noticing that Jesus had given them a good answer, he asked him, “Of all the commandments, which is the most important?” 29 “The most important one,” answered Jesus, “is this: ‘Hear, O Israel: The Lord our God, the Lord is one. 30 Love the Lord your God with all your heart and with all your soul and with all your mind and with all your strength.’",
-    "ESV": "28 And one of the scribes came up and heard them disputing with one another, and seeing that he answered them well, asked him, “Which commandment is the most important of all?” 29 Jesus answered, “The most important is, ‘Hear, O Israel: The Lord our God, the Lord is one. 30 And you shall love the Lord your God with all your heart and with all your soul and with all your mind and with all your strength.’",
-    "AMP": "28 Then one of the scribes [an expert in Mosaic Law] came up and listened to them arguing [with one another], and noticing that Jesus had answered them well, asked Him, “Which commandment is the first and most important of all?” 29 Jesus answered, “The first and most important one is: ‘Hear, O Israel, the Lord our God is one Lord; 30 and you shall love the Lord your God with all your heart, and with all your soul (life), and with all your mind (thought, understanding), and with all your strength.’",
-    "NLT": "28 One of the teachers of religious law was standing there listening to the debate. He realized that Jesus had answered well, so he asked, “Of all the commandments, which is the most important?” 29 Jesus replied, “The most important commandment is this: ‘Listen, O Israel! The Lord our God is the one and only Lord. 30 And you must love the Lord your God with all your heart, all your soul, all your mind, and all your strength.’",
-    "MSG": "28 One of the religion scholars came up. Hearing the lively exchanges of question and answer and seeing how sharp Jesus was in his answers, he put in his own question: “Which is the most important commandment of all?” 29-30 Jesus said, “The first in importance is: ‘Listen, Israel: The Lord your God is one; so love the Lord God with all your passion and prayer and intelligence and energy.’"
+  "Gen. 12:1-5": {
+    "KJV": "1 Now the Lord had said unto Abram, Get thee out of thy country, and from thy kindred, and from thy father's house, unto a land that I will show thee: 2 And I will make of thee a great nation, and I will bless thee, and make thy name great; and thou shalt be a blessing: 3 And I will bless them that bless thee, and curse him that curseth thee: and in thee shall all families of the earth be blessed. 4 So Abram departed, as the Lord had spoken unto him; and Lot went with him: and Abram was seventy and five years old when he departed out of Haran. 5 And Abram took Sarai his wife, and Lot his brother's son, and all their substance that they had gathered, and the souls that they had gotten in Haran; and they went forth to go into the land of Canaan; and into the land of Canaan they came.",
+    "NKJV": "1 Now the Lord had said to Abram: “Get out of your country, From your family And from your father’s house, To a land that I will show you. 2 I will make you a great nation; I will bless you And make your name great; And you shall be a blessing. 3 I will bless those who bless you, And I will curse him who curses you; And in you all the families of the earth shall be blessed.” 4 So Abram departed as the Lord had spoken to him, and Lot went with him. And Abram was seventy-five years old when he departed from Haran. 5 Then Abram took Sarai his wife and Lot his brother’s son, and all their possessions that they had gathered, and the people whom they had acquired in Haran, and they departed to go to the land of Canaan. So they came to the land of Canaan.",
+    "NIV": "1 The Lord had said to Abram, “Go from your country, your people and your father’s household to the land I will show you. 2 “I will make you into a great nation, and I will bless you; I will make your name great, and you will be a blessing. 3 I will bless those who bless you, and whoever curses you I will curse; and all peoples on earth will be blessed through you.” 4 So Abram went, as the Lord had told him; and Lot went with him. Abram was seventy-five years old when he set out from Haran. 5 He took his wife Sarai, his nephew Lot, all the possessions they had accumulated and the people they had acquired in Haran, and they set out for the land of Canaan, and they arrived there.",
+    "ESV": "1 Now the Lord said to Abram, “Go from your country and your kindred and your father's house to the land that I will show you. 2 And I will make of you a great nation, and I will bless you and make your name great, so that you will be a blessing. 3 I will bless those who bless you, and him who dishonors you I will curse, and in you all the families of the earth shall be blessed.” 4 So Abram went, as the Lord had told him, and Lot went with him. Abram was seventy-five years old when he departed from Haran. 5 And Abram took Sarai his wife, and Lot his brother's son, and all their possessions that they had gathered, and the people whom they had acquired in Haran, and they set out to go to the land of Canaan. When they came to the land of Canaan,",
+    "AMP": "1 Now [in Haran] the Lord said to Abram, “Go away from your country, And from your relatives And from your father’s house, To the land which I will show you; 2 And I will make you a great nation, And I will bless you [abundantly], And make your name great [exalted]; And you shall be a blessing [a source of great good to others]; 3 And I will bless (do good for, benefit) those who bless you, And I will curse [that is, subject to My wrath and judgment] the one who curses (despises, dishonors, has contempt for) you. And in you all the families of the earth will be blessed.” 4 So Abram departed [from Haran] as the Lord had spoken to him; and Lot [his nephew] went with him. Abram was seventy-five years old when he left Haran. 5 Abram took Sarai his wife and Lot his brother’s son, and all their possessions which they had accumulated, and the people [the servants] whom they had acquired in Haran, and they set out for the land of Canaan.",
+    "NLT": "1 The Lord had said to Abram, “Leave your native country, your relatives, and your father’s family, and go to the land that I will show you. 2 I will make you into a great nation. I will bless you and make you famous, and you will be a blessing to others. 3 I will bless those who bless you and curse those who treat you with contempt. All the families on earth will be blessed through you.” 4 So Abram departed as the Lord had instructed, and Lot went with him. Abram was seventy-five years old when he left Haran. 5 He took his wife, Sarai, his nephew Lot, and all his wealth—his livestock and all the people he had taken into his household at Haran—and headed for the land of Canaan. When they arrived in Canaan,",
+    "MSG": "1-3 God told Abram: “Leave your country, your family, and your father’s home for a land that I will show you. I’ll make you a great nation and bless you. I’ll make you famous; you’ll be a blessing. I’ll bless those who bless you; those who curse you I’ll curse. All the families of the Earth will be blessed through you.” 4-5 Abram left just as God said, and Lot left with him. Abram was seventy-five years old when he left Haran. Abram took his wife Sarai and his nephew Lot with him, along with all the possessions and people they had gotten in Haran, and set out for the land of Canaan and arrived safe and sound."
   },
-  "Matthew 18:19": {
-    "KJV": "Again I say unto you, That if two of you shall agree on earth as touching any thing that they shall ask, it shall be done for them of my Father which is in heaven.",
-    "NKJV": "“Again I say to you that if two of you agree on earth concerning anything that they ask, it will be done for them by My Father in heaven.",
-    "NIV": "“Again, truly I tell you that if two of you on earth agree about anything they ask for, it will be done for them by my Father in heaven.",
-    "ESV": "Again I say to you, if two of you agree on earth about anything they ask, it will be done for them by my Father in heaven.",
-    "AMP": "“Again I at tell you, if two of you on earth agree [harmonize together, make a symphony together] about anything that they may ask, it will come to pass and be done for them by My Father in heaven.",
-    "NLT": "“I also tell you this: If two of you agree here on earth concerning anything you ask, my Father in heaven will do it for you.",
-    "MSG": "“When two of you get together on anything at all on earth and make a prayer of it, my Father in heaven goes into action."
-  },
-
-  "Proverbs 4:23": {
-    "KJV": "Keep thy heart with all diligence; for out of it are the issues of life.",
-    "NKJV": "Keep your heart with all diligence, For out of it spring the issues of life.",
-    "NIV": "Above all else, guard your heart, for everything you do flows from it.",
-    "ESV": "Keep your heart with all vigilance, for from it flow the springs of life.",
-    "AMP": "Watch over your heart with all diligence, For from it flow the springs of life.",
-    "NLT": "Guard your heart above all else, for it determines the course of your life.",
-    "MSG": "Keep vigilant watch over your heart; that’s where life starts."
-  },
-  "John 3:16": {
-    "KJV": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
-    "NKJV": "For God so loved the world that He gave His only begotten Son, that whoever believes in Him should not perish but have everlasting life.",
-    "NIV": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
-    "ESV": "For God so loved the world, that he gave his only Son, that whoever believes in him should not perish but have eternal life.",
-    "AMP": "For God so [greatly] loved and dearly prized the world, that He [even] gave His [One and] only begotten Son, so that whoever believes and trusts in Him [as Savior] shall not perish being lost and out of the way, but have eternal life.",
-    "NLT": "For this is how God loved the world: He gave his one and only Son, so that everyone who believes in him will not perish but have eternal life.",
-    "MSG": "This is how much God loved the world: He gave his Son, his one and only Son. And this is why: so that no one need be destroyed; by believing in him, anyone can have a whole and lasting life."
+  "Genesis 12:1": {
+    "KJV": "Now the Lord had said unto Abram, Get thee out of thy country, and from thy kindred, and from thy father's house, unto a land that I will show thee:",
+    "NKJV": "Now the Lord had said to Abram: “Get out of your country, From your family And from your father’s house, To a land that I will show you.",
+    "NIV": "The Lord had said to Abram, “Go from your country, your people and your father’s household to the land I will show you.",
+    "ESV": "Now the Lord said to Abram, “Go from your country and your kindred and your father's house to the land that I will show you.",
+    "AMP": "Now [in Haran] the Lord said to Abram, “Go away from your country, And from your relatives And from your father’s house, To the land which I will show you;",
+    "NLT": "The Lord had said to Abram, “Leave your native country, your relatives, and your father’s family, and go to the land that I will show you.",
+    "MSG": "God told Abram: “Leave your country, your family, and your father’s home for a land that I will show you."
   },
 
-  "Romans 5:8": {
-    "KJV": "But God commendeth his love toward us, in that, while we were yet sinners, Christ died for us.",
-    "NKJV": "But God demonstrates His own love toward us, in that while we were still sinners, Christ died for us.",
-    "NIV": "But God demonstrates his own love for us in this: While we were still sinners, Christ died for us.",
-    "ESV": "but God shows his love for us in that while we were still sinners, Christ died for us.",
-    "AMP": "But God clearly shows and proves His own love for us, by the fact that while we were still sinners, Christ died for us.",
-    "NLT": "But God showed his great love for us by sending Christ to die for us while we were still sinners.",
-    "MSG": "But God put his love on the line for us by offering his Son in sacrificial death while we were of no use whatever to him."
+  "Colossians 1:17": {
+    "KJV": "And he is before all things, and by him all things consist.",
+    "NKJV": "And He is before all things, and in Him all things consist.",
+    "NIV": "He is before all things, and in him all things hold together.",
+    "ESV": "And he is before all things, and in him all things hold together.",
+    "AMP": "And He Himself existed and is before all things, and in Him all things hold together [within His control].",
+    "NLT": "He existed before anything else, and he holds all creation together.",
+    "MSG": "He was there before any of it came into existence and holds it all together right up to this moment."
+  },
+
+  "2 Cor. 10:5": {
+    "KJV": "Casting down imaginations, and every high thing that exalteth itself against the knowledge of God, and bringing into captivity every thought to the obedience of Christ;",
+    "NKJV": "casting down arguments and every high thing that exalts itself against the knowledge of God, bringing every thought into captivity to the obedience of Christ,",
+    "NIV": "We demolish arguments and every pretension that sets itself up against the knowledge of God, and we take captive every thought to make it obedient to Christ.",
+    "ESV": "We destroy arguments and every lofty opinion raised against the knowledge of God, and take every thought captive to obey Christ,",
+    "AMP": "We are destroying sophisticated arguments and every exalted and proud thing that sets itself up against the [true] knowledge of God, and we are taking every thought and purpose captive to the obedience of Christ,",
+    "NLT": "We destroy every proud obstacle that keeps people from knowing God. We capture their rebellious thoughts and teach them to obey Christ.",
+    "MSG": "We use our powerful God-tools for smashing warped philosophies, tearing down barriers erected against the truth of God, fitting every loose thought and emotion and impulse into the structure of life shaped by Christ."
   },
   
-
-  "Philippians 2:5": {
-    "KJV": "Let this mind be in you, which was also in Christ Jesus:",
-    "NKJV": "Let this mind be in you which was also in Christ Jesus,",
-    "NIV": "In your relationships with one another, have the same mindset as Christ Jesus:",
-    "ESV": "Have this mind among yourselves, which is yours in Christ Jesus,",
-    "AMP": "Have this same attitude in yourselves which was in Christ Jesus [look to Him as your example in selfless humility],",
-    "NLT": "You must have the same attitude that Christ Jesus had.",
-    "MSG": "Think of yourselves the way Christ Jesus thought of himself."
+  "2 Corinthians 10:5": {
+    "KJV": "Casting down imaginations, and every high thing that exalteth itself against the knowledge of God, and bringing into captivity every thought to the obedience of Christ;",
+    "NKJV": "casting down arguments and every high thing that exalts itself against the knowledge of God, bringing every thought into captivity to the obedience of Christ,",
+    "NIV": "We demolish arguments and every pretension that sets itself up against the knowledge of God, and we take captive every thought to make it obedient to Christ.",
+    "ESV": "We destroy arguments and every lofty opinion raised against the knowledge of God, and take every thought captive to obey Christ,",
+    "AMP": "We are destroying sophisticated arguments and every exalted and proud thing that sets itself up against the [true] knowledge of God, and we are taking every thought and purpose captive to the obedience of Christ,",
+    "NLT": "We destroy every proud obstacle that keeps people from knowing God. We capture their rebellious thoughts and teach them to obey Christ.",
+    "MSG": "We use our powerful God-tools for smashing warped philosophies, tearing down barriers erected against the truth of God, fitting every loose thought and emotion and impulse into the structure of life shaped by Christ."
   },
-  "John 1:11-12": {
-    "KJV": "11 He came unto his own, and his own received him not. 12 But as many as received him, to them gave he power to become the sons of God, even to them that believe on his name:",
-    "NKJV": "11 He came to His own, and His own did not receive Him. 12 But as many as received Him, to them He gave the right to become children of God, to those who believe in His name:",
-    "NIV": "11 He came to that which was his own, but his own did not receive him. 12 Yet to all who did receive him, to those who believed in his name, he gave the right to become children of God—",
-    "ESV": "11 He came to his own, and his own people did not receive him. 12 But to all who did receive him, who believed in his name, he gave the right to become children of God,",
-    "AMP": "11 He came to His own [domain and creations], and His own [people] did not accept Him. 12 But to as many as did receive and welcome Him, He gave the right [the authority, the privilege] to become children of God, that is, to those who believe in (adhere to, trust in, and rely on) His name—",
-    "NLT": "11 He came to his own people, and even they rejected him. 12 But to all who believed him and accepted him, he gave the right to become children of God.",
-    "MSG": "11 He came to his own people, but they didn’t want him. 12 But whoever did want him, who believed he was who he claimed and would do what he said, He made to be their true selves, their child-of-God selves."
-  },
-
-  "Matthew 13:58": {
-    "KJV": "And he did not many mighty works there because of their unbelief.",
-    "NKJV": "Now He did not do many mighty works there because of their unbelief.",
-    "NIV": "And he did not do many miracles there because of their lack of faith.",
-    "ESV": "And he did not do many mighty works there, because of their unbelief.",
-    "AMP": "And He did not do many miracles there because of their unbelief [their lack of faith, their unteachableness].",
-    "NLT": "And so he did only a few miracles there because of their unbelief.",
-    "MSG": "And he didn’t do many miracles, holding back because of their unbelief."
-  },
-
-  "Mark 12:30": {
-    "KJV": "And thou shalt love the Lord thy God with all thy heart, and with all thy soul, and with all thy mind, and with all thy strength: this is the first commandment.",
-    "NKJV": "And you shall love the Lord your God with all your heart, with all your soul, with all your mind, and with all your strength.’ This is the first commandment.",
-    "NIV": "Love the Lord your God with all your heart and with all your soul and with all your mind and with all your strength.’",
-    "ESV": "And you shall love the Lord your God with all your heart and with all your soul and with all your mind and with all your strength.’",
-    "AMP": "and you shall love the Lord your God with all your heart, and with all your soul (life), and with all your mind (thought, understanding), and with all your strength.’",
-    "NLT": "And you must love the Lord your God with all your heart, all your soul, all your mind, and all your strength.’",
-    "MSG": "so love the Lord God with all your passion and prayer and intelligence and energy.’"
-  },
-
-  "Genesis 2:7": {
-    "KJV": "And the Lord God formed man of the dust of the ground, and breathed into his nostrils the breath of life; and man became a living soul.",
-    "NKJV": "And the Lord God formed man of the dust of the ground, and breathed into his nostrils the breath of life; and man became a living being.",
-    "NIV": "Then the Lord God formed a man from the dust of the ground and breathed into his nostrils the breath of life, and the man became a living being.",
-    "ESV": "then the Lord God formed the man of dust from the ground and breathed into his nostrils the breath of life, and the man became a living creature.",
-    "AMP": "then the Lord God formed [that is, created the body of] man from the dust of the ground, and breathed into his nostrils the breath of life; and the man became a living being [an individual complete in body and spirit].",
-    "NLT": "Then the Lord God formed the man from the dust of the ground. He breathed the breath of life into the man’s nostrils, and the man became a living person.",
-    "MSG": "God formed Man out of dirt from the ground and blew into his nostrils the breath of life. The Man came alive—a living soul!"
+  "Genesis 12:1-5": {
+    "KJV": "1 Now the Lord had said unto Abram, Get thee out of thy country, and from thy kindred, and from thy father's house, unto a land that I will show thee: 2 And I will make of thee a great nation, and I will bless thee, and make thy name great; and thou shalt be a blessing: 3 And I will bless them that bless thee, and curse him that curseth thee: and in thee shall all families of the earth be blessed. 4 So Abram departed, as the Lord had spoken unto him; and Lot went with him: and Abram was seventy and five years old when he departed out of Haran. 5 And Abram took Sarai his wife, and Lot his brother's son, and all their substance that they had gathered, and the souls that they had gotten in Haran; and they went forth to go into the land of Canaan; and into the land of Canaan they came.",
+    "NKJV": "1 Now the Lord had said to Abram: “Get out of your country, From your family And from your father’s house, To a land that I will show you. 2 I will make you a great nation; I will bless you And make your name great; And you shall be a blessing. 3 I will bless those who bless you, And I will curse him who curses you; And in you all the families of the earth shall be blessed.” 4 So Abram departed as the Lord had spoken to him, and Lot went with him. And Abram was seventy-five years old when he departed from Haran. 5 Then Abram took Sarai his wife and Lot his brother’s son, and all their possessions that they had gathered, and the people whom they had acquired in Haran, and they departed to go to the land of Canaan. So they came to the land of Canaan.",
+    "NIV": "1 The Lord had said to Abram, “Go from your country, your people and your father’s household to the land I will show you. 2 “I will make you into a great nation, and I will bless you; I will make your name great, and you will be a blessing. 3 I will bless those who bless you, and whoever curses you I will curse; and all peoples on earth will be blessed through you.” 4 So Abram went, as the Lord had told him; and Lot went with him. Abram was seventy-five years old when he set out from Haran. 5 He took his wife Sarai, his nephew Lot, all the possessions they had accumulated and the people they had acquired in Haran, and they set out for the land of Canaan, and they arrived there.",
+    "ESV": "1 Now the Lord said to Abram, “Go from your country and your kindred and your father's house to the land that I will show you. 2 And I will make of you a great nation, and I will bless you and make your name great, so that you will be a blessing. 3 I will bless those who bless you, and him who dishonors you I will curse, and in you all the families of the earth shall be blessed.” 4 So Abram went, as the Lord had told him, and Lot went with him. Abram was seventy-five years old when he departed from Haran. 5 And Abram took Sarai his wife, and Lot his brother's son, and all their possessions that they had gathered, and the people whom they had acquired in Haran, and they set out to go to the land of Canaan. When they came to the land of Canaan,",
+    "AMP": "1 Now [in Haran] the Lord said to Abram, “Go away from your country, And from your relatives And from your father’s house, To the land which I will show you; 2 And I will make you a great nation, And I will bless you [abundantly], And make your name great [exalted]; And you shall be a blessing [a source of great good to others]; 3 And I will bless (do good for, benefit) those who bless you, And I will curse [that is, subject to My wrath and judgment] the one who curses (despises, dishonors, has contempt for) you. And in you all the families of the earth will be blessed.” 4 So Abram departed [from Haran] as the Lord had spoken to him; and Lot [his nephew] went with him. Abram was seventy-five years old when he left Haran. 5 Abram took Sarai his wife and Lot his brother’s son, and all their possessions which they had accumulated, and the people [the servants] whom they had acquired in Haran, and they set out for the land of Canaan.",
+    "NLT": "1 The Lord had said to Abram, “Leave your native country, your relatives, and your father’s family, and go to the land that I will show you. 2 I will make you into a great nation. I will bless you and make you famous, and you will be a blessing to others. 3 I will bless those who bless you and curse those who treat you with contempt. All the families on earth will be blessed through you.” 4 So Abram departed as the Lord had instructed, and Lot went with him. Abram was seventy-five years old when he left Haran. 5 He took his wife, Sarai, his nephew Lot, and all his wealth—his livestock and all the people he had taken into his household at Haran—and headed for the land of Canaan. When they arrived in Canaan,",
+    "MSG": "1-3 God told Abram: “Leave your country, your family, and your father’s home for a land that I will show you. I’ll make you a great nation and bless you. I’ll make you famous; you’ll be a blessing. I’ll bless those who bless you; those who curse you I’ll curse. All the families of the Earth will be blessed through you.” 4-5 Abram left just as God said, and Lot left with him. Abram was seventy-five years old when he left Haran. Abram took his wife Sarai and his nephew Lot with him, along with all the possessions and people they had gotten in Haran, and set out for the land of Canaan and arrived safe and sound."
+  },    
+  "Gen. 12:1": {
+    "KJV": "Now the Lord had said unto Abram, Get thee out of thy country, and from thy kindred, and from thy father's house, unto a land that I will show thee:",
+    "NKJV": "Now the Lord had said to Abram: “Get out of your country, From your family And from your father’s house, To a land that I will show you.”",
+    "NIV": "The Lord had said to Abram, “Go from your country, your people and your father’s household to the land I will show you.”",
+    "ESV": "Now the Lord said to Abram, “Go from your country and your kindred and your father's house to the land that I will show you.”",
+    "AMP": "Now [in Haran] the Lord said to Abram, “Go away from your country, And from your relatives And from your father’s house, To the land which I will show you;”",
+    "NLT": "The Lord had said to Abram, “Leave your native country, your relatives, and your father’s family, and go to the land that I will show you.”",
+    "MSG": "God told Abram: “Leave your country, your family, and your father’s home for a land that I will show you.”"
   }
+
 };
 
-// const quizQuestions = [
-//     {
-//         q: "What is the main theme or title of this lesson?",
-//         a: [
-//             "Doing The First Thing First",
-//             "IMITATING CHRIST JESUS",
-//             "The Power of Faith",
-//             "Living Without Boundaries"
-//         ],
-//         correct: 1
-//     },
-//     {
-//         q: "What is the memory verse of this lesson?",
-//         a: [
-//             "Matthew 6:33",
-//             "John 3:16",
-//             "Matthew 5:48",
-//             "Acts 4:13"
-//         ],
-//         correct: 2
-//     },
-//     {
-//         q: "According to the lesson, what does 'Imitating Christ' simply mean?",
-//         a: [
-//             "Going to church every day",
-//             "Copying the way Jesus behaves and talks",
-//             "Performing miracles",
-//             "Becoming a religious leader"
-//         ],
-//         correct: 1
-//     },
-//     {
-//         q: "What did the elders notice about the disciples in Acts 4:13?",
-//         a: [
-//             "They were highly educated",
-//             "They were wealthy men",
-//             "They had been with Jesus",
-//             "They were expert speakers"
-//         ],
-//         correct: 2
-//     },
-//     {
-//         q: "Why is it necessary to 'Know the Lord' to successfully imitate Him?",
-//         a: [
-//             "To gain high status in church",
-//             "Because no one can imitate an unknown person",
-//             "To become famous",
-//             "To prove intelligence"
-//         ],
-//         correct: 1
-//     },
-//     {
-//         q: "What is a common mistake among Christians mentioned in the lesson regarding character?",
-//         a: [
-//             "They focus too much on character",
-//             "They have charisma and religious cloaks but no trait of Godly character",
-//             "They do not have the Holy Spirit",
-//             "They study the Bible too much"
-//         ],
-//         correct: 1
-//     },
-//     {
-//         q: "Who is described as the 'Pacesetter' for the many sons born to God?",
-//         a: [
-//             "The Apostle Paul",
-//             "The Elders of Israel",
-//             "The Lord Jesus Christ",
-//             "The Disciples"
-//         ],
-//         correct: 2
-//     },
-//     {
-//         q: "According to John 14:6, how can an individual reach God?",
-//         a: [
-//             "Through hard work",
-//             "Through religious traditions",
-//             "Only through Christ Jesus",
-//             "By being uneducated and ordinary"
-//         ],
-//         correct: 2
-//     },
-//     {
-//         q: "What is the 'identification mark' of a believer mentioned in the lesson?",
-//         a: [
-//             "Their religious title",
-//             "Their church attendance",
-//             "The manifestation of His character",
-//             "The amount of scriptures they know"
-//         ],
-//         correct: 2
-//     },
-//     {
-//         q: "Which scripture mentions that we will face persecution for His name's sake?",
-//         a: [
-//             "John 3:16",
-//             "Matthew 10:22",
-//             "Daniel 11:32",
-//             "Matthew 5:48"
-//         ],
-//         correct: 1
-//     },
-//     {
-//         q: "What is the ultimate consequence of failing to imitate Christ according to Matthew 7:22-23?",
-//         a: [
-//             "Missing a church service",
-//             "Rejection by the Lord",
-//             "Loss of material wealth",
-//             "Lack of charisma"
-//         ],
-//         correct: 1
-//     }
-// ];
 
 const quizQuestions = [
-    { q: "🌟 What is the super-cool title of our lesson today?", a: ["Doing The First Thing First", "LOVING THE LORD YOUR GOD", "The Power of Faith", "Living Without Boundaries"], correct: 1 },
-    { q: "📖 Which verse is our 'Power Verse' to memorize this week?", a: ["Matthew 6:33", "John 3:16", "Amos 3:3", "Acts 4:13"], correct: 2 },
-    { q: "🤝 According to Amos 3:3, what do two people need to 'walk together'?", a: ["The same shoes", "To be in agreement (Love)", "A map and a compass", "A fast car"], correct: 1 },
-    { q: "🍎 In our lesson, what did the Jewish lawyer try to do to Jesus?", a: ["Give Him a gift", "Ask for a miracle", "Discredit Him (prove He was wrong)", "Invite Him to dinner"], correct: 2 },
-    { q: "❤️ Why did God give His only Son (John 3:16)?", a: ["Because He was bored", "Because He loved the world so much!", "To show off His power", "To start a new holiday"], correct: 1 },
-    { q: "🔋 Which part of us is like a 'pump' that sends God's love to our whole body?", a: ["Our Muscles", "Our Heart (Proverbs 4:23)", "Our Brain", "Our Feet"], correct: 1 },
-    { q: "🌍 Which part of us helps us fill our world with God's good work?", a: ["Our Shadow", "Our Voice", "Our Soul (Genesis 2:7)", "Our Pockets"], correct: 2 },
-    { q: "🧠 What happens if your Mind is 'intoxicated' with love for God?", a: ["You get a headache", "You forget everything", "God succeeds in changing your life!", "You become a scientist"], correct: 2 },
-    { q: "💪 What is the 'Strength' dimension of loving God about?", a: ["Lifting heavy weights", "Using our abilities to cause positive change", "Being louder than everyone", "Winning every game"], correct: 1 },
-    { q: "🌉 Our love for God is like a _____ that helps His goals come true.", a: ["Wall", "Bridge", "Tunnel", "Mountain"], correct: 1 },
-    { q: "🏆 What is the 'First and Greatest' commandment (Mark 12:30)?", a: ["Clean your room", "Love the Lord your God with everything!", "Don't be late", "Eat your vegetables"], correct: 1 },
-    { q: "🤔 Why did the lawyer yield to Jesus in the end?", a: ["He was afraid", "He was moved by Jesus' words on love", "He wanted a job", "Jesus did a magic trick"], correct: 1 },
-    { q: "✨ What is the 'phenomenon' that makes things happen on earth?", a: ["Luck", "Co-operation (Agreement)", "Gravity", "Electricity"], correct: 1 },
-    { q: "📜 In Romans 5:8, how did God show His love?", a: ["By giving us gold", "Christ died for us while we were sinners", "By lightning bolt", "He didn't show it"], correct: 1 },
-    { q: "🕊️ What is the 'Reasoning Device' inside our soul?", a: ["Our Stomach", "Our Mind", "Our Ears", "Our Eyes"], correct: 1 },
-    { q: "🚀 Complete: 'He loves us already and demands our love for ____'.", a: ["Money", "Agreement", "Rules", "Success"], correct: 1 },
-    { q: "🚶‍♂️ What happens if you DON'T love God in return?", a: ["Prize", "What He offers cannot be delivered", "Nothing changes", "He stops loving you"], correct: 1 },
-    { q: "💎 Which verse says 'Keep thy heart with all diligence'?", a: ["Gen 1:1", "Proverbs 4:23", "John 1:1", "Psalm 23:1"], correct: 1 },
-    { q: "🧱 What did Jesus use to change the lawyer's mind?", a: ["A sword", "Words bordered on love", "A long book", "He ignored him"], correct: 1 },
-    { q: "🌈 What is the 'bottom line' of Strength in this lesson?", a: ["Faster than a lion", "It helps to cause a change", "Never get tired", "To be the boss"], correct: 1 }
-  ];
+  {
+    q: "What is the title of today's lesson?",
+    a: ["Faithfulness", "OBEDIENCE", "Divine Favour", "Spiritual Growth"],
+    correct: 1
+  },
+  {
+    q: "Which scripture is the memory verse for this lesson?",
+    a: ["Genesis 12:1-5", "Philippians 2:8", "Romans 12:1", "Psalm 23:1"],
+    correct: 1
+  },
+  {
+    q: "According to the lesson, obedience is primarily a relationship between:",
+    a: ["Friends and neighbors", "Teacher and student", "A higher authority and a lesser person", "Parents and children only"],
+    correct: 2
+  },
+  {
+    q: "Who is presented as the Creator and Possessor of heaven and earth?",
+    a: ["Abraham", "Angels", "God", "Man"],
+    correct: 2
+  },
+  {
+    q: "Which biblical figure was commanded to leave Haran and his family?",
+    a: ["Moses", "David", "Abram", "Isaac"],
+    correct: 2
+  },
+  {
+    q: "What was Abram asked to do?",
+    a: ["Build a temple", "Fight a battle", "Leave for an unknown land", "Return to Egypt"],
+    correct: 2
+  },
+  {
+    q: "The obedience of Abram teaches that personal will must be:",
+    a: ["Celebrated", "Ignored", "Buried in God's will", "Shared with others"],
+    correct: 2
+  },
+  {
+    q: "According to the lesson, God's instructions are found in:",
+    a: ["Traditions only", "Dreams alone", "The Bible", "Human opinions"],
+    correct: 2
+  },
+  {
+    q: "What does the lesson say disobedience becomes?",
+    a: ["Wisdom", "Sin", "Progress", "Neutral"],
+    correct: 1
+  },
+  {
+    q: "True obedience may require laying aside:",
+    a: ["Convenience", "Feelings", "Human reasoning", "All of the above"],
+    correct: 3
+  },
+  {
+    q: "The phrase 'unto the land that I will show thee' teaches:",
+    a: ["Immediate clarity", "Blind trust in God", "Fear of failure", "Material success"],
+    correct: 1
+  },
+  {
+    q: "According to the lesson, blessings are often rewards of:",
+    a: ["Popularity", "Obedience", "Wealth", "Knowledge"],
+    correct: 1
+  },
+  {
+    q: "Which verse says Christ became obedient unto death?",
+    a: ["Philippians 2:8", "Genesis 12:1", "John 3:16", "Psalm 91:1"],
+    correct: 0
+  },
+  {
+    q: "Jesus is described in the lesson as our perfect example of:",
+    a: ["Leadership", "Obedience", "Prosperity", "Wisdom only"],
+    correct: 1
+  },
+  {
+    q: "According to Colossians 1:17, Christ does what?",
+    a: ["Judges nations", "Holds all things together", "Builds cities", "Creates gold"],
+    correct: 1
+  },
+  {
+    q: "The aim of this subject is to bring every man to:",
+    a: ["Fame", "Religious activity", "The obedience of Christ", "Earthly power"],
+    correct: 2
+  },
+  {
+    q: "One objective of obedience is peaceful coexistence between:",
+    a: ["Nations only", "God and man, and man with man", "Churches only", "Families only"],
+    correct: 1
+  },
+  {
+    q: "When convenience conflicts with God's pleasure, the lesson says God will:",
+    a: ["Compromise", "Wait forever", "Not compromise", "Change His standards"],
+    correct: 2
+  },
+  {
+    q: "According to the lesson, many excuses for disobedience are removed because:",
+    a: ["Others obeyed first", "Jesus obeyed even unto death", "Life is easy", "Rules changed"],
+    correct: 1
+  },
+  {
+    q: "What key truth best summarizes this lesson?",
+    a: ["Obedience preserves relationship with God and opens blessings", "Success comes by effort alone", "Feelings should guide decisions", "Delay is harmless"],
+    correct: 0
+  }
+];
 
 
 
@@ -396,87 +335,91 @@ const addCommitment = () => {
 
 
 const [contentData, setContentData] = useState<ContentData>({
-    lessonDate: "April 19, 2026",
-    lessonTitle: "LOVING THE LORD YOUR GOD",
+    lessonDate: "July 3, 2016",
+    lessonTitle: "OBEDIENCE",
 
     memoryVerse:
-        "Can two walk together, except they be agreed? - Amos 3:3",
-    memoryVerseRef: "Amos 3:3",
+        "And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross - Phil. 2:8.",
+    memoryVerseRef: "Phil. 2:8",
 
-    introScriptures: ["Mark 12:28-30"],
+    introScriptures: ["Gen 12:1-5"],
     
-    lessonIntroScriptures: [
-        "Amos 3:3", 
-        "Matthew 18:19", 
-        "John 3:16", 
-        "Romans 5:8"
+    lessonIntroScriptures: [ 
+        "Colossians 1:17", 
+        "2 Corinthians 10:5"
     ],
 
     introduction:
-        "Nothing meaningful can happen on planet earth to a people or a place without some level of co-operation. This phenomenon is what the Bible also calls agreement in Amos 3:3 and Matt 18:19. The scriptures clearly reveal the demonstration of God's love towards man with the purpose of restoration. Jn. 3:16, Rom. 5:8. This process cannot be achieved except there is an agreement between man and God in terms of love. He loves us already and demands our love for agreement to realize the set goals.",
+        "Obedience is a matter of relationship between two persons, one higher and the other lesser. It therefore has to do with being submissive to another's will, instructions, terms, commandments, conditions or the keeping of another's will/wish. The Bible has proven God beyond any doubt to be the creator and possessor of Heaven and Earth. In them he has made other persons lesser to himself for his pleasure to co-inhabit. This is where obedience steps into the scene of the kingdom of God or else things would fall apart. The creator of wisdom has more wisdom than wisdom and by Christ Jesus he holds all things together in obedience to himself - Colossians 1:17, 2 Corinthians 10:5.",
 
     aims:
-        "To enable believers to love the Lord their God.",
+        "This subject is aimed at bringing every man to the obedience of Christ.",
 
-    aimsScriptures: [],
+    aimsScriptures: ["Colossians 1:17"],
 
     objectives:
-        "To bring man to reach agreement with God for his transformation.",
+        "That there may be a peaceful co-existence between God and man, and between man and man.",
 
-    objectivesScriptures: [],
+    objectivesScriptures: ["2 Corinthians 10:5"],
 
     lessonIntro:
-        "A Jewish lawyer confronted Jesus to prove his superiority and to publicly discredit the teachings of Jesus. By the time Jesus was through with His words that were bordered on love, he yielded unreservedly to his doctrine. Let's consider the lesson drawn from this.",
+        "Abraham the son of Terah, a descendant of a Godly seed Shem was asked by God to leave Haran, his family and to move to a land unknown at the time of instruction. Gen. 12:1-5. Many promises were attached to this commandment that was obeyed by Abram, a man like you and I. The lesson drawn from the text is enumerated below:",
 
     lessonPoints: [
         {
-            title: "THE DEFINITION AND DYNAMICS OF LOVE",
+            title: "THE FOUNDATION OF OBEDIENCE",
             content:
-                "Love is the foundation of our relationship with God. It requires both an understanding of what love is and a reciprocal response to God's existing love.",
-            scriptures: ["John 3:16", "Romans 5:8"],
+                "Obedience is a matter of two parties involving a higher authority and a lesser subject. It requires a mandatory response to divine instructions as seen in the call of Abram. Gen. 12:1.",
+            scriptures: ["Gen. 12:1-5"],
             subPoints: [
                 {
-                    title: "WHAT IS LOVE?",
+                    title: "TWO PARTIES INVOLVED",
                     content:
-                        "Love is the phenomenon of passionate feeling that motivates to do something positive. Jn. 3:16, Rom. 5:8. It moved God to give His only begotten Son to save man and restore all things.",
-                    scriptures: ["John 3:16", "Romans 5:8"]
+                        "Obedience is a matter of two parties, 'THE LORD SAID TO ABRAM'. Lord and Abram. This means that the Lord requires the obedience of any of us. Gen. 12:1.",
+                    scriptures: ["Gen. 12:1"]
                 },
                 {
-                    title: "LOVE FOR LOVE (AGREEMENT)",
+                    title: "SURRENDER OF WILL",
                     content:
-                        "Nothing works without an agreement or acceptance. Except you accept God or Satan either of them cannot use you. In the same vein, unless one loves God in return what he has to offer cannot be delivered — Jn 1:11-12, Matt. 13:58, Amos 3:3.",
-                    scriptures: ["John 1:11-12", "Matthew 13:58", "Amos 3:3"]
+                        "Abram's will was buried in God's will and that is what He requires of your will also. As Christ Jesus holds all things together, we must align our will with His. Col. 1:17.",
+                    scriptures: ["Colossians 1:17"]
+                },
+                {
+                    title: "DIVINE COMMAND",
+                    content:
+                        "Abram was not given a choice to choose between going and staying back. It shows that God commands and not suggest. The lesser person which is you has to obey mandatorily. If you disobey the instruction, it becomes sin. The Bible is the book where God's instructions are found.",
+                    scriptures: []
                 }
             ],
         },
         {
-            title: "THE FOUR DIMENSIONS OF LOVING GOD",
+            title: "THE COST, FAITH, AND REWARD OF OBEDIENCE",
             content:
-                "Jesus commanded us to love God with our entire being: Heart, Soul, Mind, and Strength.",
-            scriptures: ["Mark 12:30"],
+                "True obedience disregards personal convenience and feelings, requiring a blind trust in God's leading, exemplified by Christ's obedience unto death. Phil. 2:8.",
+            scriptures: ["Phil. 2:8", "2 Corinthians 10:5"],
             subPoints: [
                 {
-                    title: "LOVE WITH ALL HEART",
+                    title: "CONVENIENCE AND PLEASURE",
                     content:
-                        "The heart is responsible for the pumping of blood (live) to all parts of the body. If the heart loves God it means the whole body will because its influence is transported around the body. Prov. 4:23.",
-                    scriptures: ["Proverbs 4:23"]
+                        "Abram's convenience was not considered. For a man to be obedient to God, he must forget about his convenience. Remember that you are made for his pleasure and if your convenience double-crosses his pleasure, he will not compromise.",
+                    scriptures: []
                 },
                 {
-                    title: "LOVE WITH ALL SOUL",
-                    content: 
-                        "The soul is a spiritual part of a man that is created to be earthly. GEN. 2:7. Man is made conscious of the earth through his soul. Therefore if the soul loves God the man will be able to fill his domain with God and his redemptive work.",
-                    scriptures: ["Genesis 2:7"]
+                    title: "DISREGARDING FEELINGS",
+                    content:
+                        "God does not care about how you or others feel about what he instructs you to do. Abram had to leave his home-land, family and quit business. We must drop our feelings and fulfill God's conditions and terms. 2 Cor. 10:5.",
+                    scriptures: ["2 Corintians 10:5"]
                 },
                 {
-                    title: "LOVE WITH ALL MIND",
+                    title: "BLIND TRUST",
                     content:
-                        "The mind is the reasoning device in the soul of a man. Whoever conquers in the mind controls the man. If this part is intoxicated with love for God, it therefore means that God will succeed in his restoration work. Phil. 2:5.",
-                    scriptures: ["Philippians 2:5"]
+                        "The word 'unto the land that I will show thee' speaks of uncertainty, a blind trust and suggests irrationality. Gen 12:1. YOU MAY NOT KNOW WHERE YOUR OBEDIENCE TO GOD WILL TAKE YOU but you are required to TRUST AND OBEY.",
+                    scriptures: ["Genesis 12:1"]
                 },
                 {
-                    title: "LOVE WITH ALL STRENGTH",
+                    title: "REWARDS OF OBEDIENCE",
                     content:
-                        "Strength has to do with ability or enabling power. Strength is in various forms but the bottom line is that it helps to cause a change. If ones strength is overwhelmed with love for God there is bound to be a positive change as a result of the strengths joined together.",
+                        "The text shows that blessings and benefits are rewards of obedience.",
                     scriptures: []
                 }
             ],
@@ -484,19 +427,17 @@ const [contentData, setContentData] = useState<ContentData>({
     ],
 
     conclusion:
-        "Our love for God will give room for agreement and trust to enable God work our redemption.",
+        "Obedience is the only thing that will keep our relationship with God and the key to God's storehouse of blessing. Jesus our perfect example was also human like us, whose obedience even led him to death. Phil. 2:8. Many things God demand of us are not as much as that and this is why we don't have excuses today if we aren't obedient.",
 
     conclusionScriptures: [],
 
-   prayerPoints: [
-    "Lord, help me stay 100% synced with You today. I want us to be an unbeatable team, walking in total agreement! 🤜🤛",
-    "Father, guard my heart like a treasure chest. Fill it so full of Your love that kindness flows out to everyone I meet.",
-    "Lord, I 'download' Your Word into my mind today. Let Your thoughts be my thoughts so I can see the world like You do! 🧠✨",
-    "Father, take my energy, my gaming skills, my sports, and my talents. Use my 'Strength' to be a world-changer for Your Kingdom!"
-],
+    prayerPoints: [
+        "Father, help me to bring my will into total subjection to Yours, just as Abram did. Gen. 12:4.",
+        "Lord, give me the grace to choose Your pleasure over my personal convenience every day.",
+        "Father, strengthen my heart to trust and obey You even when the destination is not clear. Gen. 12:1.",
+        "Lord Jesus, empower me by Your Spirit to walk in the same level of obedience that You displayed on the cross. Phil. 2:8."
+    ],
 });
-
-
 
 
     const formatScriptureText = (text: string) => {
@@ -1146,19 +1087,19 @@ const [contentData, setContentData] = useState<ContentData>({
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-bold mb-3">
-                                        Mark 12:28-30
+                                        Text: Genesis 12:1-5
                                     </h3>
                                     <div className="flex gap-2 flex-wrap">
                                         <button
                                             onClick={() =>
                                                 showBibleVersions(
-                                                    "Mark 12:28-30"
+                                                    "Genesis 12:1-5"
                                                 )
                                             }
                                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
                                         >
                                         <BookOpen size={16} />
-                                            Read  Mark 12:28-30
+                                            Read Genesis 12:1-5
                                         </button>
 
                                     </div>
@@ -1703,132 +1644,160 @@ const [contentData, setContentData] = useState<ContentData>({
             
 
 
-            {activeTab === "application" && (
-                <div className="space-y-6">
-                    <h3 className="text-2xl font-bold mb-4 text-center">💖 Living the Love-Life</h3>
+{activeTab === "application" && (
+    <div className="space-y-6">
+        <h3 className="text-2xl font-bold mb-4 text-center">🛡️ Living in Obedience</h3>
 
-                    {/* Gamified Self-Assessment: The Love Battery */}
-                    <div
-                        className={`${
-                            darkMode
-                                ? "bg-gray-700 border-red-900"
-                                : "bg-gradient-to-r from-red-50 to-pink-50 border-pink-100"
-                        } p-6 rounded-2xl border-2 shadow-sm`}
+        {/* Obedience Reflection Meter */}
+        <div
+            className={`${
+                darkMode
+                    ? "bg-gray-700 border-blue-900"
+                    : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100"
+            } p-6 rounded-2xl border-2 shadow-sm`}
+        >
+            <h4 className="text-xl font-bold mb-2 flex items-center gap-2">
+                📊 Obedience Check
+            </h4>
+
+            <p className="mb-6 text-sm opacity-80 leading-relaxed">
+                God’s commands are perfect and purposeful. How aligned are you today with His will,
+                instructions, and direction? Reflect honestly and assess your current obedience walk.
+            </p>
+
+            <div className="space-y-4">
+                <div className="flex justify-between items-end mb-1">
+                    <span className="text-xs font-mono uppercase tracking-wider">
+                        Alignment Level
+                    </span>
+
+                    <span
+                        className={`text-3xl font-black ${
+                            loveRating > 7
+                                ? "text-green-500"
+                                : loveRating > 4
+                                ? "text-orange-500"
+                                : "text-red-500"
+                        }`}
                     >
-                        <h4 className="text-xl font-bold mb-2 flex items-center gap-2">
-                            🔋 Love Connection Status
-                        </h4>
-                        <p className="mb-6 text-sm opacity-80">
-                            God’s love for you is always 100%! But how much are you "plugged in" 
-                            to Him today? Check your agreement level (Amos 3:3).
-                        </p>
+                        {loveRating * 10}%
+                    </span>
+                </div>
 
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-end mb-1">
-                                <span className="text-xs font-mono uppercase tracking-wider">Connection Strength</span>
-                                <span className={`text-3xl font-black ${loveRating > 7 ? 'text-green-500' : 'text-orange-500'}`}>
-                                    {loveRating * 10}%
-                                </span>
-                            </div>
-                            
-                            {/* Visual Battery Bar */}
-                            <div className="h-8 w-full bg-gray-200 rounded-full overflow-hidden border-2 border-gray-300">
-                                <div 
-                                    className={`h-full transition-all duration-500 ${
-                                        loveRating > 7 ? 'bg-green-500' : loveRating > 4 ? 'bg-orange-400' : 'bg-red-500'
-                                    }`}
-                                    style={{ width: `${loveRating * 10}%` }}
-                                />
-                            </div>
-
-                            <input
-                                type="range"
-                                min="1"
-                                max="10"
-                                value={loveRating}
-                                onChange={(e) => setLoveRating(Number(e.target.value))}
-                                className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-red-500"
-                            />
-                        </div>
-
-                        <div className={`mt-6 p-4 rounded-xl text-center text-sm font-medium ${
-                            darkMode ? 'bg-gray-800' : 'bg-white shadow-sm'
-                        }`}>
-                            {loveRating >= 8
-                                ? "🔥 WOW! You're in total agreement with God! Your heart, soul, and mind are high-fiving Him right now!"
-                                : loveRating >= 5
-                                ? "⚡ Charging... You're making progress! Try 'intoxicating' your mind with a favorite verse today to boost your score."
-                                : "🔌 Connection Low. Time to re-sync! God is waiting for a 'Love-Agreement' with you. Let's talk to Him!"}
-                        </div>
-                    </div>
-
-                    {/* Mission Log: My Love Actions */}
+                <div className="h-8 w-full bg-gray-200 rounded-full overflow-hidden border-2 border-gray-300">
                     <div
-                        className={`${
+                        className={`h-full transition-all duration-500 ${
+                            loveRating > 7
+                                ? "bg-green-500"
+                                : loveRating > 4
+                                ? "bg-orange-400"
+                                : "bg-red-500"
+                        }`}
+                        style={{ width: `${loveRating * 10}%` }}
+                    />
+                </div>
+
+                <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={loveRating}
+                    onChange={(e) => setLoveRating(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+            </div>
+
+            <div
+                className={`mt-6 p-4 rounded-xl text-center text-sm font-medium leading-relaxed ${
+                    darkMode ? "bg-gray-800" : "bg-white shadow-sm"
+                }`}
+            >
+                {loveRating >= 8
+                    ? "✅ You are walking in strong obedience. Continue yielding your will to God daily."
+                    : loveRating >= 5
+                    ? "⚡ Growth is happening. Strengthen your obedience through prayer, Scripture, and immediate response to God's voice."
+                    : "⚠️ Your obedience needs renewal. Return to surrender, repentance, and trust in God's leading."}
+            </div>
+        </div>
+
+        {/* Daily Obedience Commitment */}
+        <div
+            className={`${
+                darkMode
+                    ? "bg-gray-700 border-gray-600"
+                    : "bg-white border-2 border-dashed border-blue-200"
+            } p-6 rounded-2xl`}
+        >
+            <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
+                📝 Today's Obedience Action
+            </h4>
+
+            <p className="text-sm mb-4 leading-relaxed">
+                What one practical step will you take today to obey God despite
+                inconvenience, feelings, uncertainty, or delay?
+            </p>
+
+            <div className="flex flex-col gap-3 mb-6">
+                <input
+                    type="text"
+                    value={commitmentInput}
+                    onChange={(e) => setCommitmentInput(e.target.value)}
+                    placeholder="E.g., Forgive someone, pray early, stop a sinful habit..."
+                    className={`flex-1 px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-400 transition ${
+                        darkMode
+                            ? "bg-gray-800 border-gray-600 text-white"
+                            : "bg-gray-50 border-gray-200"
+                    }`}
+                />
+
+                <button
+                    onClick={addCommitment}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-transform active:scale-95 flex items-center justify-center gap-2"
+                >
+                    <Save size={18} /> SAVE ACTION
+                </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+                {commitments.map((commitment, idx) => (
+                    <div
+                        key={idx}
+                        className={`p-4 rounded-xl flex items-center gap-4 ${
                             darkMode
-                                ? "bg-gray-700 border-gray-600"
-                                : "bg-white border-2 border-dashed border-red-200"
-                        } p-6 rounded-2xl`}
+                                ? "bg-gray-800"
+                                : "bg-blue-50 border border-blue-100"
+                        }`}
                     >
-                        <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            🚀 My Love Mission
-                        </h4>
-                        <p className="text-sm mb-4">
-                            What is 1 cool thing you will do today to show God you love Him with all your 
-                            <strong> Heart, Soul, Mind, or Strength</strong>?
-                        </p>
-
-                        <div className="flex flex-col gap-3 mb-6">
-                            <input
-                                type="text"
-                                value={commitmentInput}
-                                onChange={(e) => setCommitmentInput(e.target.value)}
-                                placeholder="E.g., Sing a song for God, Be kind to my brother..."
-                                className={`flex-1 px-4 py-3 rounded-xl border-2 outline-none focus:border-red-400 transition ${
-                                    darkMode
-                                        ? "bg-gray-800 border-gray-600 text-white"
-                                        : "bg-gray-50 border-gray-200"
-                                }`}
-                            />
-                            <button
-                                onClick={addCommitment}
-                                className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-red-200 transition-transform active:scale-95 flex items-center justify-center gap-2"
-                            >
-                                <Save size={18} /> ACCEPT MISSION
-                            </button>
+                        <div className="bg-white p-2 rounded-full shadow-sm">
+                            <CheckCircle className="text-blue-500" size={24} />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3">
-                            {commitments.map((commitment, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`p-4 rounded-xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 ${
-                                        darkMode ? "bg-gray-800" : "bg-red-50 border border-red-100"
-                                    }`}
-                                >
-                                    <div className="bg-white p-2 rounded-full shadow-sm">
-                                        <CheckCircle className="text-red-500" size={24} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-bold text-gray-800 dark:text-gray-100">{commitment.text}</p>
-                                        <p className="text-[10px] uppercase font-black opacity-40 mt-1">
-                                            Mission Logged: {commitment.date}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <div className="flex-1">
+                            <p className="font-bold text-gray-800 dark:text-gray-100">
+                                {commitment.text}
+                            </p>
 
-                        <div className="mt-8 text-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Final Thought</p>
-                            <p className="text-sm italic font-medium">
-                                "Can two walk together if they don't agree?" (Amos 3:3). 
-                                When you agree to love God, You and Him become an unbeatable team! 🤜🤛
+                            <p className="text-[10px] uppercase font-black opacity-40 mt-1">
+                                Logged: {commitment.date}
                             </p>
                         </div>
                     </div>
-                </div>
-            )}
+                ))}
+            </div>
+
+            <div className="mt-8 text-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">
+                    Reflection
+                </p>
+
+                <p className="text-sm italic font-medium leading-relaxed">
+                    “And being found in fashion as a man, he humbled himself, and became obedient unto death...” (Phil. 2:8).  
+                    Jesus is our perfect example of complete obedience.
+                </p>
+            </div>
+        </div>
+    </div>
+)}
 
 
 
