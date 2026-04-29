@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/declarations.d.ts","./src/global.d.ts","./src/main.tsx","./src/components/header.tsx","./src/components/lovinggod.tsx","./src/types/paystack.d.ts"],"version":"5.8.3"}
+{"root":["./src/app.tsx","./src/declarations.d.ts","./src/global.d.ts","./src/main.tsx","./src/components/adminpanel.tsx","./src/components/header.tsx","./src/components/lovinggod.tsx","./src/lib/supabase.ts","./src/types/paystack.ts"],"version":"5.8.3"}

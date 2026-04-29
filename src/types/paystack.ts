@@ -1,13 +1,13 @@
-type PaystackResponse = {
+export type PaystackResponse = {
   reference: string;
   status: string;
 };
 
-type PaystackHandler = {
+export type PaystackHandler = {
   openIframe: () => void;
 };
 
-type PaystackConfig = {
+export type PaystackConfig = {
   key: string;
   email: string;
   amount: number;
