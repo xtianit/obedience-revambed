@@ -3,9 +3,10 @@ import Header from "./components/Header";
 import { AdminPanel } from "./components/AdminPanel";
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Lock, BookOpen, Award, CheckCircle, Edit2, Save, X,
+    BookOpen, Award, CheckCircle, Edit2, Save, X,
     Clock, Plus, Loader2, ShieldCheck, LogOut,
-    CreditCard, Chrome, RefreshCw,
+    CreditCard, Chrome, RefreshCw, Mail, Eye, EyeOff,
+    KeyRound, UserPlus, ArrowLeft, AtSign, Lock,
 } from "lucide-react";
 import {
     supabase, signInWithGoogle, signOut,
@@ -42,83 +43,15 @@ type BibleVersions = { KJV: string; NKJV: string; NIV: string; ESV: string; AMP:
 type ScriptureDB   = Record<string, BibleVersions>;
 
 const initialScriptureDB: ScriptureDB = {
-  "Phil. 2:8": {
-    "KJV": "And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross.",
-    "NKJV": "And being found in appearance as a man, He humbled Himself and became obedient to the point of death, even the death of the cross.",
-    "NIV": "And being found in appearance as a man, he humbled himself by becoming obedient to death— even death on a cross!",
-    "ESV": "And being found in human form, he humbled himself by becoming obedient to the point of death, even death on a cross.",
-    "AMP": "After He had appeared in human form, He self-centeredly humbled Himself by becoming obedient to the point of death, even death on a cross.",
-    "NLT": "When he appeared in human form, he humbled himself in obedience to God and died a criminal’s death on a cross.",
-    "MSG": "Having become human, he stayed human. It was an incredibly humbling process. He didn’t claim special privileges. Instead, he lived a selfless, obedient life and then died a selfless, obedient death—and the worst kind of death at that: a crucifixion."
-  },
-
-  "Gen. 12:1-5": {
-    "KJV": "1 Now the Lord had said unto Abram, Get thee out of thy country, and from thy kindred, and from thy father's house, unto a land that I will show thee: 2 And I will make of thee a great nation, and I will bless thee, and make thy name great; and thou shalt be a blessing: 3 And I will bless them that bless thee, and curse him that curseth thee: and in thee shall all families of the earth be blessed. 4 So Abram departed, as the Lord had spoken unto him; and Lot went with him: and Abram was seventy and five years old when he departed out of Haran. 5 And Abram took Sarai his wife, and Lot his brother's son, and all their substance that they had gathered, and the souls that they had gotten in Haran; and they went forth to go into the land of Canaan; and into the land of Canaan they came.",
-    "NKJV": "1 Now the Lord had said to Abram: “Get out of your country, From your family And from your father’s house, To a land that I will show you. 2 I will make you a great nation; I will bless you And make your name great; And you shall be a blessing. 3 I will bless those who bless you, And I will curse him who curses you; And in you all the families of the earth shall be blessed.” 4 So Abram departed as the Lord had spoken to him, and Lot went with him. And Abram was seventy-five years old when he departed from Haran. 5 Then Abram took Sarai his wife and Lot his brother’s son, and all their possessions that they had gathered, and the people whom they had acquired in Haran, and they departed to go to the land of Canaan. So they came to the land of Canaan.",
-    "NIV": "1 The Lord had said to Abram, “Go from your country, your people and your father’s household to the land I will show you. 2 “I will make you into a great nation, and I will bless you; I will make your name great, and you will be a blessing. 3 I will bless those who bless you, and whoever curses you I will curse; and all peoples on earth will be blessed through you.” 4 So Abram went, as the Lord had told him; and Lot went with him. Abram was seventy-five years old when he set out from Haran. 5 He took his wife Sarai, his nephew Lot, all the possessions they had accumulated and the people they had acquired in Haran, and they set out for the land of Canaan, and they arrived there.",
-    "ESV": "1 Now the Lord said to Abram, “Go from your country and your kindred and your father's house to the land that I will show you. 2 And I will make of you a great nation, and I will bless you and make your name great, so that you will be a blessing. 3 I will bless those who bless you, and him who dishonors you I will curse, and in you all the families of the earth shall be blessed.” 4 So Abram went, as the Lord had told him, and Lot went with him. Abram was seventy-five years old when he departed from Haran. 5 And Abram took Sarai his wife, and Lot his brother's son, and all their possessions that they had gathered, and the people whom they had acquired in Haran, and they set out to go to the land of Canaan. When they came to the land of Canaan,",
-    "AMP": "1 Now [in Haran] the Lord said to Abram, “Go away from your country, And from your relatives And from your father’s house, To the land which I will show you; 2 And I will make you a great nation, And I will bless you [abundantly], And make your name great [exalted]; And you shall be a blessing [a source of great good to others]; 3 And I will bless (do good for, benefit) those who bless you, And I will curse [that is, subject to My wrath and judgment] the one who curses (despises, dishonors, has contempt for) you. And in you all the families of the earth will be blessed.” 4 So Abram departed [from Haran] as the Lord had spoken to him; and Lot [his nephew] went with him. Abram was seventy-five years old when he left Haran. 5 Abram took Sarai his wife and Lot his brother’s son, and all their possessions which they had accumulated, and the people [the servants] whom they had acquired in Haran, and they set out for the land of Canaan.",
-    "NLT": "1 The Lord had said to Abram, “Leave your native country, your relatives, and your father’s family, and go to the land that I will show you. 2 I will make you into a great nation. I will bless you and make you famous, and you will be a blessing to others. 3 I will bless those who bless you and curse those who treat you with contempt. All the families on earth will be blessed through you.” 4 So Abram departed as the Lord had instructed, and Lot went with him. Abram was seventy-five years old when he left Haran. 5 He took his wife, Sarai, his nephew Lot, and all his wealth—his livestock and all the people he had taken into his household at Haran—and headed for the land of Canaan. When they arrived in Canaan,",
-    "MSG": "1-3 God told Abram: “Leave your country, your family, and your father’s home for a land that I will show you. I’ll make you a great nation and bless you. I’ll make you famous; you’ll be a blessing. I’ll bless those who bless you; those who curse you I’ll curse. All the families of the Earth will be blessed through you.” 4-5 Abram left just as God said, and Lot left with him. Abram was seventy-five years old when he left Haran. Abram took his wife Sarai and his nephew Lot with him, along with all the possessions and people they had gotten in Haran, and set out for the land of Canaan and arrived safe and sound."
-  },
-  "Genesis 12:1": {
-    "KJV": "Now the Lord had said unto Abram, Get thee out of thy country, and from thy kindred, and from thy father's house, unto a land that I will show thee:",
-    "NKJV": "Now the Lord had said to Abram: “Get out of your country, From your family And from your father’s house, To a land that I will show you.",
-    "NIV": "The Lord had said to Abram, “Go from your country, your people and your father’s household to the land I will show you.",
-    "ESV": "Now the Lord said to Abram, “Go from your country and your kindred and your father's house to the land that I will show you.",
-    "AMP": "Now [in Haran] the Lord said to Abram, “Go away from your country, And from your relatives And from your father’s house, To the land which I will show you;",
-    "NLT": "The Lord had said to Abram, “Leave your native country, your relatives, and your father’s family, and go to the land that I will show you.",
-    "MSG": "God told Abram: “Leave your country, your family, and your father’s home for a land that I will show you."
-  },
-
-  "Colossians 1:17": {
-    "KJV": "And he is before all things, and by him all things consist.",
-    "NKJV": "And He is before all things, and in Him all things consist.",
-    "NIV": "He is before all things, and in him all things hold together.",
-    "ESV": "And he is before all things, and in him all things hold together.",
-    "AMP": "And He Himself existed and is before all things, and in Him all things hold together [within His control].",
-    "NLT": "He existed before anything else, and he holds all creation together.",
-    "MSG": "He was there before any of it came into existence and holds it all together right up to this moment."
-  },
-
-  "2 Cor. 10:5": {
-    "KJV": "Casting down imaginations, and every high thing that exalteth itself against the knowledge of God, and bringing into captivity every thought to the obedience of Christ;",
-    "NKJV": "casting down arguments and every high thing that exalts itself against the knowledge of God, bringing every thought into captivity to the obedience of Christ,",
-    "NIV": "We demolish arguments and every pretension that sets itself up against the knowledge of God, and we take captive every thought to make it obedient to Christ.",
-    "ESV": "We destroy arguments and every lofty opinion raised against the knowledge of God, and take every thought captive to obey Christ,",
-    "AMP": "We are destroying sophisticated arguments and every exalted and proud thing that sets itself up against the [true] knowledge of God, and we are taking every thought and purpose captive to the obedience of Christ,",
-    "NLT": "We destroy every proud obstacle that keeps people from knowing God. We capture their rebellious thoughts and teach them to obey Christ.",
-    "MSG": "We use our powerful God-tools for smashing warped philosophies, tearing down barriers erected against the truth of God, fitting every loose thought and emotion and impulse into the structure of life shaped by Christ."
-  },
-  
-  "2 Corinthians 10:5": {
-    "KJV": "Casting down imaginations, and every high thing that exalteth itself against the knowledge of God, and bringing into captivity every thought to the obedience of Christ;",
-    "NKJV": "casting down arguments and every high thing that exalts itself against the knowledge of God, bringing every thought into captivity to the obedience of Christ,",
-    "NIV": "We demolish arguments and every pretension that sets itself up against the knowledge of God, and we take captive every thought to make it obedient to Christ.",
-    "ESV": "We destroy arguments and every lofty opinion raised against the knowledge of God, and take every thought captive to obey Christ,",
-    "AMP": "We are destroying sophisticated arguments and every exalted and proud thing that sets itself up against the [true] knowledge of God, and we are taking every thought and purpose captive to the obedience of Christ,",
-    "NLT": "We destroy every proud obstacle that keeps people from knowing God. We capture their rebellious thoughts and teach them to obey Christ.",
-    "MSG": "We use our powerful God-tools for smashing warped philosophies, tearing down barriers erected against the truth of God, fitting every loose thought and emotion and impulse into the structure of life shaped by Christ."
-  },
-  "Genesis 12:1-5": {
-    "KJV": "1 Now the Lord had said unto Abram, Get thee out of thy country, and from thy kindred, and from thy father's house, unto a land that I will show thee: 2 And I will make of thee a great nation, and I will bless thee, and make thy name great; and thou shalt be a blessing: 3 And I will bless them that bless thee, and curse him that curseth thee: and in thee shall all families of the earth be blessed. 4 So Abram departed, as the Lord had spoken unto him; and Lot went with him: and Abram was seventy and five years old when he departed out of Haran. 5 And Abram took Sarai his wife, and Lot his brother's son, and all their substance that they had gathered, and the souls that they had gotten in Haran; and they went forth to go into the land of Canaan; and into the land of Canaan they came.",
-    "NKJV": "1 Now the Lord had said to Abram: “Get out of your country, From your family And from your father’s house, To a land that I will show you. 2 I will make you a great nation; I will bless you And make your name great; And you shall be a blessing. 3 I will bless those who bless you, And I will curse him who curses you; And in you all the families of the earth shall be blessed.” 4 So Abram departed as the Lord had spoken to him, and Lot went with him. And Abram was seventy-five years old when he departed from Haran. 5 Then Abram took Sarai his wife and Lot his brother’s son, and all their possessions that they had gathered, and the people whom they had acquired in Haran, and they departed to go to the land of Canaan. So they came to the land of Canaan.",
-    "NIV": "1 The Lord had said to Abram, “Go from your country, your people and your father’s household to the land I will show you. 2 “I will make you into a great nation, and I will bless you; I will make your name great, and you will be a blessing. 3 I will bless those who bless you, and whoever curses you I will curse; and all peoples on earth will be blessed through you.” 4 So Abram went, as the Lord had told him; and Lot went with him. Abram was seventy-five years old when he set out from Haran. 5 He took his wife Sarai, his nephew Lot, all the possessions they had accumulated and the people they had acquired in Haran, and they set out for the land of Canaan, and they arrived there.",
-    "ESV": "1 Now the Lord said to Abram, “Go from your country and your kindred and your father's house to the land that I will show you. 2 And I will make of you a great nation, and I will bless you and make your name great, so that you will be a blessing. 3 I will bless those who bless you, and him who dishonors you I will curse, and in you all the families of the earth shall be blessed.” 4 So Abram went, as the Lord had told him, and Lot went with him. Abram was seventy-five years old when he departed from Haran. 5 And Abram took Sarai his wife, and Lot his brother's son, and all their possessions that they had gathered, and the people whom they had acquired in Haran, and they set out to go to the land of Canaan. When they came to the land of Canaan,",
-    "AMP": "1 Now [in Haran] the Lord said to Abram, “Go away from your country, And from your relatives And from your father’s house, To the land which I will show you; 2 And I will make you a great nation, And I will bless you [abundantly], And make your name great [exalted]; And you shall be a blessing [a source of great good to others]; 3 And I will bless (do good for, benefit) those who bless you, And I will curse [that is, subject to My wrath and judgment] the one who curses (despises, dishonors, has contempt for) you. And in you all the families of the earth will be blessed.” 4 So Abram departed [from Haran] as the Lord had spoken to him; and Lot [his nephew] went with him. Abram was seventy-five years old when he left Haran. 5 Abram took Sarai his wife and Lot his brother’s son, and all their possessions which they had accumulated, and the people [the servants] whom they had acquired in Haran, and they set out for the land of Canaan.",
-    "NLT": "1 The Lord had said to Abram, “Leave your native country, your relatives, and your father’s family, and go to the land that I will show you. 2 I will make you into a great nation. I will bless you and make you famous, and you will be a blessing to others. 3 I will bless those who bless you and curse those who treat you with contempt. All the families on earth will be blessed through you.” 4 So Abram departed as the Lord had instructed, and Lot went with him. Abram was seventy-five years old when he left Haran. 5 He took his wife, Sarai, his nephew Lot, and all his wealth—his livestock and all the people he had taken into his household at Haran—and headed for the land of Canaan. When they arrived in Canaan,",
-    "MSG": "1-3 God told Abram: “Leave your country, your family, and your father’s home for a land that I will show you. I’ll make you a great nation and bless you. I’ll make you famous; you’ll be a blessing. I’ll bless those who bless you; those who curse you I’ll curse. All the families of the Earth will be blessed through you.” 4-5 Abram left just as God said, and Lot left with him. Abram was seventy-five years old when he left Haran. Abram took his wife Sarai and his nephew Lot with him, along with all the possessions and people they had gotten in Haran, and set out for the land of Canaan and arrived safe and sound."
-  },    
-  "Gen. 12:1": {
-    "KJV": "Now the Lord had said unto Abram, Get thee out of thy country, and from thy kindred, and from thy father's house, unto a land that I will show thee:",
-    "NKJV": "Now the Lord had said to Abram: “Get out of your country, From your family And from your father’s house, To a land that I will show you.”",
-    "NIV": "The Lord had said to Abram, “Go from your country, your people and your father’s household to the land I will show you.”",
-    "ESV": "Now the Lord said to Abram, “Go from your country and your kindred and your father's house to the land that I will show you.”",
-    "AMP": "Now [in Haran] the Lord said to Abram, “Go away from your country, And from your relatives And from your father’s house, To the land which I will show you;”",
-    "NLT": "The Lord had said to Abram, “Leave your native country, your relatives, and your father’s family, and go to the land that I will show you.”",
-    "MSG": "God told Abram: “Leave your country, your family, and your father’s home for a land that I will show you.”"
-  }
-
+    "Phil. 2:8": {
+        KJV: "And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross.",
+        NKJV:"And being found in appearance as a man, He humbled Himself and became obedient to the point of death, even the death of the cross.",
+        NIV: "And being found in appearance as a man, he humbled himself by becoming obedient to death— even death on a cross!",
+        ESV: "And being found in human form, he humbled himself by becoming obedient to the point of death, even death on a cross.",
+        AMP: "After He had appeared in human form, He humbled Himself by becoming obedient to the point of death, even death on a cross.",
+        NLT: "When he appeared in human form, he humbled himself in obedience to God and died a criminal's death on a cross.",
+        MSG: "Having become human, he stayed human. He didn't claim special privileges. Instead, he lived a selfless, obedient life and then died a selfless, obedient death—and the worst kind of death at that: a crucifixion.",
+    },
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -163,7 +96,7 @@ type ContentData = {
 };
 
 const defaultContent: ContentData = {
-    lessonDate:  "May 3, 2026",
+    lessonDate:  "July 3, 2016",
     lessonTitle: "OBEDIENCE",
     memoryVerse: "And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross - Phil. 2:8.",
     memoryVerseRef: "Phil. 2:8",
@@ -205,6 +138,9 @@ const defaultContent: ContentData = {
     ],
 };
 
+// ── Auth mode type ───────────────────────────────────────────────────────────
+type AuthMode = "login" | "signup" | "forgot";
+
 // ════════════════════════════════════════════════════════════════════════════
 //  MAIN APP COMPONENT
 // ════════════════════════════════════════════════════════════════════════════
@@ -221,6 +157,17 @@ const SundaySchoolApp = () => {
     const [loadingPct,   setLoadingPct]   = useState(0);
     const [authLoading,  setAuthLoading]  = useState(false);
     const [payLoading,   setPayLoading]   = useState(false);
+
+    // ── Email auth state ──────────────────────────────────────────────────────
+    const [authMode,      setAuthMode]      = useState<AuthMode>("login");
+    const [authEmail,     setAuthEmail]     = useState("");
+    const [authPassword,  setAuthPassword]  = useState("");
+    const [authFullName,  setAuthFullName]  = useState("");
+    const [authConfirm,   setAuthConfirm]   = useState("");
+    const [authError,     setAuthError]     = useState("");
+    const [authSuccess,   setAuthSuccess]   = useState("");
+    const [showPassword,  setShowPassword]  = useState(false);
+    const [showConfirm,   setShowConfirm]   = useState(false);
     const [subChecking,  setSubChecking]  = useState(false);
 
     // ── App state ─────────────────────────────────────────────────────────────
@@ -228,7 +175,9 @@ const SundaySchoolApp = () => {
     const [darkMode,       setDarkMode]       = useState(true);
     const [fontSize,       setFontSize]       = useState(16);
     const [tabLoading,     setTabLoading]     = useState(false);
-    const [scriptureDB,    setScriptureDB]    = useState<ScriptureDB>(initialScriptureDB);
+    const [scriptureDB,    setScriptureDB]    = useState<ScriptureDB>({});
+    const [scriptureLoading, setScriptureLoading] = useState(false);
+    const [scriptureSyncing, setScriptureSyncing] = useState(false); // DB write in progress
     const [selectedVerse,  setSelectedVerse]  = useState<string | null>(null);
     const [bibleVersion,   setBibleVersion]   = useState<keyof BibleVersions>("KJV");
     const [showVerseModal, setShowVerseModal] = useState(false);
@@ -272,36 +221,22 @@ const SundaySchoolApp = () => {
     // On startup we read it back so a Supabase lock failure never drops the user
     // back to the payment screen.
     const CACHE_KEY = "ssa_sub_cache";
-
     const writeSubCache = (userId: string, endDate: string) => {
-        try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ userId, endDate }));
-        } catch {
-            // Ignore storage errors
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ userId, endDate })); } catch {
+            return null;
         }
     };
-
     const readSubCache = (userId: string): boolean => {
         try {
             const raw = localStorage.getItem(CACHE_KEY);
             if (!raw) return false;
-
             const { userId: uid, endDate } = JSON.parse(raw);
-
             return uid === userId && new Date(endDate) > new Date();
-        } catch {
-            // Ignore invalid cache data
-            return false;
-        }
+        } catch { return false; }
     };
-
-    const clearSubCache = () => {
-        try {
-            localStorage.removeItem(CACHE_KEY);
-        } catch {
-            // Ignore storage errors
-        }
-    };
+    const clearSubCache = () => { try { localStorage.removeItem(CACHE_KEY); } catch {
+        return null;
+    } };
 
     // ── Retry DB fetch with exponential back-off ───────────────────────────────
     const fetchWithRetry = async <T,>(
@@ -397,6 +332,74 @@ const SundaySchoolApp = () => {
         window.addEventListener("keydown", h);
         return () => window.removeEventListener("keydown", h);
     }, [activeTab, isAdmin]);
+
+    // ─── EMAIL AUTH HANDLERS ──────────────────────────────────────────────────
+    const clearAuthForm = () => {
+        setAuthError(""); setAuthSuccess("");
+        setAuthEmail(""); setAuthPassword("");
+        setAuthFullName(""); setAuthConfirm("");
+        setShowPassword(false); setShowConfirm(false);
+    };
+    const switchAuthMode = (mode: AuthMode) => { clearAuthForm(); setAuthMode(mode); };
+
+    const handleEmailSignUp = async () => {
+        setAuthError(""); setAuthSuccess("");
+        if (!authFullName.trim()) { setAuthError("Please enter your full name."); return; }
+        if (!authEmail.includes("@")) { setAuthError("Please enter a valid email address."); return; }
+        if (authPassword.length < 6) { setAuthError("Password must be at least 6 characters."); return; }
+        if (authPassword !== authConfirm) { setAuthError("Passwords do not match."); return; }
+        setAuthLoading(true);
+        const { data, error } = await supabase.auth.signUp({
+            email: authEmail.trim().toLowerCase(),
+            password: authPassword,
+            options: {
+                data: { full_name: authFullName.trim(), avatar_url: null },
+                emailRedirectTo: window.location.origin,
+            },
+        });
+        setAuthLoading(false);
+        if (error) { setAuthError(error.message); return; }
+        if (data.user && !data.session) {
+            // Email confirmation required
+            setAuthSuccess("✅ Account created! Check your email to confirm your address before signing in.");
+        }
+        // If auto-confirmed (e.g. in dev), the auth listener will fire and handle navigation
+    };
+
+    const handleEmailSignIn = async () => {
+        setAuthError(""); setAuthSuccess("");
+        if (!authEmail.includes("@")) { setAuthError("Please enter a valid email address."); return; }
+        if (!authPassword) { setAuthError("Please enter your password."); return; }
+        setAuthLoading(true);
+        const { error } = await supabase.auth.signInWithPassword({
+            email: authEmail.trim().toLowerCase(),
+            password: authPassword,
+        });
+        setAuthLoading(false);
+        if (error) {
+            if (error.message.toLowerCase().includes("invalid")) {
+                setAuthError("Incorrect email or password. Please try again.");
+            } else if (error.message.toLowerCase().includes("confirm")) {
+                setAuthError("Please confirm your email address first. Check your inbox.");
+            } else {
+                setAuthError(error.message);
+            }
+        }
+        // On success the onAuthStateChange listener handles navigation
+    };
+
+    const handleForgotPassword = async () => {
+        setAuthError(""); setAuthSuccess("");
+        if (!authEmail.includes("@")) { setAuthError("Please enter your email address first."); return; }
+        setAuthLoading(true);
+        const { error } = await supabase.auth.resetPasswordForEmail(
+            authEmail.trim().toLowerCase(),
+            { redirectTo: window.location.origin }
+        );
+        setAuthLoading(false);
+        if (error) { setAuthError(error.message); return; }
+        setAuthSuccess("✅ Password reset email sent! Check your inbox and follow the link.");
+    };
 
     // ─── PAYSTACK PAYMENT ─────────────────────────────────────────────────────
     const handlePaystackPayment = () => {
@@ -509,12 +512,96 @@ const SundaySchoolApp = () => {
     const updatePrayer = (i: number, value: string) =>
         setContentData((p) => ({ ...p, prayerPoints: p.prayerPoints.map((pr, idx) => idx === i ? value : pr) }));
 
-    const addNewScripture = () => {
-        if (newVerse.reference && Object.values(newVerse.versions).some((v) => v)) {
-            setScriptureDB((p) => ({ ...p, [newVerse.reference]: newVerse.versions }));
-            setNewVerse({ reference: "", versions: { KJV:"", NKJV:"", NIV:"", ESV:"", AMP:"", NLT:"", MSG:"" } });
-            setEditMode(false);
+    // ─── SCRIPTURE DB HELPERS ────────────────────────────────────────────────
+
+    // Pure converter — no state, no deps — stable without useCallback but
+    // defined outside render so it never changes reference.
+    // (Moved to module scope via inline const to avoid re-creation each render)
+    const rowToEntry = useCallback(
+        (row: Record<string, string>): [string, BibleVersions] => [
+            row.reference,
+            { KJV: row.kjv||"", NKJV: row.nkjv||"", NIV: row.niv||"",
+              ESV: row.esv||"", AMP: row.amp||"", NLT: row.nlt||"", MSG: row.msg||"" },
+        ],
+        [] // no dependencies — pure function
+    );
+
+    // Seed the initialScriptureDB into Supabase on first run
+    const seedScripturesToDB = useCallback(async () => {
+        const rows = Object.entries(initialScriptureDB).map(([ref, v]) => ({
+            reference: ref,
+            kjv: v.KJV,  nkjv: v.NKJV, niv: v.NIV,
+            esv: v.ESV,  amp:  v.AMP,   nlt: v.NLT,  msg: v.MSG,
+        }));
+        const { error } = await supabase
+            .from("scriptures")
+            .upsert(rows, { onConflict: "reference" });
+        if (error) { console.error("seedScriptures:", error); return; }
+        // Reload after seeding
+        const { data } = await supabase
+            .from("scriptures")
+            .select("*")
+            .order("reference", { ascending: true });
+        if (data) {
+            const db: ScriptureDB = {};
+            data.forEach((row: Record<string, string>) => {
+                const [ref, versions] = rowToEntry(row);
+                db[ref] = versions;
+            });
+            setScriptureDB(db);
         }
+    }, [rowToEntry]); // rowToEntry is stable (empty deps), so this is stable too
+
+    // Load ALL scriptures from Supabase and populate state
+    const loadScripturesFromDB = useCallback(async () => {
+        setScriptureLoading(true);
+        const { data, error } = await supabase
+            .from("scriptures")
+            .select("*")
+            .order("reference", { ascending: true });
+        if (error) {
+            console.error("loadScriptures:", error);
+            setScriptureLoading(false);
+            return;
+        }
+        if (data && data.length > 0) {
+            const db: ScriptureDB = {};
+            data.forEach((row: Record<string, string>) => {
+                const [ref, versions] = rowToEntry(row);
+                db[ref] = versions;
+            });
+            setScriptureDB(db);
+        } else {
+            // DB is empty on first run — seed with built-in data
+            await seedScripturesToDB();
+        }
+        setScriptureLoading(false);
+    }, [rowToEntry, seedScripturesToDB]); // both are stable → loadScripturesFromDB is stable
+
+    // Add new scripture to DB + state
+    const addNewScripture = async () => {
+        if (!newVerse.reference.trim() || !Object.values(newVerse.versions).some((v) => v)) return;
+        setScriptureSyncing(true);
+        const { error } = await supabase.from("scriptures").upsert({
+            reference: newVerse.reference.trim(),
+            kjv: newVerse.versions.KJV,   nkjv: newVerse.versions.NKJV,
+            niv: newVerse.versions.NIV,   esv:  newVerse.versions.ESV,
+            amp: newVerse.versions.AMP,   nlt:  newVerse.versions.NLT,
+            msg: newVerse.versions.MSG,
+        }, { onConflict: "reference" });
+        if (error) {
+            console.error("addNewScripture:", error);
+            setScriptureSyncing(false);
+            alert("Failed to save scripture: " + error.message);
+            return;
+        }
+        // Update local state
+        setScriptureDB((p) => ({ ...p, [newVerse.reference.trim()]: newVerse.versions }));
+        setNewVerse({ reference: "", versions: { KJV:"", NKJV:"", NIV:"", ESV:"", AMP:"", NLT:"", MSG:"" } });
+        setEditMode(false);
+        setScriptureSaved(newVerse.reference.trim());
+        setTimeout(() => setScriptureSaved(null), 2500);
+        setScriptureSyncing(false);
     };
 
     // ─── SCRIPTURE EDITOR HELPERS ────────────────────────────────────────────
@@ -529,24 +616,54 @@ const SundaySchoolApp = () => {
         setEditingRefNew("");
         setEditingVersions({ KJV:"",NKJV:"",NIV:"",ESV:"",AMP:"",NLT:"",MSG:"" });
     };
-    const saveEditScripture = () => {
+
+    // Save edited scripture to DB + update state
+    const saveEditScripture = async () => {
         if (!editingRef) return;
+        setScriptureSyncing(true);
+        const targetRef = (editingRefNew && editingRefNew.trim()) ? editingRefNew.trim() : editingRef;
+
+        // If reference was renamed: delete old row, insert new
+        if (targetRef !== editingRef) {
+            await supabase.from("scriptures").delete().eq("reference", editingRef);
+        }
+        const { error } = await supabase.from("scriptures").upsert({
+            reference: targetRef,
+            kjv: editingVersions.KJV,   nkjv: editingVersions.NKJV,
+            niv: editingVersions.NIV,   esv:  editingVersions.ESV,
+            amp: editingVersions.AMP,   nlt:  editingVersions.NLT,
+            msg: editingVersions.MSG,
+        }, { onConflict: "reference" });
+
+        if (error) {
+            console.error("saveEditScripture:", error);
+            setScriptureSyncing(false);
+            alert("Failed to update scripture: " + error.message);
+            return;
+        }
+        // Update local state
         setScriptureDB((prev) => {
             const updated = { ...prev };
-            // If reference was renamed, remove old key
-            if (editingRefNew && editingRefNew !== editingRef) {
-                delete updated[editingRef];
-                updated[editingRefNew] = { ...editingVersions };
-            } else {
-                updated[editingRef] = { ...editingVersions };
-            }
+            if (targetRef !== editingRef) delete updated[editingRef];
+            updated[targetRef] = { ...editingVersions };
             return updated;
         });
-        setScriptureSaved(editingRefNew || editingRef);
+        setScriptureSaved(targetRef);
         setTimeout(() => setScriptureSaved(null), 2500);
+        setScriptureSyncing(false);
         cancelEditScripture();
     };
-    const deleteScripture = (ref: string) => {
+
+    // Delete scripture from DB + state
+    const deleteScripture = async (ref: string) => {
+        setScriptureSyncing(true);
+        const { error } = await supabase.from("scriptures").delete().eq("reference", ref);
+        if (error) {
+            console.error("deleteScripture:", error);
+            setScriptureSyncing(false);
+            alert("Failed to delete: " + error.message);
+            return;
+        }
         setScriptureDB((prev) => {
             const updated = { ...prev };
             delete updated[ref];
@@ -554,7 +671,9 @@ const SundaySchoolApp = () => {
         });
         setDeleteConfirmRef(null);
         if (editingRef === ref) cancelEditScripture();
+        setScriptureSyncing(false);
     };
+
     const updateEditVersion = (v: keyof BibleVersions, text: string) =>
         setEditingVersions((p) => ({ ...p, [v]: text }));
 
@@ -620,38 +739,184 @@ const SundaySchoolApp = () => {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    //  AUTH SCREEN  — Google Login
+    //  AUTH SCREEN  — Email/Password + Google
     // ═══════════════════════════════════════════════════════════════════════════
     if (screen === "auth") {
+        const inputCls = `w-full px-4 py-3 rounded-xl border text-sm outline-none transition focus:ring-2 focus:ring-purple-400 ${
+            darkMode ? "bg-white/10 border-white/20 text-white placeholder-white/40" : "bg-white border-gray-300 text-gray-800 placeholder-gray-400"
+        }`;
         return (
             <div className={`min-h-screen ${th} flex items-center justify-center p-4 relative overflow-hidden`}>
+                {/* Blobs */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute w-96 h-96 bg-purple-500/25 rounded-full blur-3xl -top-48 -left-48 animate-pulse"/>
                     <div className="absolute w-96 h-96 bg-blue-500/25 rounded-full blur-3xl -bottom-48 -right-48 animate-pulse" style={{animationDelay:"1s"}}/>
+                    <div className="absolute w-64 h-64 bg-pink-500/15 rounded-full blur-3xl top-1/2 right-0 animate-pulse" style={{animationDelay:"2s"}}/>
                 </div>
-                <div className="max-w-sm w-full relative z-10 text-center">
-                    <div className="w-24 h-24 mx-auto mb-6 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl border border-white/20">
-                        <img src={logo} alt="Logo" className="w-16 h-16 object-contain" />
+
+                <div className="max-w-sm w-full relative z-10">
+                    {/* Logo & Title */}
+                    <div className="text-center mb-7">
+                        <div className="w-20 h-20 mx-auto mb-4 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl border border-white/20">
+                            <img src={logo} alt="Logo" className="w-13 h-13 object-contain w-12 h-12"/>
+                        </div>
+                        <h1 className="text-3xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                            Sunday School
+                        </h1>
+                        <p className="text-xs opacity-50 mt-1">Life Gate Ministries Worldwide</p>
                     </div>
-                    <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                        Sunday School
-                    </h1>
-                    <p className="opacity-60 mb-2 text-sm">Life Gate Ministries Worldwide</p>
-                    <p className="opacity-80 mb-10 font-medium">Sign in to access the lesson</p>
 
-                    <button
-                        onClick={async () => { setAuthLoading(true); await signInWithGoogle(); }}
-                        disabled={authLoading}
-                        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white text-gray-800 rounded-2xl font-bold shadow-2xl hover:shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
-                    >
-                        {authLoading
-                            ? <Loader2 size={20} className="animate-spin text-blue-600" />
-                            : <Chrome size={20} className="text-blue-600" />
-                        }
-                        {authLoading ? "Redirecting to Google…" : "Continue with Google"}
-                    </button>
+                    {/* Card */}
+                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-7 shadow-2xl space-y-5">
 
-                    <p className="mt-6 text-xs opacity-40">By signing in you agree to our terms of service.</p>
+                        {/* ── FORGOT PASSWORD MODE ── */}
+                        {authMode === "forgot" && (
+                            <>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <button onClick={()=>switchAuthMode("login")} className="opacity-50 hover:opacity-80 transition">
+                                        <ArrowLeft size={18}/>
+                                    </button>
+                                    <h2 className="text-lg font-bold">Reset Password</h2>
+                                </div>
+                                <p className="text-sm opacity-60 -mt-2">Enter your email and we'll send a reset link.</p>
+
+                                {authError && <div className="flex items-start gap-2 px-4 py-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm"><X size={15} className="mt-0.5 flex-shrink-0"/>{authError}</div>}
+                                {authSuccess && <div className="flex items-start gap-2 px-4 py-3 bg-green-500/20 border border-green-500/40 rounded-xl text-green-300 text-sm"><CheckCircle size={15} className="mt-0.5 flex-shrink-0"/>{authSuccess}</div>}
+
+                                <div className="relative">
+                                    <AtSign size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40"/>
+                                    <input type="email" value={authEmail} onChange={e=>{setAuthEmail(e.target.value);setAuthError("");}}
+                                        placeholder="your@email.com" className={`${inputCls} pl-10`}/>
+                                </div>
+
+                                <button onClick={handleForgotPassword} disabled={authLoading}
+                                    className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
+                                    {authLoading ? <><Loader2 size={17} className="animate-spin"/> Sending…</> : <><Mail size={16}/> Send Reset Link</>}
+                                </button>
+
+                                <p className="text-center text-xs opacity-50">
+                                    Remembered it? <button onClick={()=>switchAuthMode("login")} className="text-purple-400 hover:underline font-semibold">Sign In</button>
+                                </p>
+                            </>
+                        )}
+
+                        {/* ── LOGIN / SIGNUP MODE ── */}
+                        {authMode !== "forgot" && (
+                            <>
+                                {/* Mode tabs */}
+                                <div className={`flex rounded-xl overflow-hidden border ${darkMode?"border-white/10":"border-gray-200"} p-1 gap-1`}>
+                                    {(["login","signup"] as AuthMode[]).map(m=>(
+                                        <button key={m} onClick={()=>switchAuthMode(m)}
+                                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${authMode===m?"bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg":"opacity-50 hover:opacity-80"}`}>
+                                            {m==="login" ? "Sign In" : "Sign Up"}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Error / Success banners */}
+                                {authError && (
+                                    <div className="flex items-start gap-2 px-4 py-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-sm">
+                                        <X size={15} className="mt-0.5 flex-shrink-0"/>{authError}
+                                    </div>
+                                )}
+                                {authSuccess && (
+                                    <div className="flex items-start gap-2 px-4 py-3 bg-green-500/20 border border-green-500/40 rounded-xl text-green-300 text-sm">
+                                        <CheckCircle size={15} className="mt-0.5 flex-shrink-0"/>{authSuccess}
+                                    </div>
+                                )}
+
+                                {/* Full name — sign up only */}
+                                {authMode === "signup" && (
+                                    <div className="relative">
+                                        <UserPlus size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40"/>
+                                        <input type="text" value={authFullName}
+                                            onChange={e=>{setAuthFullName(e.target.value);setAuthError("");}}
+                                            placeholder="Full Name"
+                                            className={`${inputCls} pl-10`}/>
+                                    </div>
+                                )}
+
+                                {/* Email */}
+                                <div className="relative">
+                                    <AtSign size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40"/>
+                                    <input type="email" value={authEmail}
+                                        onChange={e=>{setAuthEmail(e.target.value);setAuthError("");}}
+                                        placeholder="Email Address"
+                                        className={`${inputCls} pl-10`}/>
+                                </div>
+
+                                {/* Password */}
+                                <div className="relative">
+                                    <KeyRound size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40"/>
+                                    <input type={showPassword?"text":"password"} value={authPassword}
+                                        onChange={e=>{setAuthPassword(e.target.value);setAuthError("");}}
+                                        placeholder={authMode==="signup"?"Create Password (min 6 chars)":"Password"}
+                                        className={`${inputCls} pl-10 pr-11`}/>
+                                    <button type="button" onClick={()=>setShowPassword(p=>!p)}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70 transition">
+                                        {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                                    </button>
+                                </div>
+
+                                {/* Confirm password — sign up only */}
+                                {authMode === "signup" && (
+                                    <div className="relative">
+                                        <KeyRound size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40"/>
+                                        <input type={showConfirm?"text":"password"} value={authConfirm}
+                                            onChange={e=>{setAuthConfirm(e.target.value);setAuthError("");}}
+                                            placeholder="Confirm Password"
+                                            className={`${inputCls} pl-10 pr-11 ${authConfirm && authConfirm!==authPassword?"border-red-500/60":""}`}/>
+                                        <button type="button" onClick={()=>setShowConfirm(p=>!p)}
+                                            className="absolute right-3.5 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70 transition">
+                                            {showConfirm ? <EyeOff size={16}/> : <Eye size={16}/>}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Forgot password link */}
+                                {authMode === "login" && (
+                                    <div className="text-right -mt-2">
+                                        <button onClick={()=>switchAuthMode("forgot")} className="text-xs text-purple-400 hover:underline opacity-70 hover:opacity-100 transition">
+                                            Forgot password?
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Submit button */}
+                                <button
+                                    onClick={authMode==="login" ? handleEmailSignIn : handleEmailSignUp}
+                                    disabled={authLoading}
+                                    className="w-full py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]">
+                                    {authLoading
+                                        ? <><Loader2 size={17} className="animate-spin"/> {authMode==="login"?"Signing in…":"Creating account…"}</>
+                                        : authMode==="login"
+                                            ? <><Lock size={16}/> Sign In</>
+                                            : <><UserPlus size={16}/> Create Account</>
+                                    }
+                                </button>
+
+                                {/* Divider */}
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1 h-px bg-white/10"/>
+                                    <span className="text-xs opacity-40 font-semibold">OR</span>
+                                    <div className="flex-1 h-px bg-white/10"/>
+                                </div>
+
+                                {/* Google button */}
+                                <button
+                                    onClick={async()=>{ setAuthError(""); setAuthLoading(true); await signInWithGoogle(); }}
+                                    disabled={authLoading}
+                                    className={`w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-bold shadow-lg transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 ${darkMode?"bg-white/90 text-gray-800 hover:bg-white":"bg-white text-gray-800 hover:bg-gray-50"}`}>
+                                    <Chrome size={18} className="text-blue-600"/>
+                                    Continue with Google
+                                </button>
+
+                                <p className="text-center text-xs opacity-40">
+                                    By continuing you agree to our terms of service.
+                                </p>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
         );
@@ -1125,12 +1390,19 @@ const SundaySchoolApp = () => {
                                             {Object.keys(scriptureDB).length} entries · {isAdmin ? "Admin — full edit access" : "Read-only"}
                                         </p>
                                     </div>
-                                    {isAdmin && (
-                                        <button onClick={()=>setEditMode(!editMode)}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${editMode?"bg-red-600 hover:bg-red-700":"bg-green-600 hover:bg-green-700"} text-white`}>
-                                            {editMode ? <><X size={14}/> Cancel</> : <><Plus size={14}/> Add New Scripture</>}
+                                    <div className="flex items-center gap-2">
+                                        {/* Reload from DB */}
+                                        <button onClick={loadScripturesFromDB} disabled={scriptureLoading}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 transition disabled:opacity-40">
+                                            <RefreshCw size={13} className={scriptureLoading?"animate-spin":""}/> Sync DB
                                         </button>
-                                    )}
+                                        {isAdmin && (
+                                            <button onClick={()=>setEditMode(!editMode)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${editMode?"bg-red-600 hover:bg-red-700":"bg-green-600 hover:bg-green-700"} text-white`}>
+                                                {editMode ? <><X size={14}/> Cancel</> : <><Plus size={14}/> Add New Scripture</>}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Save toast */}
@@ -1162,9 +1434,9 @@ const SundaySchoolApp = () => {
                                             </div>
                                         ))}
                                         <div className="flex gap-3">
-                                            <button onClick={addNewScripture}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition">
-                                                <Save size={15}/> Save Scripture
+                                            <button onClick={()=>{ void addNewScripture(); }} disabled={scriptureSyncing}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition disabled:opacity-50">
+                                                {scriptureSyncing ? <><Loader2 size={15} className="animate-spin"/> Saving…</> : <><Save size={15}/> Save to Database</>}
                                             </button>
                                             <button onClick={()=>setEditMode(false)}
                                                 className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-xl flex items-center gap-2 text-sm transition">
@@ -1222,7 +1494,7 @@ const SundaySchoolApp = () => {
                                                                     {isConfirmingDelete ? (
                                                                         <div className="flex items-center gap-1">
                                                                             <span className="text-xs text-red-400 font-semibold">Delete?</span>
-                                                                            <button onClick={()=>deleteScripture(ref)}
+                                                                            <button onClick={()=>{ void deleteScripture(ref); }} disabled={scriptureSyncing}
                                                                                 className="px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition">Yes</button>
                                                                             <button onClick={()=>setDeleteConfirmRef(null)}
                                                                                 className="px-2 py-1 rounded-lg bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold transition">No</button>
@@ -1275,9 +1547,9 @@ const SundaySchoolApp = () => {
 
                                                             {/* Save */}
                                                             <div className="flex gap-3 pt-1">
-                                                                <button onClick={saveEditScripture}
-                                                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition">
-                                                                    <Save size={15}/> Save Changes
+                                                                <button onClick={()=>{ void saveEditScripture(); }} disabled={scriptureSyncing}
+                                                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition disabled:opacity-50">
+                                                                    {scriptureSyncing ? <><Loader2 size={15} className="animate-spin"/> Saving…</> : <><Save size={15}/> Save to Database</>}
                                                                 </button>
                                                                 <button onClick={cancelEditScripture}
                                                                     className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 transition">
@@ -1300,10 +1572,16 @@ const SundaySchoolApp = () => {
                                             );
                                         })
                                     }
-                                    {Object.keys(scriptureDB).filter(r=>r.toLowerCase().includes(scriptureSearch.toLowerCase())).length === 0 && (
+                                    {scriptureLoading && (
+                                        <div className="flex flex-col items-center py-16 opacity-60">
+                                            <Loader2 size={36} className="animate-spin text-blue-400 mb-3"/>
+                                            <p className="text-sm">Loading scriptures from database…</p>
+                                        </div>
+                                    )}
+                                    {!scriptureLoading && Object.keys(scriptureDB).filter(r=>r.toLowerCase().includes(scriptureSearch.toLowerCase())).length === 0 && (
                                         <div className="text-center py-12 opacity-40">
                                             <BookOpen size={40} className="mx-auto mb-3"/>
-                                            <p>No scriptures match "{scriptureSearch}"</p>
+                                            <p>{scriptureSearch ? `No scriptures match "${scriptureSearch}"` : "No scriptures in database yet. Add one above."}</p>
                                         </div>
                                     )}
                                 </div>
