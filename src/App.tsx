@@ -300,6 +300,14 @@ const SundaySchoolApp = () => {
         }
     }, []);
 
+    // Load scriptures from DB whenever the user reaches the app screen.
+    // loadScripturesFromDB is wrapped in useCallback so this won't loop.
+    // useEffect(() => {
+    //     if (screen === "app") {
+    //         void loadScripturesFromDB();
+    //     }
+    // }, [screen, loadScripturesFromDB]);
+
     useEffect(() => {
         const { data: { subscription: listener } } = supabase.auth.onAuthStateChange(
             async (_event, session) => {
@@ -577,6 +585,12 @@ const SundaySchoolApp = () => {
         }
         setScriptureLoading(false);
     }, [rowToEntry, seedScripturesToDB]); // both are stable → loadScripturesFromDB is stable
+
+    useEffect(() => {
+        if (screen === "app") {
+            void loadScripturesFromDB();
+        }
+    }, [screen, loadScripturesFromDB]);
 
     // Add new scripture to DB + state
     const addNewScripture = async () => {
