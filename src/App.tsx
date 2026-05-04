@@ -44,11 +44,11 @@ type ScriptureDB   = Record<string, BibleVersions>;
 
 const initialScriptureDB: ScriptureDB = {
     "Phil. 2:8": {
-        KJV: "And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross.",
-        NKJV:"And being found in appearance as a man, He humbled Himself and became obedient to the point of death, even the death of the cross.",
-        NIV: "And being found in appearance as a man, he humbled himself by becoming obedient to death— even death on a cross!",
-        ESV: "And being found in human form, he humbled himself by becoming obedient to the point of death, even death on a cross.",
-        AMP: "After He had appeared in human form, He humbled Himself by becoming obedient to the point of death, even death on a cross.",
+        KJV: "",
+        NKJV:"",
+        NIV: "",
+        ESV: "",
+        AMP: "",
         NLT: "When he appeared in human form, he humbled himself in obedience to God and died a criminal's death on a cross.",
         MSG: "Having become human, he stayed human. He didn't claim special privileges. Instead, he lived a selfless, obedient life and then died a selfless, obedient death—and the worst kind of death at that: a crucifixion.",
     },
