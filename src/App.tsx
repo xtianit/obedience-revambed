@@ -1589,7 +1589,7 @@ const hydrateLessonData = (data: Partial<LessonContent>): LessonContent => {
                                 <p className="text-sm opacity-60">Full access to Sunday School content</p>
                             </div>
                             <div className="text-center mb-6">
-                                <p className="text-6xl font-black mb-1">₦1,000</p>
+                                <p className="text-6xl font-black mb-1">₦500</p>
                                 <p className="text-sm opacity-50 flex items-center justify-center gap-1"><RefreshCw size={12}/> per month</p>
                             </div>
                             <ul className="space-y-2.5 mb-8">
