@@ -1979,14 +1979,23 @@
 
 
                         <div className="space-y-6 animate-in fade-in duration-300">
-    {editBanner("lesson")}
-    <h3 className="text-2xl font-bold">Lesson Content</h3>
-    
-    {/* Intro Section */}
+                        {editBanner("lesson")}
+                        <h3 className="text-2xl font-bold">Lesson Content</h3>
+                        
+                        {/* Intro Section */}
 
 
 
                             {/* Intro Section */}
+
+
+
+
+
+
+
+
+
 {isAdmin && editingContent === "lesson" ? (
     <>
         <textarea 
@@ -1996,7 +2005,6 @@
             rows={3}
             placeholder="Lesson Introduction..."
         />
-
         {/* ── EDITABLE SCRIPTURE BUTTONS ── */}
         <div className="mt-2 mb-4">
             <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">Scripture Buttons</p>
@@ -2046,9 +2054,35 @@
         </div>
     </>
 ) : (
-    <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
+    <>
+        <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
+        <div className="flex flex-wrap gap-2 mb-4">
+            {(contentData.lessonIntroScriptures || []).filter(s => s?.trim()).map(s => (
+                <button
+                    key={s}
+                    onClick={() => showBibleVerse(s)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-bold transition"
+                >
+                    <BookOpen size={13} /> {s}
+                </button>
+            ))}
+        </div>
+    </>
 )}
 
+
+
+
+
+
+
+
+
+
+
+
+
+                            
 
                             
 
