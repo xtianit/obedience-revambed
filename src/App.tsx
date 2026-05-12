@@ -2110,131 +2110,205 @@
         </button>
     )}
 
-    
-
-
-
-
                         
             
-            {/* Main Points Loop */}
-            {(contentData?.lessonPoints || []).map((section, idx) => (
-                <div key={`point-${idx}`} className={`${darkMode ? "bg-gray-700/40" : "bg-gray-50"} p-5 rounded-xl border border-transparent`}>
-                    {/* Move this inside the very first <div> of your .map() loop */}
-                    {isAdmin && editingContent === "lesson" && (
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation(); // Prevents clicking the section by mistake
-                                if(window.confirm(`Delete Point ${idx + 1}?`)) {
-                                    const filtered = contentData.lessonPoints.filter((_, i) => i !== idx);
-                                    updateContent("lessonPoints", filtered);
-                                }
-                            }}
-                            /* I removed 'opacity-0' so you can actually see it now! */
-                            className="absolute -top-2 -right-2 z-50 bg-red-500 text-white p-2 rounded-full shadow-xl hover:bg-red-600 active:scale-90 transition-all border-2 border-white dark:border-gray-800"
-                            title="Delete entire section"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    )}
-                    
-                    {isAdmin && editingContent === "lesson" ? (
-                        
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <span className="font-black opacity-30 text-lg">{idx + 1}</span>
-                                <input 
-                                    type="text" 
-                                    value={section?.title || ""} 
-                                    onChange={e => updateLessonPoint(idx, "title", e.target.value)} 
-                                    className={`w-full px-3 py-2 rounded-lg border font-bold ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
-                                    placeholder="Main Point Title"
+    {/* Main Points Loop */}
+    {(contentData?.lessonPoints || []).map((section, idx) => (
+    <div key={`point-${idx}`} className={`relative ${darkMode ? "bg-gray-700/40" : "bg-gray-50"} p-5 rounded-xl border border-transparent`}>
+
+        {isAdmin && editingContent === "lesson" && (
+            <button 
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Delete Point ${idx + 1}?`)) {
+                        const filtered = contentData.lessonPoints.filter((_, i) => i !== idx);
+                        updateContent("lessonPoints", filtered);
+                    }
+                }}
+                className="absolute -top-2 -right-2 z-50 bg-red-500 text-white p-2 rounded-full shadow-xl hover:bg-red-600 active:scale-90 transition-all border-2 border-white dark:border-gray-800"
+                title="Delete entire section"
+            >
+                <Trash2 size={16} />
+            </button>
+        )}
+
+        {isAdmin && editingContent === "lesson" ? (
+            <div className="space-y-3">
+                {/* Section Title */}
+                <div className="flex items-center gap-2">
+                    <span className="font-black opacity-30 text-lg">{idx + 1}.</span>
+                    <input 
+                        type="text" 
+                        value={section?.title || ""} 
+                        onChange={e => updateLessonPoint(idx, "title", e.target.value)} 
+                        className={`w-full px-3 py-2 rounded-lg border font-bold ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+                        placeholder="Section Title (e.g. Why We Are to Submit)"
+                    />
+                </div>
+
+                {/* Section Content */}
+                <textarea 
+                    value={section?.content || ""} 
+                    onChange={e => updateLessonPoint(idx, "content", e.target.value)} 
+                    className={`w-full px-3 py-2 rounded-lg border text-sm ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
+                    rows={2}
+                    placeholder="Optional section description..."
+                />
+
+                {/* Scripture tags for section */}
+                <div className="flex flex-wrap gap-2 py-1">
+                    {(section?.scriptures || []).map((s, si) => (
+                        <span key={si} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                            {s}
+                            <X size={10} className="cursor-pointer" onClick={() => {
+                                const filtered = section.scriptures.filter((_, i) => i !== si);
+                                updateLessonPoint(idx, "scriptures", filtered);
+                            }}/>
+                        </span>
+                    ))}
+                    <button 
+                        onClick={() => {
+                            const val = prompt("Enter scripture (e.g. Rom 13:1)");
+                            if (val) updateLessonPoint(idx, "scriptures", [...(section?.scriptures || []), val]);
+                        }}
+                        className="text-[10px] font-bold text-blue-500 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500 hover:text-white transition"
+                    >
+                        + Add Scripture
+                    </button>
+                </div>
+
+                {/* Sub-points — compact inline-style editing */}
+                <div className="ml-4 space-y-2 border-l-2 border-purple-500/20 pl-4 mt-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2">Sub-points</p>
+                    {(section?.subPoints || []).map((sp, si) => (
+                        <div key={`sub-${si}`} className={`flex items-start gap-2 p-2.5 rounded-lg ${darkMode ? "bg-gray-800/60" : "bg-white border border-gray-200"}`}>
+                            <span className="font-black text-purple-400 mt-1 flex-shrink-0 text-sm">
+                                {String.fromCharCode(65 + si)}.
+                            </span>
+                            <div className="flex-1 space-y-1.5">
+                                <textarea
+                                    value={sp?.content || ""}
+                                    onChange={e => updateSubPoint(idx, si, "content", e.target.value)}
+                                    placeholder="Sub-point content..."
+                                    rows={2}
+                                    className={`w-full bg-transparent text-sm outline-none border-b pb-1 resize-none ${darkMode ? "border-gray-600 focus:border-purple-400" : "border-gray-300 focus:border-purple-500"}`}
+                                />
+                                <input
+                                    type="text"
+                                    value={(sp?.scriptures || [])[0] || ""}
+                                    onChange={e => {
+                                        const updated = [...(sp?.scriptures || [])];
+                                        updated[0] = e.target.value;
+                                        updateSubPoint(idx, si, "scriptures", updated);
+                                    }}
+                                    placeholder="Scripture ref (e.g. vs 1, Heb 13:17)"
+                                    className={`w-full bg-transparent text-xs text-blue-400 outline-none border-b border-dashed pb-0.5 ${darkMode ? "border-gray-600 placeholder-blue-400/40" : "border-gray-300"}`}
                                 />
                             </div>
-                            <textarea 
-                                value={section?.content || ""} 
-                                onChange={e => updateLessonPoint(idx, "content", e.target.value)} 
-                                className={`w-full px-3 py-2 rounded-lg border text-sm ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-                                rows={2}
-                                placeholder="Description..."
-                            />
-                            
-                            {/* Scripture Manager for Point */}
-                            <div className="flex flex-wrap gap-2 py-2">
-                                {(section?.scriptures || []).map((s, si) => (
-                                    <span key={si} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
-                                        {s} <X size={10} className="cursor-pointer" onClick={() => {
-                                            const filtered = section.scriptures.filter((_, i) => i !== si);
-                                            updateLessonPoint(idx, "scriptures", filtered);
-                                        }}/>
-                                    </span>
-                                ))}
-                                <button 
-                                    onClick={() => {
-                                        const val = prompt("Enter Verse (e.g. John 3:16)");
-                                        if(val) updateLessonPoint(idx, "scriptures", [...(section?.scriptures || []), val]);
-                                    }}
-                                    className="text-[10px] font-bold text-blue-500 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500 hover:text-white transition"
-                                >
-                                    + Add Scripture
-                                </button>
-                            </div>
-
-                            {/* Sub-points Manager */}
-                            <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
-                                {(section?.subPoints || []).map((sp, si) => (
-                                    <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg">
-                                        <button onClick={() => deleteSubPoint(idx, si)} className="absolute top-2 right-2 text-red-400"><X size={14}/></button>
-                                        <input 
-                                            type="text" 
-                                            value={sp?.title || ""} 
-                                            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
-                                            placeholder="Sub-point title" 
-                                            className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
-                                        />
-                                        <textarea 
-                                            value={sp?.content || ""} 
-                                            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
-                                            placeholder="Content" 
-                                            className="w-full bg-transparent text-xs outline-none" 
-                                            rows={2}
-                                        />
-                                    </div>
-                                ))}
-                                <button onClick={() => addSubPoint(idx)} className="text-xs font-bold text-purple-500 flex items-center gap-1"><Plus size={14}/> New Sub-point</button>
-                            </div>
+                            <button onClick={() => deleteSubPoint(idx, si)} className="text-red-400 hover:text-red-500 mt-1 flex-shrink-0">
+                                <X size={13}/>
+                            </button>
                         </div>
-                    ) : (
-                        <>
-                            <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
-                            {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
-                            
-                            {/* Interactive Scripture Buttons */}
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                {(section?.scriptures || []).map(s => (
-                                    <button key={s} onClick={() => showBibleVerse(s)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-transform active:scale-95 shadow-sm">
-                                        <BookOpen size={12} /> {s}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Sub-point List */}
-                            <div className="space-y-4 ml-2">
-                                {(section?.subPoints || []).map((sp, si) => (
-                                    <div key={si} className="flex gap-3">
-                                        <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
-                                        <div>
-                                            <p className="text-sm"><span className="font-bold">{sp?.title}:</span> {sp?.content}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
+                    ))}
+                    <button
+                        onClick={() => addSubPoint(idx)}
+                        className="text-xs font-bold text-purple-400 flex items-center gap-1 hover:text-purple-300 mt-1"
+                    >
+                        <Plus size={13}/> Add Sub-point
+                    </button>
                 </div>
-            ))}
-        </div>
-    )}
+            </div>
+
+        ) : (
+            <>
+                {/* Display: Section heading */}
+                <h4 className="text-lg font-bold mb-1">
+                    {idx + 1}. {section?.title || "Untitled Point"}
+                    {(section?.scriptures || []).length > 0 && (
+                        <span className="text-blue-400 font-normal text-sm ml-2">:</span>
+                    )}
+                </h4>
+
+                {/* Display: optional section description */}
+                {section?.content && (
+                    <p className="leading-relaxed mb-2 opacity-80 text-sm">{section.content}</p>
+                )}
+
+                {/* Display: section-level scripture buttons */}
+                {(section?.scriptures || []).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        {section.scriptures.map(s => (
+                            <button key={s} onClick={() => showBibleVerse(s)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition active:scale-95 shadow-sm">
+                                <BookOpen size={11} /> {s}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Display: sub-points inline */}
+
+                {/* Display: sub-points inline with scripture buttons */}
+{(section?.subPoints || []).length > 0 && (
+    <div className="space-y-2 mt-2">
+        {(section.subPoints).map((sp, si) => (
+            <div key={si} className="flex items-start gap-2 flex-wrap">
+                <span className="font-bold text-purple-400 flex-shrink-0">
+                    {String.fromCharCode(65 + si)}.
+                </span>
+                <span className="text-sm opacity-90 flex-1">{sp?.content}</span>
+                {(sp?.scriptures || []).filter(s => s.trim()).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                        {(sp.scriptures || []).filter(s => s.trim()).map((s, ssi) => (
+                            <button
+                                key={ssi}
+                                onClick={() => showBibleVerse(s)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition active:scale-95 shadow-sm"
+                            >
+                                <BookOpen size={10} /> {s}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        ))}
+    </div>
+)}
+
+
+                
+            </>
+        )}
+    </div>
+))}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            
+
+
+                            
+        
 
     {/* ── CONCLUSION ── */}
     {activeTab === "conclusion" && (
