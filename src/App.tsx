@@ -1975,22 +1975,60 @@
 
     {activeTab === "lesson" && (
 
-        <div className="space-y-6 animate-in fade-in duration-300">
-            {editBanner("lesson")}
-            <h3 className="text-2xl font-bold">Lesson Content</h3>
-            
-            {/* Intro Section */}
-            {isAdmin && editingContent === "lesson" ? (
-                <textarea 
-                    value={contentData?.lessonIntro || ""} 
-                    onChange={e => updateContent("lessonIntro", e.target.value)} 
-                    className={`w-full px-4 py-2 rounded-lg border mb-4 outline-none focus:ring-2 focus:ring-purple-500 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-                    rows={3}
-                    placeholder="Lesson Introduction..."
-                />
-            ) : (
-                <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
-            )}
+
+
+
+                        <div className="space-y-6 animate-in fade-in duration-300">
+    {editBanner("lesson")}
+    <h3 className="text-2xl font-bold">Lesson Content</h3>
+    
+    {/* Intro Section */}
+    {isAdmin && editingContent === "lesson" ? (
+        <textarea 
+            value={contentData?.lessonIntro || ""} 
+            onChange={e => updateContent("lessonIntro", e.target.value)} 
+            className={`w-full px-4 py-2 rounded-lg border mb-4 outline-none focus:ring-2 focus:ring-purple-500 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
+            rows={3}
+            placeholder="Lesson Introduction..."
+        />
+    ) : (
+        <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
+    )}
+
+    {/* ── ADD SECTION BUTTON — admin edit mode only ── */}
+    {isAdmin && editingContent === "lesson" && (
+        <button
+            onClick={() => {
+                const newSection = {
+                    title: "",
+                    content: "",
+                    scriptures: [],
+                    subPoints: [{ title: "", content: "", scriptures: [] }]
+                };
+                updateContent("lessonPoints", [...(contentData?.lessonPoints || []), newSection]);
+            }}
+            className="w-full py-4 rounded-2xl border-2 border-dashed border-purple-500/30 hover:border-purple-500 hover:bg-purple-500/5 transition-all group flex items-center justify-center gap-3"
+        >
+            <div className="bg-purple-500 text-white p-2 rounded-full shadow group-hover:scale-110 transition-transform">
+                <Plus size={18} strokeWidth={3} />
+            </div>
+            <div className="text-left">
+                <p className="font-black uppercase tracking-widest text-purple-500 text-sm">Add New Lesson Section</p>
+                <p className="text-xs opacity-40">Adds Point {(contentData?.lessonPoints?.length || 0) + 1}</p>
+            </div>
+        </button>
+    )}
+
+    {/* Main Points Loop */}
+    {(contentData?.lessonPoints || []).map((section, idx) => (
+        // ... rest of your map unchanged
+    ))}
+</div>
+
+
+
+
+                        
             
             {/* Main Points Loop */}
             {(contentData?.lessonPoints || []).map((section, idx) => (
