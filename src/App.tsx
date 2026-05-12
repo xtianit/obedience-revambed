@@ -1983,7 +1983,12 @@
     <h3 className="text-2xl font-bold">Lesson Content</h3>
     
     {/* Intro Section */}
-    {isAdmin && editingContent === "lesson" ? (
+
+
+
+                            {/* Intro Section */}
+{isAdmin && editingContent === "lesson" ? (
+    <>
         <textarea 
             value={contentData?.lessonIntro || ""} 
             onChange={e => updateContent("lessonIntro", e.target.value)} 
@@ -1991,9 +1996,61 @@
             rows={3}
             placeholder="Lesson Introduction..."
         />
-    ) : (
-        <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
-    )}
+
+        {/* ── EDITABLE SCRIPTURE BUTTONS ── */}
+        <div className="mt-2 mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">Scripture Buttons</p>
+            <div className="flex flex-wrap gap-2 items-center">
+                {(contentData.lessonIntroScriptures || []).map((s, ri) => (
+                    <label
+                        key={ri}
+                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold cursor-text shadow transition group"
+                    >
+                        <BookOpen size={13} className="flex-shrink-0" />
+                        <input
+                            type="text"
+                            value={s}
+                            onChange={e => updateScriptureRef("intro", e.target.value, ri)}
+                            placeholder="e.g., John 3:16"
+                            className="bg-transparent outline-none text-white placeholder-white/50 font-bold min-w-[60px]"
+                            style={{ width: `${Math.max((s || "").length + 1, 10)}ch` }}
+                        />
+                        <span className="flex items-center gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                type="button"
+                                onClick={() => showBibleVerse(s)}
+                                disabled={!s.trim()}
+                                title="Preview verse"
+                                className="opacity-80 hover:opacity-100 disabled:opacity-30"
+                            >
+                                <Eye size={11} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => removeScriptureRef("intro", ri)}
+                                title="Remove"
+                                className="opacity-80 hover:opacity-100 text-red-300"
+                            >
+                                <X size={11} />
+                            </button>
+                        </span>
+                    </label>
+                ))}
+                <button
+                    onClick={() => addScriptureRef("intro")}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border-2 border-dashed border-blue-500/40 text-blue-400 text-sm font-bold hover:border-blue-500 hover:bg-blue-500/10 transition"
+                >
+                    <Plus size={13} /> Add Button
+                </button>
+            </div>
+        </div>
+    </>
+) : (
+    <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
+)}
+
+
+                            
 
     {/* ── ADD SECTION BUTTON — admin edit mode only ── */}
     {isAdmin && editingContent === "lesson" && (
@@ -2019,11 +2076,7 @@
         </button>
     )}
 
-    {/* Main Points Loop */}
-    {(contentData?.lessonPoints || []).map((section, idx) => (
-        // ... rest of your map unchanged
-    ))}
-</div>
+    
 
 
 
