@@ -2011,104 +2011,104 @@
                             {/* Sub-points Manager */}
                             <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
                                {(section?.subPoints || []).map((sp, si) => (
-    <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
-        {/* Delete Sub-point Button */}
-        <button 
-            onClick={() => deleteSubPoint(idx, si)} 
-            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors"
-        >
-            <X size={14}/>
-        </button>
+                                    <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
+                                        {/* Delete Sub-point Button */}
+                                        <button 
+                                            onClick={() => deleteSubPoint(idx, si)} 
+                                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors"
+                                        >
+                                            <X size={14}/>
+                                        </button>
 
-        {/* Sub-point Title */}
-        <input 
-            type="text" 
-            value={sp?.title || ""} 
-            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
-            placeholder="Sub-point title" 
-            className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
-        />
+                                        {/* Sub-point Title */}
+                                        <input 
+                                            type="text" 
+                                            value={sp?.title || ""} 
+                                            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
+                                            placeholder="Sub-point title" 
+                                            className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
+                                        />
 
-        {/* Sub-point Content */}
-        <textarea 
-            value={sp?.content || ""} 
-            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
-            placeholder="Content" 
-            className="w-full bg-transparent text-xs outline-none mb-2" 
-            rows={2}
-        />
+                                        {/* Sub-point Content */}
+                                        <textarea 
+                                            value={sp?.content || ""} 
+                                            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
+                                            placeholder="Content" 
+                                            className="w-full bg-transparent text-xs outline-none mb-2" 
+                                            rows={2}
+                                        />
 
-        {/* --- SCRIPTURE SECTION FOR SUB-POINT --- */}
-        <div className="flex flex-wrap gap-2 items-center mt-2 border-t border-black/5 pt-2">
-            {(sp?.scriptures || []).map((ref, sci) => (
-                <div key={`sub-sc-${sci}`} className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded text-[10px]">
-                    <input 
-                        type="text"
-                        value={ref}
-                        placeholder="e.g. John 3:16"
-                        onChange={(e) => updateScriptureRef("subpoint", e.target.value, idx, si, sci)}
-                        className="bg-transparent outline-none w-20 border-none p-0"
-                    />
-                    <button 
-                        onClick={() => removeScriptureRef("subpoint", idx, si, sci)}
-                        className="text-red-500 hover:text-red-700"
-                    >
-                        <X size={10}/>
-                    </button>
-                </div>
-            ))}
-            
-            {/* Add Scripture Button for this specific sub-point */}
-            <button 
-                onClick={() => addScriptureRef("subpoint", idx, si)}
-                className="text-[10px] text-gray-500 hover:text-purple-500 flex items-center gap-0.5 border border-dashed border-gray-400 rounded px-1"
-            >
-                <Plus size={10}/> Add Scripture
-            </button>
-        </div>
-    </div>
-))}
-
-{/* Main Add Sub-point Button (Outside the map) */}
-<button 
-    onClick={() => addSubPoint(idx)} 
-    className="text-xs font-bold text-purple-500 flex items-center gap-1 mt-2 hover:bg-purple-50 p-1 rounded transition-colors"
->
-    <Plus size={14}/> New Sub-point
-</button>
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
-                            {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
-                            
-                            {/* Interactive Scripture Buttons */}
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                {(section?.scriptures || []).map(s => (
-                                    <button key={s} onClick={() => showBibleVerse(s)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-transform active:scale-95 shadow-sm">
-                                        <BookOpen size={12} /> {s}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Sub-point List */}
-                            <div className="space-y-4 ml-2">
-                                {(section?.subPoints || []).map((sp, si) => (
-                                    <div key={si} className="flex gap-3">
-                                        <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
-                                        <div>
-                                            <p className="text-sm"><span className="font-bold">{sp?.title}:</span> {sp?.content}</p>
+                                        {/* --- SCRIPTURE SECTION FOR SUB-POINT --- */}
+                                        <div className="flex flex-wrap gap-2 items-center mt-2 border-t border-black/5 pt-2">
+                                            {(sp?.scriptures || []).map((ref, sci) => (
+                                                <div key={`sub-sc-${sci}`} className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded text-[10px]">
+                                                    <input 
+                                                        type="text"
+                                                        value={ref}
+                                                        placeholder="e.g. John 3:16"
+                                                        onChange={(e) => updateScriptureRef("subpoint", e.target.value, idx, si, sci)}
+                                                        className="bg-transparent outline-none w-20 border-none p-0"
+                                                    />
+                                                    <button 
+                                                        onClick={() => removeScriptureRef("subpoint", idx, si, sci)}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        <X size={10}/>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            
+                                            {/* Add Scripture Button for this specific sub-point */}
+                                            <button 
+                                                onClick={() => addScriptureRef("subpoint", idx, si)}
+                                                className="text-[10px] text-gray-500 hover:text-purple-500 flex items-center gap-0.5 border border-dashed border-gray-400 rounded px-1"
+                                            >
+                                                <Plus size={10}/> Add Scripture
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
+
+                                {/* Main Add Sub-point Button (Outside the map) */}
+                                <button 
+                                    onClick={() => addSubPoint(idx)} 
+                                    className="text-xs font-bold text-purple-500 flex items-center gap-1 mt-2 hover:bg-purple-50 p-1 rounded transition-colors"
+                                >
+                                    <Plus size={14}/> New Sub-point
+                                </button>
                             </div>
-                        </>
-                    )}
-                </div>
-            ))}
-        </div>
-    )}
+                        </div>
+                    ) : (
+                    <>
+                        <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
+                        {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
+                        
+                        {/* Interactive Scripture Buttons */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {(section?.scriptures || []).map(s => (
+                                <button key={s} onClick={() => showBibleVerse(s)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-transform active:scale-95 shadow-sm">
+                                    <BookOpen size={12} /> {s}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Sub-point List */}
+                        <div className="space-y-4 ml-2">
+                            {(section?.subPoints || []).map((sp, si) => (
+                                <div key={si} className="flex gap-3">
+                                    <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
+                                    <div>
+                                        <p className="text-sm"><span className="font-bold">{sp?.title}:</span> {sp?.content}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        ))}
+    </div>
+)}
 
     {/* ── CONCLUSION ── */}
     {activeTab === "conclusion" && (
