@@ -2014,7 +2014,7 @@
             </div>
 
             {/* EDIT MODE: SUB-POINTS LIST */}
-            {/* <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
+            <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
                 {(section?.subPoints || []).map((sp, si) => (
                     <div key={`sub-edit-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
                         <button 
@@ -2040,7 +2040,7 @@
                         />
                     </div>
                 ))}
-            </div> */}
+            </div>
         </>
     ) : (
         /* 2. PUBLIC VIEW MODE */
@@ -2064,83 +2064,39 @@
 
             {/* Sub-point Display List */}
            {/* 2. SUB-POINTS MANAGER (Inside Edit Mode) */}
-<div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
-    {(section?.subPoints || []).map((sp, si) => (
-        <div key={`sub-edit-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
-            {/* Delete Sub-point Button */}
-            <button 
-                type="button"
-                onClick={() => deleteSubPoint(idx, si)} 
-                className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors"
-            >
-                <X size={14}/>
-            </button>
+          
+<div className="space-y-4 ml-2 mt-4">
+        {(section?.subPoints || []).map((sp, si) => (
+            <div key={`sub-view-${si}`} className="flex gap-3">
+                <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
+                <div className="flex-1">
+                    {/* Sub-point Title & Content */}
+                    <p className="text-sm font-bold text-purple-600">{sp?.title}</p>
+                    <p className="text-sm opacity-80">{sp?.content}</p>
+                    
+                    {/* --- THE FIX: ADD THIS BLOCK BELOW --- */}
+                    {/* Sub-point Scripture Buttons for View Mode */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                        {(sp?.scriptures || []).map((ss, ssi) => (
+                            <button 
+                                key={`ss-view-${si}-${ssi}`} 
+                                onClick={() => showBibleVerse(ss)} 
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm transition-colors"
+                            >
+                                {ss}
+                            </button>
+                        ))}
+                    </div>
+                    {/* --- END OF FIX --- */}
+                </div>
+            </div>
+        ))}
+    </div>
 
-            {/* Sub-point Title Input */}
-            <input 
-                type="text" 
-                value={sp?.title || ""} 
-                onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
-                className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
-                placeholder="Sub-point Title"
-            />
 
-            {/* Sub-point Content Input */}
-            <textarea 
-                value={sp?.content || ""} 
-                onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
-                className="w-full bg-transparent text-xs outline-none mb-2" 
-                rows={2}
-                placeholder="Sub-point description..."
-            />
-            
-            {/* --- SCRIPTURE MANAGER FOR SUB-POINTS (The Missing Part!) --- */}
-            <div className="flex flex-wrap gap-2 items-center mt-2 border-t border-black/5 pt-2">
-    {(sp?.scriptures || []).map((ref, sci) => (
-        <div key={`sub-sc-${sci}`} className="flex items-center gap-1 bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">
-            <span>{ref}</span>
-            <button 
-                type="button"
-                onClick={() => {
-                    // Safety check: Use || [] here so .filter doesn't crash if empty
-                    const currentRefs = sp?.scriptures || [];
-                    const filtered = currentRefs.filter((_, i) => i !== sci);
-                    updateSubPoint(idx, si, "scriptures", filtered);
-                }} 
-                className="hover:text-red-200"
-            >
-                <X size={10}/>
-            </button>
-        </div>
-    ))}
-    
-    <button 
-        type="button"
-        onClick={() => {
-            const val = prompt("Enter Sub-point Verse (e.g. Heb 13:17)");
-            if(val) {
-                // Your excellent safety logic here
-                const currentRefs = sp?.scriptures || []; 
-                updateSubPoint(idx, si, "scriptures", [...currentRefs, val]);
-            }
-        }}
-        className="text-[10px] text-blue-500 font-bold hover:text-blue-700 flex items-center gap-0.5 border border-dashed border-blue-400 rounded px-2 py-0.5 transition-colors"
-    >
-        <Plus size={10}/> Add Verse
-    </button>
-</div>
-        </div>
-    ))}
-    
-    {/* New Sub-point Button */}
-    <button 
-        type="button"
-        onClick={() => addSubPoint(idx)} 
-        className="text-xs font-bold text-purple-500 flex items-center gap-1 mt-2 hover:bg-purple-50 p-2 rounded-lg transition-colors border border-purple-100"
-    >
-        <Plus size={14}/> New Sub-point
-    </button>
-</div>
+
+
+
         </>
     )}
 
