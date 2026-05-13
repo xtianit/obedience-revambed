@@ -2128,7 +2128,7 @@
                                         <div className="flex gap-3">
                                             <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
                                             <div className="flex-1">
-                                                <p className="text-sm font-bold text-purple-600">{sp?.title}</p>
+                                                <p className="text-sm font-bold text-white">{sp?.title}</p>
                                                 <p className="text-sm opacity-80">{sp?.content}</p>
                                                 
                                                 {/* Sub-point Scripture Buttons (View Mode) */}
