@@ -2014,7 +2014,7 @@
             </div>
 
             {/* EDIT MODE: SUB-POINTS LIST */}
-            <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
+            {/* <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
                 {(section?.subPoints || []).map((sp, si) => (
                     <div key={`sub-edit-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
                         <button 
@@ -2040,7 +2040,7 @@
                         />
                     </div>
                 ))}
-            </div>
+            </div> */}
         </>
     ) : (
         /* 2. PUBLIC VIEW MODE */
