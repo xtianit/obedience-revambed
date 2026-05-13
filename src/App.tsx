@@ -1734,95 +1734,95 @@
 
 
 
-    {/* --- ISOLATED BLOCK --- */}
-    <div className="my-8 border-t border-b py-6 border-gray-100">
-        {/* Header & Toggle Section */}
-        <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold flex items-center gap-2 flex-wrap">
-                <BookOpen size={20} className="text-blue-500" />
-                <span>Lesson Reading:</span>
-                {contentData?.lessonReadingScriptures
-                    ?.filter(s => s?.trim())
-                    .map((s, idx) => (
-                        <span key={`title-ref-${idx}`} className="font-semibold">
-                            {s}{idx < (contentData.lessonReadingScriptures.filter(x => x.trim()).length - 1) ? ',' : ''}
-                        </span>
-                    ))
-                }
-            </h3>
+                                    {/* --- ISOLATED BLOCK --- */}
+                                    <div className="my-8 border-t border-b py-6 border-gray-100">
+                                        {/* Header & Toggle Section */}
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-xl font-bold flex items-center gap-2 flex-wrap">
+                                                <BookOpen size={20} className="text-blue-500" />
+                                                <span>Lesson Reading:</span>
+                                                {contentData?.lessonReadingScriptures
+                                                    ?.filter(s => s?.trim())
+                                                    .map((s, idx) => (
+                                                        <span key={`title-ref-${idx}`} className="font-semibold">
+                                                            {s}{idx < (contentData.lessonReadingScriptures.filter(x => x.trim()).length - 1) ? ',' : ''}
+                                                        </span>
+                                                    ))
+                                                }
+                                            </h3>
 
-            {isAdmin && (
-                <button 
-                    type="button"
-                    onClick={() => setEditingContent(editingContent === "reading" ? null : "reading")}
-                    className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${
-                        editingContent === "reading" 
-                        ? "bg-green-100 text-green-700 hover:bg-green-200" 
-                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                    }`}
-                >
-                    {editingContent === "reading" ? "Close Editor" : "Edit Reading"}
-                </button>
-            )}
-        </div>
+                                            {isAdmin && (
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setEditingContent(editingContent === "reading" ? null : "reading")}
+                                                    className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${
+                                                        editingContent === "reading" 
+                                                        ? "bg-green-100 text-green-700 hover:bg-green-200" 
+                                                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                                    }`}
+                                                >
+                                                    {editingContent === "reading" ? "Close Editor" : "Edit Reading"}
+                                                </button>
+                                            )}
+                                        </div>
 
-        {/* Admin Logic: Now correctly checking for "reading" */}
-        {isAdmin && editingContent === "reading" ? (
-            <div className="space-y-2 p-4 rounded-xl border-2 border-dashed border-blue-500/30 bg-blue-500/5 animate-in fade-in slide-in-from-top-1">
-                <p className="text-[10px] font-black uppercase tracking-tighter opacity-60 mb-2">
-                    Configure Reading Buttons
-                </p>
+                                        {/* Admin Logic: Now correctly checking for "reading" */}
+                                        {isAdmin && editingContent === "reading" ? (
+                                            <div className="space-y-2 p-4 rounded-xl border-2 border-dashed border-blue-500/30 bg-blue-500/5 animate-in fade-in slide-in-from-top-1">
+                                                <p className="text-[10px] font-black uppercase tracking-tighter opacity-60 mb-2">
+                                                    Configure Reading Buttons
+                                                </p>
 
-                {(contentData.lessonReadingScriptures || []).map((s, ri) => (
-                    <div key={`edit-ref-${ri}`} className="flex items-center gap-2 mb-2">
-                        <input
-                            type="text"
-                            value={s}
-                            onChange={(e) => updateScriptureRef("reading", e.target.value, ri)}
-                            placeholder="e.g., Matthew 13:24-30"
-                            className={`px-3 py-2 rounded-lg border text-sm flex-1 outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                                darkMode ? "bg-gray-800 border-gray-600 text-white" : "bg-white border-gray-300"
-                            }`}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => removeScriptureRef("reading", ri)}
-                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
-                            title="Remove reference"
-                        >
-                            <X size={14} />
-                        </button>
-                    </div>
-                ))}
+                                                {(contentData.lessonReadingScriptures || []).map((s, ri) => (
+                                                    <div key={`edit-ref-${ri}`} className="flex items-center gap-2 mb-2">
+                                                        <input
+                                                            type="text"
+                                                            value={s}
+                                                            onChange={(e) => updateScriptureRef("reading", e.target.value, ri)}
+                                                            placeholder="e.g., Matthew 13:24-30"
+                                                            className={`px-3 py-2 rounded-lg border text-sm flex-1 outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                                                                darkMode ? "bg-gray-800 border-gray-600 text-white" : "bg-white border-gray-300"
+                                                            }`}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeScriptureRef("reading", ri)}
+                                                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
+                                                            title="Remove reference"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
 
-                <button
-                    type="button"
-                    onClick={() => addScriptureRef("reading")}
-                    className="flex items-center gap-1 text-xs font-bold text-blue-500 hover:text-blue-400 mt-2 p-1"
-                >
-                    <Plus size={14} /> Add Reading Reference
-                </button>
-            </div>
-        ) : (
-            /* Display Mode: Clickable buttons for students/congregation */
-            <div className="flex gap-2 flex-wrap">
-                {contentData?.lessonReadingScriptures?.filter(s => s?.trim()).length > 0 ? (
-                    contentData.lessonReadingScriptures.filter(s => s?.trim()).map((s, idx) => (
-                        <button
-                            key={`read-btn-${idx}`}
-                            onClick={() => showBibleVerse(s)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-md hover:shadow-blue-500/20 active:scale-95"
-                        >
-                            <BookOpen size={16} />
-                            Read {s}
-                        </button>
-                    ))
-                ) : (
-                    <p className="text-sm text-gray-400 italic">No reading references set.</p>
-                )}
-            </div>
-        )}
-    </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addScriptureRef("reading")}
+                                                    className="flex items-center gap-1 text-xs font-bold text-blue-500 hover:text-blue-400 mt-2 p-1"
+                                                >
+                                                    <Plus size={14} /> Add Reading Reference
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            /* Display Mode: Clickable buttons for students/congregation */
+                                            <div className="flex gap-2 flex-wrap">
+                                                {contentData?.lessonReadingScriptures?.filter(s => s?.trim()).length > 0 ? (
+                                                    contentData.lessonReadingScriptures.filter(s => s?.trim()).map((s, idx) => (
+                                                        <button
+                                                            key={`read-btn-${idx}`}
+                                                            onClick={() => showBibleVerse(s)}
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-md hover:shadow-blue-500/20 active:scale-95"
+                                                        >
+                                                            <BookOpen size={16} />
+                                                            Read {s}
+                                                        </button>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-sm text-gray-400 italic">No reading references set.</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
 
 
 
@@ -1966,145 +1966,115 @@
                         </button>
                     )}
                     
-                    {isAdmin && editingContent === "lesson" ? (
+
+
+
+
+                   <div className="space-y-3">
+    {/* 1. TOP SECTION: Title and Content (Admin Edit vs Public View) */}
+    {isAdmin && editingContent === "lesson" ? (
+        <>
+            <div className="flex items-center gap-2">
+                <span className="font-black opacity-30 text-lg">{idx + 1}</span>
+                <input 
+                    type="text" 
+                    value={section?.title || ""} 
+                    onChange={e => updateLessonPoint(idx, "title", e.target.value)} 
+                    className={`w-full px-3 py-2 rounded-lg border font-bold ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+                    placeholder="Main Point Title"
+                />
+            </div>
+            <textarea 
+                value={section?.content || ""} 
+                onChange={e => updateLessonPoint(idx, "content", e.target.value)} 
+                className={`w-full px-3 py-2 rounded-lg border text-sm ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
+                rows={2}
+                placeholder="Description..."
+            />
+
+            {/* 2. SUB-POINTS MANAGER (Inside Edit Mode) */}
+            <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
+                {(section?.subPoints || []).map((sp, si) => (
+                    <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
+                        <button 
+                            onClick={() => deleteSubPoint(idx, si)} 
+                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors"
+                        >
+                            <X size={14}/>
+                        </button>
+                        <input 
+                            type="text" 
+                            value={sp?.title || ""} 
+                            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
+                            className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
+                        />
+                        <textarea 
+                            value={sp?.content || ""} 
+                            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
+                            className="w-full bg-transparent text-xs outline-none mb-2" 
+                            rows={2}
+                        />
                         
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <span className="font-black opacity-30 text-lg">{idx + 1}</span>
-                                <input 
-                                    type="text" 
-                                    value={section?.title || ""} 
-                                    onChange={e => updateLessonPoint(idx, "title", e.target.value)} 
-                                    className={`w-full px-3 py-2 rounded-lg border font-bold ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
-                                    placeholder="Main Point Title"
-                                />
-                            </div>
-                            <textarea 
-                                value={section?.content || ""} 
-                                onChange={e => updateLessonPoint(idx, "content", e.target.value)} 
-                                className={`w-full px-3 py-2 rounded-lg border text-sm ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-                                rows={2}
-                                placeholder="Description..."
-                            />
-                            
-                            {/* Scripture Manager for Point */}
-                            <div className="flex flex-wrap gap-2 py-2">
-                                {(section?.scriptures || []).map((s, si) => (
-                                    <span key={si} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
-                                        {s} <X size={10} className="cursor-pointer" onClick={() => {
-                                            const filtered = section.scriptures.filter((_, i) => i !== si);
-                                            updateLessonPoint(idx, "scriptures", filtered);
-                                        }}/>
-                                    </span>
-                                ))}
-                                <button 
-                                    onClick={() => {
-                                        const val = prompt("Enter Verse (e.g. John 3:16)");
-                                        if(val) updateLessonPoint(idx, "scriptures", [...(section?.scriptures || []), val]);
-                                    }}
-                                    className="text-[10px] font-bold text-blue-500 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500 hover:text-white transition"
-                                >
-                                    + Add Scripture
-                                </button>
-                            </div>
-
-                            {/* Sub-points Manager */}
-                            <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
-                               {(section?.subPoints || []).map((sp, si) => (
-                                    <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
-                                        {/* Delete Sub-point Button */}
-                                        <button 
-                                            onClick={() => deleteSubPoint(idx, si)} 
-                                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors"
-                                        >
-                                            <X size={14}/>
-                                        </button>
-
-                                        {/* Sub-point Title */}
-                                        <input 
-                                            type="text" 
-                                            value={sp?.title || ""} 
-                                            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
-                                            placeholder="Sub-point title" 
-                                            className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
-                                        />
-
-                                        {/* Sub-point Content */}
-                                        <textarea 
-                                            value={sp?.content || ""} 
-                                            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
-                                            placeholder="Content" 
-                                            className="w-full bg-transparent text-xs outline-none mb-2" 
-                                            rows={2}
-                                        />
-
-                                        {/* --- SCRIPTURE SECTION FOR SUB-POINT --- */}
-                                        <div className="flex flex-wrap gap-2 items-center mt-2 border-t border-black/5 pt-2">
-                                            {(sp?.scriptures || []).map((ref, sci) => (
-                                                <div key={`sub-sc-${sci}`} className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded text-[10px]">
-                                                    <input 
-                                                        type="text"
-                                                        value={ref}
-                                                        placeholder="e.g. John 3:16"
-                                                        onChange={(e) => updateScriptureRef("subpoint", e.target.value, idx, si, sci)}
-                                                        className="bg-transparent outline-none w-20 border-none p-0"
-                                                    />
-                                                    <button 
-                                                        onClick={() => removeScriptureRef("subpoint", idx, si, sci)}
-                                                        className="text-red-500 hover:text-red-700"
-                                                    >
-                                                        <X size={10}/>
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            
-                                            {/* Add Scripture Button for this specific sub-point */}
-                                            <button 
-                                                onClick={() => addScriptureRef("subpoint", idx, si)}
-                                                className="text-[10px] text-gray-500 hover:text-purple-500 flex items-center gap-0.5 border border-dashed border-gray-400 rounded px-1"
-                                            >
-                                                <Plus size={10}/> Add Scripture
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Main Add Sub-point Button (Outside the map) */}
-                                <button 
-                                    onClick={() => addSubPoint(idx)} 
-                                    className="text-xs font-bold text-purple-500 flex items-center gap-1 mt-2 hover:bg-purple-50 p-1 rounded transition-colors"
-                                >
-                                    <Plus size={14}/> New Sub-point
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                    <>
-                        <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
-                        {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
-                        
-                        {/* Interactive Scripture Buttons */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {(section?.scriptures || []).map(s => (
-                                <button key={s} onClick={() => showBibleVerse(s)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-transform active:scale-95 shadow-sm">
-                                    <BookOpen size={12} /> {s}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Sub-point List */}
-                        <div className="space-y-4 ml-2">
-                            {(section?.subPoints || []).map((sp, si) => (
-                                <div key={si} className="flex gap-3">
-                                    <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
-                                    <div>
-                                        <p className="text-sm"><span className="font-bold">{sp?.title}:</span> {sp?.content}</p>
-                                    </div>
+                        <div className="flex flex-wrap gap-2 items-center mt-2 border-t border-black/5 pt-2">
+                            {(sp?.scriptures || []).map((ref, sci) => (
+                                <div key={`sub-sc-${sci}`} className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded text-[10px]">
+                                    <input 
+                                        type="text"
+                                        value={ref}
+                                        onChange={(e) => updateScriptureRef("subpoint", e.target.value, idx, si, sci)}
+                                        className="bg-transparent outline-none w-20 border-none p-0"
+                                    />
+                                    <button onClick={() => removeScriptureRef("subpoint", idx, si, sci)} className="text-red-500">
+                                        <X size={10}/>
+                                    </button>
                                 </div>
                             ))}
+                            <button 
+                                onClick={() => addScriptureRef("subpoint", idx, si)}
+                                className="text-[10px] text-gray-500 hover:text-purple-500 flex items-center gap-0.5 border border-dashed border-gray-400 rounded px-1"
+                            >
+                                <Plus size={10}/> Add Scripture
+                            </button>
                         </div>
-                    </>
-                )}
+                    </div>
+                ))}
+                
+                <button 
+                    type="button"
+                    onClick={() => addSubPoint(idx)} 
+                    className="text-xs font-bold text-purple-500 flex items-center gap-1 mt-2 hover:bg-purple-50 p-2 rounded-lg transition-colors border border-purple-100"
+                >
+                    <Plus size={14}/> New Sub-point
+                </button>
+            </div>
+        </>
+    ) : (
+        /* 3. PUBLIC VIEW MODE */
+        <>
+            <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
+            {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
+            
+            <div className="flex flex-wrap gap-2 mb-4">
+                {(section?.scriptures || []).map(s => (
+                    <button key={s} onClick={() => showBibleVerse(s)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-transform active:scale-95 shadow-sm">
+                        <BookOpen size={12} /> {s}
+                    </button>
+                ))}
+            </div>
+
+            <div className="space-y-4 ml-2">
+                {(section?.subPoints || []).map((sp, si) => (
+                    <div key={si} className="flex gap-3">
+                        <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
+                        <div>
+                            <p className="text-sm"><span className="font-bold">{sp?.title}:</span> {sp?.content}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
+    )}
+</div>
             </div>
         ))}
     </div>
