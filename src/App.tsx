@@ -1926,204 +1926,206 @@
     )}
 
 
+
+
+
+
+
     {activeTab === "lesson" && (
-
-        <div className="space-y-6 animate-in fade-in duration-300">
-            {editBanner("lesson")}
-            <h3 className="text-2xl font-bold">Lesson Content</h3>
-            
-            {/* Intro Section */}
-            {isAdmin && editingContent === "lesson" ? (
-                <textarea 
-                    value={contentData?.lessonIntro || ""} 
-                    onChange={e => updateContent("lessonIntro", e.target.value)} 
-                    className={`w-full px-4 py-2 rounded-lg border mb-4 outline-none focus:ring-2 focus:ring-purple-500 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-                    rows={3}
-                    placeholder="Lesson Introduction..."
-                />
-            ) : (
-                <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
-            )}
-            
-            {/* Main Points Loop */}
-            {(contentData?.lessonPoints || []).map((section, idx) => (
-                <div key={`point-${idx}`} className={`${darkMode ? "bg-gray-700/40" : "bg-gray-50"} p-5 rounded-xl border border-transparent`}>
-                    {/* Move this inside the very first <div> of your .map() loop */}
-                    {isAdmin && editingContent === "lesson" && (
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation(); // Prevents clicking the section by mistake
-                                if(window.confirm(`Delete Point ${idx + 1}?`)) {
-                                    const filtered = contentData.lessonPoints.filter((_, i) => i !== idx);
-                                    updateContent("lessonPoints", filtered);
-                                }
-                            }}
-                            /* I removed 'opacity-0' so you can actually see it now! */
-                            className="absolute -top-2 -right-2 z-50 bg-red-500 text-white p-2 rounded-full shadow-xl hover:bg-red-600 active:scale-90 transition-all border-2 border-white dark:border-gray-800"
-                            title="Delete entire section"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    )}
-                    
-
-
-
-            <div className="space-y-3">
-    {/* 1. TOP SECTION: Admin Edit vs Public View */}
-    {isAdmin && editingContent === "lesson" ? (
-        <>
-            {/* EDIT MODE: MAIN POINT */}
-            <div className="flex items-center gap-2">
-                <span className="font-black opacity-30 text-lg">{idx + 1}</span>
-                <input 
-                    type="text" 
-                    value={section?.title || ""} 
-                    onChange={e => updateLessonPoint(idx, "title", e.target.value)} 
-                    className={`w-full px-3 py-2 rounded-lg border font-bold ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
-                    placeholder="Main Point Title"
-                />
-            </div>
+    <div className="space-y-6 animate-in fade-in duration-300">
+        {editBanner("lesson")}
+        <h3 className="text-2xl font-bold">Lesson Content</h3>
+        
+        {/* Intro Section */}
+        {isAdmin && editingContent === "lesson" ? (
             <textarea 
-                value={section?.content || ""} 
-                onChange={e => updateLessonPoint(idx, "content", e.target.value)} 
-                className={`w-full px-3 py-2 rounded-lg border text-sm ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-                rows={2}
-                placeholder="Description..."
+                value={contentData?.lessonIntro || ""} 
+                onChange={e => updateContent("lessonIntro", e.target.value)} 
+                className={`w-full px-4 py-2 rounded-lg border mb-4 outline-none focus:ring-2 focus:ring-purple-500 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
+                rows={3}
+                placeholder="Lesson Introduction..."
             />
-
-            {/* Admin Scripture Manager for Main Point */}
-            <div className="flex flex-wrap gap-2 py-2">
-                {(section?.scriptures || []).map((s, si) => (
-                    <span key={si} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
-                        {s} <X size={10} className="cursor-pointer" onClick={() => {
-                            const filtered = section.scriptures.filter((_, i) => i !== si);
-                            updateLessonPoint(idx, "scriptures", filtered);
-                        }}/>
-                    </span>
-                ))}
-                <button 
-                    onClick={() => {
-                        const val = prompt("Enter Verse (e.g. Romans 13:1)");
-                        if(val) updateLessonPoint(idx, "scriptures", [...(section?.scriptures || []), val]);
-                    }}
-                    className="text-[10px] font-bold text-blue-500 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500 hover:text-white transition"
-                >
-                    + Add Scripture
-                </button>
-            </div>
-
-            {/* EDIT MODE: SUB-POINTS LIST */}
-            <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
-                {(section?.subPoints || []).map((sp, si) => (
-                    <div key={`sub-edit-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
-                        <button 
-                            type="button"
-                            onClick={() => deleteSubPoint(idx, si)} 
-                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors"
-                        >
-                            <X size={14}/>
-                        </button>
-                        <input 
-                            type="text" 
-                            value={sp?.title || ""} 
-                            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
-                            placeholder="Sub-point Title"
-                            className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
-                        />
-                        <textarea 
-                            value={sp?.content || ""} 
-                            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
-                            placeholder="Sub-point content..."
-                            className="w-full bg-transparent text-xs outline-none mb-2" 
-                            rows={2}
-                        />
-                    </div>
-                ))}
-            </div>
-        </>
-    ) : (
-        /* 2. PUBLIC VIEW MODE */
-        <>
-            <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
-            {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
-            
-            {/* Clickable Scripture Buttons (Main Point) */}
-            <div className="flex flex-wrap gap-2 mb-4">
-                {(section?.scriptures || []).map(s => (
+        ) : (
+            <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
+        )}
+        
+        {/* Main Points Loop */}
+        {(contentData?.lessonPoints || []).map((section, idx) => (
+            <div key={`point-${idx}`} className={`relative ${darkMode ? "bg-gray-700/40" : "bg-gray-50"} p-5 rounded-xl border border-transparent`}>
+                
+                {/* Delete Entire Section Button */}
+                {isAdmin && editingContent === "lesson" && (
                     <button 
-                        key={s} 
-                        onClick={() => showBibleVerse(s)} 
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all active:scale-95 shadow-md border-none"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if(window.confirm(`Delete Point ${idx + 1}?`)) {
+                                const filtered = contentData.lessonPoints.filter((_, i) => i !== idx);
+                                updateContent("lessonPoints", filtered);
+                            }
+                        }}
+                        className="absolute -top-2 -right-2 z-50 bg-red-500 text-white p-2 rounded-full shadow-xl hover:bg-red-600 active:scale-90 transition-all border-2 border-white dark:border-gray-800"
+                        title="Delete entire section"
                     >
-                        <BookOpen size={12} className="text-white" /> 
-                        <span className="text-white">{s}</span>
+                        <Trash2 size={16} />
                     </button>
-                ))}
-            </div>
+                )}
 
-            {/* Sub-point Display List */}
-           {/* 2. SUB-POINTS MANAGER (Inside Edit Mode) */}
-          
-<div className="space-y-4 ml-2 mt-4">
-        {(section?.subPoints || []).map((sp, si) => (
-            <div key={`sub-view-${si}`} className="flex gap-3">
-                <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
-                <div className="flex-1">
-                    {/* Sub-point Title & Content */}
-                    <p className="text-sm font-bold text-purple-600">{sp?.title}</p>
-                    <p className="text-sm opacity-80">{sp?.content}</p>
-                    
-                    {/* --- THE FIX: ADD THIS BLOCK BELOW --- */}
-                    {/* Sub-point Scripture Buttons for View Mode */}
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        {(sp?.scriptures || []).map((ss, ssi) => (
-                            <button 
-                                key={`ss-view-${si}-${ssi}`} 
-                                onClick={() => showBibleVerse(ss)} 
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm transition-colors"
-                            >
-                                {ss}
-                            </button>
-                        ))}
-                    </div>
-                    {/* --- END OF FIX --- */}
+                <div className="space-y-3">
+                    {isAdmin && editingContent === "lesson" ? (
+                        /* --- 1. ADMIN EDIT MODE --- */
+                        <>
+                            <div className="flex items-center gap-2">
+                                <span className="font-black opacity-30 text-lg">{idx + 1}</span>
+                                <input 
+                                    type="text" 
+                                    value={section?.title || ""} 
+                                    onChange={e => updateLessonPoint(idx, "title", e.target.value)} 
+                                    className={`w-full px-3 py-2 rounded-lg border font-bold ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+                                    placeholder="Main Point Title"
+                                />
+                            </div>
+                            <textarea 
+                                value={section?.content || ""} 
+                                onChange={e => updateLessonPoint(idx, "content", e.target.value)} 
+                                className={`w-full px-3 py-2 rounded-lg border text-sm ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
+                                rows={2}
+                                placeholder="Description..."
+                            />
+
+                            {/* Main Point Scripture Manager */}
+                            <div className="flex flex-wrap gap-2 py-2">
+                                {(section?.scriptures || []).map((s, si) => (
+                                    <span key={si} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                                        {s} <X size={10} className="cursor-pointer" onClick={() => {
+                                            const filtered = section.scriptures.filter((_, i) => i !== si);
+                                            updateLessonPoint(idx, "scriptures", filtered);
+                                        }}/>
+                                    </span>
+                                ))}
+                                <button 
+                                    onClick={() => {
+                                        const val = prompt("Enter Verse (e.g. Romans 13:1)");
+                                        if(val) updateLessonPoint(idx, "scriptures", [...(section?.scriptures || []), val]);
+                                    }}
+                                    className="text-[10px] font-bold text-blue-500 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500 hover:text-white transition"
+                                >
+                                    + Add Scripture
+                                </button>
+                            </div>
+
+                            {/* SUB-POINTS MANAGER (Fixes Edit Mode Buttons) */}
+                            <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
+                                {(section?.subPoints || []).map((sp, si) => (
+                                    <div key={`sub-edit-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
+                                        <button onClick={() => deleteSubPoint(idx, si)} className="absolute top-2 right-2 text-red-400">
+                                            <X size={14}/>
+                                        </button>
+                                        <input 
+                                            type="text" 
+                                            value={sp?.title || ""} 
+                                            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
+                                            className="w-full bg-transparent border-b border-gray-300 mb-2 text-sm font-bold focus:border-purple-500 outline-none" 
+                                        />
+                                        <textarea 
+                                            value={sp?.content || ""} 
+                                            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
+                                            className="w-full bg-transparent text-xs outline-none mb-2" 
+                                            rows={1}
+                                        />
+                                        
+                                        {/* Sub-point Scripture Manager (Edit Mode) */}
+                                        <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-black/5">
+                                            {(sp?.scriptures || []).map((ref, sci) => (
+                                                <span key={sci} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                                                    {ref} <X size={10} className="cursor-pointer" onClick={() => {
+                                                        const filtered = (sp?.scriptures ?? []).filter((_, i) => i !== sci);
+                                                        updateSubPoint(idx, si, "scriptures", filtered);
+                                                    }}/>
+                                                </span>
+                                            ))}
+                                            <button 
+                                                onClick={() => {
+                                                    const val = prompt("Enter Verse");
+                                                    if(val) updateSubPoint(idx, si, "scriptures", [...(sp?.scriptures || []), val]);
+                                                }}
+                                                className="text-[9px] font-bold text-blue-500 border border-blue-400 border-dashed px-2 py-0.5 rounded"
+                                            >
+                                                + Add Verse
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button 
+                                    onClick={() => addSubPoint(idx)} 
+                                    className="text-xs font-bold text-purple-500 flex items-center gap-1 hover:bg-purple-50 p-2 rounded-lg border border-purple-100 border-dashed"
+                                >
+                                    <Plus size={14}/> New Sub-point
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        /* --- 2. PUBLIC VIEW MODE --- */
+                        <>
+                            <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
+                            {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
+                            
+                            {/* Main Point Scripture Buttons */}
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {(section?.scriptures || []).map(s => (
+                                    <button 
+                                        key={s} 
+                                        onClick={() => showBibleVerse(s)} 
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-md border-none transition-transform active:scale-95"
+                                    >
+                                        <BookOpen size={12} /> <span>{s}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Sub-point List (View Mode) */}
+                            <div className="space-y-4 ml-2 mt-4">
+                                {(section?.subPoints || []).map((sp, si) => (
+                                    <div key={`sub-view-${si}`} className="flex flex-col gap-1">
+                                        <div className="flex gap-3">
+                                            <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-bold text-purple-600">{sp?.title}</p>
+                                                <p className="text-sm opacity-80">{sp?.content}</p>
+                                                
+                                                {/* Sub-point Scripture Buttons (View Mode) */}
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {(sp?.scriptures || []).map((ss, ssi) => (
+                                                        <button 
+                                                            key={`${si}-${ssi}`} 
+                                                            onClick={() => showBibleVerse(ss)} 
+                                                            className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm transition-colors"
+                                                        >
+                                                            {ss}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         ))}
     </div>
-
-
-
-
-
-        </>
-    )}
-
-    {/* 3. ADMIN ACTIONS: New Subpoint Button */}
-    {isAdmin && editingContent === "lesson" && (
-        <div className="ml-6 mt-4">
-            <button 
-                type="button"
-                onClick={() => addSubPoint(idx)} 
-                className="text-xs font-bold text-purple-500 flex items-center gap-1 hover:bg-purple-50 p-2 rounded-lg transition-colors border border-purple-100 border-dashed"
-            >
-                <Plus size={14}/> New Sub-point
-            </button>
-        </div>
-    )}
-</div>
-
-
-
-
-
-
-                  
-            </div>
-        ))}
-    </div>
 )}
+
+
+
+
+
+
+
+
+
+
 
     {/* ── CONCLUSION ── */}
     {activeTab === "conclusion" && (
