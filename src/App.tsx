@@ -2054,9 +2054,10 @@
                     <button 
                         key={s} 
                         onClick={() => showBibleVerse(s)} 
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-transform active:scale-95 shadow-sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all active:scale-95 shadow-md border-none"
                     >
-                        <BookOpen size={12} /> {s}
+                        <BookOpen size={12} className="text-white" /> 
+                        <span className="text-white">{s}</span>
                     </button>
                 ))}
             </div>
