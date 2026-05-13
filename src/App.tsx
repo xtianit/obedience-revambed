@@ -1250,49 +1250,51 @@
         
 
 
-        const updateScriptureRef = (
-            path: "intro" | "reading" | "conclusion" | "lesson" | "subpoint",
-            val: string,
-            idx: number,
-            subIdx?: number
-            ) => {
-                upd(p => {
-                    if (path === "intro") {
-                        return { ...p, lessonIntroScriptures: p.lessonIntroScriptures.map((s, i) => i === idx ? val : s) };
-                    }
-                    if (path === "reading") {
-                        return { ...p, lessonReadingScriptures: p.lessonReadingScriptures.map((s, i) => i === idx ? val : s) };
-                    }
-                    if (path === "conclusion") {
-                        return { ...p, conclusionScriptures: p.conclusionScriptures.map((s, i) => i === idx ? val : s) };
-                    }
-                    if (path === "lesson") {
-                        return {
-                            ...p,
-                            lessonPoints: p.lessonPoints.map((pt, i) =>
-                                i === idx ? { ...pt, scriptures: pt.scriptures.map((s, j) => j === (subIdx ?? 0) ? val : s) } : pt
-                            )
-                        };
-                    }
-                    if (path === "subpoint" && subIdx !== undefined) {
-                        // Here 'idx' is the point index, 'subIdx' is the subpoint index, 
-                        // and we'd actually need a third index for the scripture itself if subpoints have multiple scriptures
-                        // For now, assuming you're updating the first/only scripture or adapting based on your UI:
-                        return {
-                            ...p,
-                            lessonPoints: p.lessonPoints.map((pt, i) =>
-                                i === idx ? {
-                                    ...pt,
-                                    subPoints: pt.subPoints.map((sp, j) =>
-                                        j === subIdx ? { ...sp, scriptures: (sp.scriptures || []).map((s, k) => k === 0 ? val : s) } : sp
-                                    )
-                                } : pt
-                            )
-                        };
-                    }
-                    return p;
-                });
+       const updateScriptureRef = (
+    path: "intro" | "reading" | "conclusion" | "lesson" | "subpoint",
+    val: string,
+    idx: number,
+    subIdx?: number,      // The Sub-point Index
+    scriptureIdx?: number // The specific Scripture Index (The 5th arg)
+) => {
+    upd(p => {
+        if (path === "intro") {
+            return { ...p, lessonIntroScriptures: p.lessonIntroScriptures.map((s, i) => i === idx ? val : s) };
+        }
+        if (path === "reading") {
+            return { ...p, lessonReadingScriptures: p.lessonReadingScriptures.map((s, i) => i === idx ? val : s) };
+        }
+        if (path === "conclusion") {
+            return { ...p, conclusionScriptures: p.conclusionScriptures.map((s, i) => i === idx ? val : s) };
+        }
+        if (path === "lesson") {
+            return {
+                ...p,
+                lessonPoints: p.lessonPoints.map((pt, i) =>
+                    i === idx ? { ...pt, scriptures: pt.scriptures.map((s, j) => j === (subIdx ?? 0) ? val : s) } : pt
+                )
             };
+        }
+        if (path === "subpoint" && subIdx !== undefined && scriptureIdx !== undefined) {
+            return {
+                ...p,
+                lessonPoints: p.lessonPoints.map((pt, i) =>
+                    i === idx ? {
+                        ...pt,
+                        subPoints: pt.subPoints.map((sp, j) =>
+                            j === subIdx ? { 
+                                ...sp, 
+                                // map through the scriptures array of the specific subpoint
+                                scriptures: (sp.scriptures || []).map((s, k) => k === scriptureIdx ? val : s) 
+                            } : sp
+                        )
+                    } : pt
+                )
+            };
+        }
+        return p;
+    });
+};
 
 
 
@@ -2008,26 +2010,72 @@
 
                             {/* Sub-points Manager */}
                             <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
-                                {(section?.subPoints || []).map((sp, si) => (
-                                    <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg">
-                                        <button onClick={() => deleteSubPoint(idx, si)} className="absolute top-2 right-2 text-red-400"><X size={14}/></button>
-                                        <input 
-                                            type="text" 
-                                            value={sp?.title || ""} 
-                                            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
-                                            placeholder="Sub-point title" 
-                                            className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
-                                        />
-                                        <textarea 
-                                            value={sp?.content || ""} 
-                                            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
-                                            placeholder="Content" 
-                                            className="w-full bg-transparent text-xs outline-none" 
-                                            rows={2}
-                                        />
-                                    </div>
-                                ))}
-                                <button onClick={() => addSubPoint(idx)} className="text-xs font-bold text-purple-500 flex items-center gap-1"><Plus size={14}/> New Sub-point</button>
+                               {(section?.subPoints || []).map((sp, si) => (
+    <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
+        {/* Delete Sub-point Button */}
+        <button 
+            onClick={() => deleteSubPoint(idx, si)} 
+            className="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors"
+        >
+            <X size={14}/>
+        </button>
+
+        {/* Sub-point Title */}
+        <input 
+            type="text" 
+            value={sp?.title || ""} 
+            onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
+            placeholder="Sub-point title" 
+            className={`w-full bg-transparent border-b mb-2 text-sm font-bold focus:border-purple-500 outline-none ${darkMode ? "border-gray-600" : "border-gray-300"}`} 
+        />
+
+        {/* Sub-point Content */}
+        <textarea 
+            value={sp?.content || ""} 
+            onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
+            placeholder="Content" 
+            className="w-full bg-transparent text-xs outline-none mb-2" 
+            rows={2}
+        />
+
+        {/* --- SCRIPTURE SECTION FOR SUB-POINT --- */}
+        <div className="flex flex-wrap gap-2 items-center mt-2 border-t border-black/5 pt-2">
+            {(sp?.scriptures || []).map((ref, sci) => (
+                <div key={`sub-sc-${sci}`} className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded text-[10px]">
+                    <input 
+                        type="text"
+                        value={ref}
+                        placeholder="e.g. John 3:16"
+                        onChange={(e) => updateScriptureRef("subpoint", e.target.value, idx, si, sci)}
+                        className="bg-transparent outline-none w-20 border-none p-0"
+                    />
+                    <button 
+                        onClick={() => removeScriptureRef("subpoint", idx, si, sci)}
+                        className="text-red-500 hover:text-red-700"
+                    >
+                        <X size={10}/>
+                    </button>
+                </div>
+            ))}
+            
+            {/* Add Scripture Button for this specific sub-point */}
+            <button 
+                onClick={() => addScriptureRef("subpoint", idx, si)}
+                className="text-[10px] text-gray-500 hover:text-purple-500 flex items-center gap-0.5 border border-dashed border-gray-400 rounded px-1"
+            >
+                <Plus size={10}/> Add Scripture
+            </button>
+        </div>
+    </div>
+))}
+
+{/* Main Add Sub-point Button (Outside the map) */}
+<button 
+    onClick={() => addSubPoint(idx)} 
+    className="text-xs font-bold text-purple-500 flex items-center gap-1 mt-2 hover:bg-purple-50 p-1 rounded transition-colors"
+>
+    <Plus size={14}/> New Sub-point
+</button>
                             </div>
                         </div>
                     ) : (
