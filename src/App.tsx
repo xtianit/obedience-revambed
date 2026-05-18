@@ -1,6 +1,6 @@
-    // import logo from "./assets/logo.png";
+    import logo from "./assets/logo.png";
     import Header from "./components/Header";
-    import { AdminPanel } from "./components/AdminPanel";
+    // import { AdminPanel } from "./components/AdminPanel";
     import { useState, useEffect, useCallback, useRef, useMemo } from "react";
     import {
         BookOpen, CheckCircle, Edit2, Save, X,
