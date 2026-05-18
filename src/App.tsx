@@ -158,23 +158,7 @@
         error?:    string;
     };
 
-    // function parseScriptureInput(raw: string): ImportRow[] {
-    //     if (!raw.trim()) return [];
-    //     let json = raw.trim()
-    //         .replace(/:\\s*\'([^\'\\\\]*(\\\\.[^\'\\\\]*)*)\'/ , (_,v)=>`:"`+v.replace(/"/g,'\\\\"')+`"`)
-    //         .replace(/([{,]\\s*)([A-Za-z_$][\\w\\s.:\'"-]*)\\s*:/g,'$1"$2":')
-    //         .replace(/,([\\s\\n]*[}\\]])/g,'$1');
-    //     const obj = JSON.parse(json);
-    //     return Object.entries(obj).map(([ref,v])=>{
-    //         const vv = v as Record<string,string>;
-    //         return { reference:ref.trim(), versions:{
-    //             KJV:vv.KJV||vv.kjv||"", NKJV:vv.NKJV||vv.nkjv||"",
-    //             NIV:vv.NIV||vv.niv||"", ESV:vv.ESV||vv.esv||"",
-    //             AMP:vv.AMP||vv.amp||"", NLT:vv.NLT||vv.nlt||"",
-    //             MSG:vv.MSG||vv.msg||"",
-    //         }, status:"pending" as const };
-    //     });
-    // }
+   
     function parseScriptureInput(raw: string): ImportRow[] {
         if (!raw.trim()) return [];
 
@@ -1370,12 +1354,28 @@
 
         const editBanner = (tab:string) => {
             if(!isAdmin) return null;
-            if(editingContent===tab) return (
-                <div className="bg-yellow-500/20 border border-yellow-400/40 rounded-xl p-3 mb-4 flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-yellow-400 text-sm font-semibold"><Edit2 size={14}/> Editing — auto-saves to database {lessonSaving&&<Loader2 size={12} className="animate-spin"/>}</span>
-                    <button onClick={()=>setEditingContent(null)} className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-4 py-1.5 rounded-lg text-xs font-bold transition">✓ Done Editing</button>
-                </div>
-            );
+
+
+
+               if (editingContent === tab) return (
+                    <div className="sticky top-0 z-50 mx-2 shadow-lg bg-yellow-500/20 border border-yellow-400/40 rounded-xl p-3 mb-4 flex items-center justify-between backdrop-blur-md">
+                        <span className="flex items-center gap-2 text-yellow-400 text-sm font-semibold">
+                            <Edit2 size={14}/>
+                            Editing — auto-saves to database
+                            {lessonSaving && <Loader2 size={12} className="animate-spin"/>}
+                        </span>
+
+                        <button
+                            onClick={() => setEditingContent(null)}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-4 py-1.5 rounded-lg text-xs font-bold transition"
+                        >
+                            ✓ Done Editing
+                        </button>
+                    </div>
+                );
+
+
+
             return (
                 <div className="flex justify-end mb-3">
                     <button onClick={()=>setEditingContent(tab)} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs font-semibold transition">
@@ -1934,20 +1934,139 @@
     {activeTab === "lesson" && (
     <div className="space-y-6 animate-in fade-in duration-300">
         {editBanner("lesson")}
-        <h3 className="text-2xl font-bold">Lesson Content</h3>
+        <h3 className="text-2xl font-bold">Lesson Contents</h3>
         
+        
+
+
+
+
+
+
+
+
+
         {/* Intro Section */}
-        {isAdmin && editingContent === "lesson" ? (
-            <textarea 
-                value={contentData?.lessonIntro || ""} 
-                onChange={e => updateContent("lessonIntro", e.target.value)} 
-                className={`w-full px-4 py-2 rounded-lg border mb-4 outline-none focus:ring-2 focus:ring-purple-500 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-                rows={3}
-                placeholder="Lesson Introduction..."
+{isAdmin && editingContent === "lesson" ? (
+    <>
+        <textarea 
+            value={contentData?.lessonIntro || ""} 
+            onChange={e => updateContent("lessonIntro", e.target.value)} 
+            className={`w-full px-4 py-2 rounded-lg border mb-4 outline-none focus:ring-2 focus:ring-purple-500 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
+            rows={3}
+            placeholder="Lesson Introduction..."
+        />
+
+        {/* Scripture Buttons (ADMIN EDIT MODE) */}
+      {/* SCRIPTURE EDITOR (ADMIN ONLY) */}
+<div className="mb-4">
+    <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">
+        Scripture Buttons
+    </p>
+
+    {(contentData.lessonIntroScriptures || []).map((s, ri) => (
+        <div key={ri} className="flex items-center gap-2 mb-2">
+            <input
+                type="text"
+                value={s}
+                onChange={(e) => {
+                    const updated = [...contentData.lessonIntroScriptures];
+                    updated[ri] = e.target.value;
+                    updateContent("lessonIntroScriptures", updated);
+                }}
+                placeholder="e.g., John 3:16"
+                className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${
+                    darkMode
+                        ? "bg-gray-800 border-gray-600"
+                        : "bg-white border-gray-300"
+                }`}
             />
-        ) : (
-            <p className="leading-relaxed mb-6 opacity-90">{contentData?.lessonIntro || "No introduction text."}</p>
-        )}
+
+            <button
+                onClick={() => showBibleVerse(s)}
+                disabled={!s.trim()}
+                className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30"
+            >
+                <BookOpen size={13} />
+            </button>
+
+            <button
+                onClick={() => {
+                    const updated = contentData.lessonIntroScriptures.filter(
+                        (_, i) => i !== ri
+                    );
+                    updateContent("lessonIntroScriptures", updated);
+                }}
+                className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"
+            >
+                <X size={13} />
+            </button>
+        </div>
+    ))}
+
+    <button
+        onClick={() =>
+            updateContent("lessonIntroScriptures", [
+                ...(contentData.lessonIntroScriptures || []),
+                "",
+            ])
+        }
+        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-1"
+    >
+        <Plus size={12} /> Add scripture button
+    </button>
+</div>
+    </>
+) : (
+    <>
+        <p className="leading-relaxed mb-6 opacity-90">
+            {contentData?.lessonIntro || "No introduction text."}
+        </p>
+
+        {/* USER VIEW SCRIPTURE BUTTONS */}
+        <div className="flex flex-wrap gap-2">
+            {(contentData.lessonIntroScriptures || [])
+                .filter(s => s?.trim())
+                .map((s, i) => (
+                    <button
+                        key={i}
+                        onClick={() => showBibleVerse(s)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm transition"
+                    >
+                        <BookOpen size={13} />
+                        {s}
+                    </button>
+                ))}
+        </div>
+    </>
+)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
         {/* Main Points Loop */}
         {(contentData?.lessonPoints || []).map((section, idx) => (
