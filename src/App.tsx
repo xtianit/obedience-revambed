@@ -1017,9 +1017,45 @@
             return () => listener.unsubscribe();
         }, [resolveUser]);
 
+        // useEffect(() => {
+        //     if (screen==="app") { void loadLessons(); void loadScripturesFromDB(); }
+        // }, [screen, loadLessons, loadScripturesFromDB]);
         useEffect(() => {
-            if (screen==="app") { void loadLessons(); void loadScripturesFromDB(); }
-        }, [screen, loadLessons, loadScripturesFromDB]);
+    if (screen !== "app") return;
+
+    void loadLessons();
+    void loadScripturesFromDB();
+
+
+
+
+    // ── Realtime: push new active lesson to ALL connected devices ──────────
+    const channel = supabase
+        .channel("lessons-realtime")
+        .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "lessons" },
+            (payload) => {
+                // Only react when is_active flips to true (admin switched lesson)
+                if (payload.new?.is_active === true) {
+                    const newLesson = payload.new as LessonRow;
+                    setActiveLessonId(newLesson.id);
+                    setContentData(hydrateLessonData(newLesson.content));
+                    setLessons(prev =>
+                        prev.map(l => ({ ...l, is_active: l.id === newLesson.id }))
+                    );
+                }
+            }
+        )
+        .subscribe();
+
+        return () => {
+            void supabase.removeChannel(channel);
+        };
+    }, [screen, loadLessons, loadScripturesFromDB]);
+
+
+    
 
         useEffect(() => {
             const h=(e:KeyboardEvent)=>{ if(e.ctrlKey&&e.shiftKey&&e.key==="E"&&isAdmin){e.preventDefault();setEditingContent(p=>p?null:activeTab);} };
