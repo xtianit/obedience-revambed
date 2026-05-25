@@ -679,6 +679,7 @@
         const [contentData,      setContentData]      = useState<LessonContent>(makeDefaultContent());
         // const [lessonsLoading,   setLessonsLoading]   = useState(false);
         const [lessonsLoading,   setLessonsLoading]   = useState(true);
+        const lessonsLoadingRef = useRef(false);
         const [lessonSaving,     setLessonSaving]     = useState(false);
         const [showLessonPicker, setShowLessonPicker] = useState(false);
         const [showNewLesson,    setShowNewLesson]    = useState(false);
@@ -762,52 +763,48 @@
 
         // Load all lessons from DB. FIX #1/#4 — lessons stored in DB with title,
         // all same page, only data changes when switching.
-        const loadLessons = useCallback(async () => {
-        setLessonsLoading(true);
-        const { data, error } = await supabase
-            .from("lessons")
-            .select("*")
-            .order("created_at", { ascending: false });
+            const loadLessons = useCallback(async () => {
+                if (lessonsLoadingRef.current) return; // block concurrent calls
+                    lessonsLoadingRef.current = true;
+                    setLessonsLoading(true);
 
-        if (error) {
-            console.error("loadLessons:", error);
-            setLessonsLoading(false);
-            return;
-        }
+                    const { data, error } = await supabase
+                        .from("lessons")
+                        .select("*")
+                        .order("created_at", { ascending: false });
 
-        if (data && data.length > 0) {
-            const rows = data as LessonRow[];
-            setLessons(rows);
+                if (error) {
+                    console.error("loadLessons:", error);
+                    setLessonsLoading(false);
+                    lessonsLoadingRef.current = false;
+                    return;
+                }
+
+            if (data && data.length > 0) {
+               const rows = data as LessonRow[];
+                setLessons(rows);
+                const active = rows[0];
+                setActiveLessonId(active.id);
+                setContentData(hydrateLessonData(active.content));
             
-            // const active = rows.find(l => l.is_active) || rows[0];
-            const active = rows[0];
-            setActiveLessonId(active.id);
-
-            // --- THE FIX ---
-            // Instead of casting directly, we hydrate the content 
-            // to ensure all new array fields exist.
-            const hydratedContent = hydrateLessonData(active.content);
-            setContentData(hydratedContent);
-            
-        } else {
-            // Seed first lesson
-            const def = makeDefaultContent();
-            const { data: ins, error: insErr } = await supabase
-                .from("lessons")
-                .insert({ title: "OBEDIENCE", is_active: true, content: def })
-                .select()
-                .single();
-
-            if (!insErr && ins) {
-                setLessons([ins as LessonRow]);
-                setActiveLessonId(ins.id);
-                
-                // Hydrate here too just to be consistent, though def is already clean
-                setContentData(hydrateLessonData(def));
+           } else if (!scriptureSeeded.current) {
+                scriptureSeeded.current = true;
+                const def = makeDefaultContent();
+                const { data: ins, error: insErr } = await supabase
+                    .from("lessons")
+                    .insert({ title: "OBEDIENCE", is_active: true, content: def })
+                    .select()
+                    .single();
+                if (!insErr && ins) {
+                    setLessons([ins as LessonRow]);
+                    setActiveLessonId(ins.id);
+                    setContentData(hydrateLessonData(def));
+                }
             }
-        }
-        setLessonsLoading(false);
-    }, []);
+
+            setLessonsLoading(false);
+            lessonsLoadingRef.current = false;
+        }, []);
         // Debounced save — waits 1.2s after last edit before writing to DB
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
