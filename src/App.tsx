@@ -779,7 +779,8 @@
             const rows = data as LessonRow[];
             setLessons(rows);
             
-            const active = rows.find(l => l.is_active) || rows[0];
+            // const active = rows.find(l => l.is_active) || rows[0];
+            const active = rows[0];
             setActiveLessonId(active.id);
 
             // --- THE FIX ---
@@ -843,7 +844,7 @@
             const newContent = makeDefaultContent(newLessonTitle.trim(), newLessonDate.trim() || new Date().toLocaleDateString());
             const { data, error } = await supabase
                 .from("lessons")
-                .insert({ title:newLessonTitle.trim(), is_active:false, content:newContent })
+                .insert({ title:newLessonTitle.trim(), is_active:true, content:newContent })
                 .select().single();
             if (error) { alert("Failed to create lesson: "+error.message); setCreatingLesson(false); return; }
             const row = data as LessonRow;
@@ -1055,7 +1056,7 @@
     }, [screen, loadLessons, loadScripturesFromDB]);
 
 
-    
+
 
         useEffect(() => {
             const h=(e:KeyboardEvent)=>{ if(e.ctrlKey&&e.shiftKey&&e.key==="E"&&isAdmin){e.preventDefault();setEditingContent(p=>p?null:activeTab);} };
