@@ -8,7 +8,7 @@
         CreditCard, Chrome, RefreshCw, Mail, Eye, EyeOff,
         KeyRound, UserPlus, ArrowLeft, AtSign, Lock,
         FileText, ChevronDown, 
-        ChevronUp, 
+        ChevronUp,
         Trash2, Database, Upload, 
         AlertTriangle,
     } from "lucide-react";
@@ -55,6 +55,7 @@
         memoryVerseRef:        string;
         introduction:          string;
         lessonIntroScriptures: string[];
+        lessonContentScriptures: string[];   // ← ADD THIS
         lessonReadingScriptures: string[];
         aims:                  string;
         objectives:            string;
@@ -82,6 +83,7 @@
         memoryVerseRef: "Phil. 2:8",
         lessonReadingScriptures: ["Matthew 13:24-30"],
         lessonIntroScriptures: ["Colossians 1:17","2 Cor. 10:5"],
+        lessonContentScriptures: ["Gen. 12:1-5"],
         introduction: "Obedience is a matter of relationship between two persons, one higher and the other lesser. It therefore has to do with being submissive to another's will, instructions, terms, commandments, conditions or the keeping of another's will/wish. The Bible has proven God beyond any doubt to be the creator and possessor of Heaven and Earth. In them he has made other persons lesser to himself for his pleasure to co-inhabit. This is where obedience steps into the scene of the kingdom of God or else things would fall apart. The creator of wisdom has more wisdom than wisdom and by Christ Jesus he holds all things together in obedience to himself - Colossians 1:17, 2 Corinthians 10:5.",
         aims:        "This subject is aimed at bringing every man to the obedience of Christ.",
         objectives:  "That there may be a peaceful co-existence between God and man, and between man and man.",
@@ -1222,6 +1224,7 @@
             // 2. Explicitly guard the new array fields
             lessonReadingScriptures: data.lessonReadingScriptures || [],
             lessonIntroScriptures: data.lessonIntroScriptures || [],
+            lessonContentScriptures: data.lessonContentScriptures || [], 
             conclusionScriptures: data.conclusionScriptures || [],
             
             // 3. Deeply map lessonPoints to ensure nested arrays aren't null
@@ -1759,12 +1762,12 @@
                                                 placeholder="e.g., Phil. 2:8"
                                                 className={`px-3 py-1.5 rounded-lg border text-sm font-semibold w-36 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}
                                             />
-                                            <button onClick={()=>showBibleVerse(contentData.memoryVerseRef)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm transition">
+                                            <button onClick={()=>showBibleVerse(contentData.memoryVerseRef)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
                                                 <BookOpen size={13}/> Preview
                                             </button>
                                         </div>
                                     ) : (
-                                        <button onClick={()=>showBibleVerse(contentData.memoryVerseRef)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition">
+                                        <button onClick={()=>showBibleVerse(contentData.memoryVerseRef)}className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
                                             <BookOpen size={15}/> Read {contentData.memoryVerseRef}
                                         </button>
                                     )}
@@ -1855,7 +1858,8 @@
                                                         <button
                                                             key={`read-btn-${idx}`}
                                                             onClick={() => showBibleVerse(s)}
-                                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-md hover:shadow-blue-500/20 active:scale-95"
+                                                            
+                                                            className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
                                                         >
                                                             <BookOpen size={16} />
                                                             Read {s}
@@ -1873,34 +1877,34 @@
 
 
 
-                                <div>
-                                    <h3 className="text-2xl font-bold mb-3">Introduction</h3>
-                                    {(editingContent==="intro"&&isAdmin)
-                                        ?(<>
-                                            <textarea value={contentData.introduction} onChange={e=>updateContent("introduction",e.target.value)} className={`w-full px-4 py-2 rounded-lg border ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={6}/>
-                                            <div className="mt-3">
-                                                <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">Scripture Buttons</p>
-                                                {contentData.lessonIntroScriptures.map((s,ri)=>(
-                                                    <div key={ri} className="flex items-center gap-2 mb-2">
-                                                        <input type="text" value={s}
-                                                            onChange={e=>updateScriptureRef("intro", e.target.value, ri)}
-                                                            placeholder="e.g., Colossians 1:17"
-                                                            className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}/>
-                                                        <button onClick={()=>showBibleVerse(s)} disabled={!s.trim()} className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30"><BookOpen size={13}/></button>
-                                                        <button onClick={()=>removeScriptureRef("intro",ri)} className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"><X size={13}/></button>
-                                                    </div>
-                                                ))}
-                                                <button onClick={()=>addScriptureRef("intro")} className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-1"><Plus size={12}/> Add scripture button</button>
-                                            </div>
-                                        </>)
-                                        :(<p className="leading-relaxed">{contentData.introduction}
-                                            <div className="mt-4 flex flex-wrap gap-2">
-                                                {contentData.lessonIntroScriptures.map(s=>(
-                                                    <button key={s} onClick={()=>showBibleVerse(s)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm transition"><BookOpen size={13}/>{s}</button>
-                                                ))}
-                                            </div>
-                                        </p>)
-                                    }
+                                    <div>
+                                        <h3 className="text-2xl font-bold mb-3">Introduction</h3>
+                                        {(editingContent==="intro"&&isAdmin)
+                                            ?(<>
+                                                <textarea value={contentData.introduction} onChange={e=>updateContent("introduction",e.target.value)} className={`w-full px-4 py-2 rounded-lg border ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={6}/>
+                                                <div className="mt-3">
+                                                    <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">Scripture Buttons</p>
+                                                    {contentData.lessonIntroScriptures.map((s,ri)=>(
+                                                        <div key={ri} className="flex items-center gap-2 mb-2">
+                                                            <input type="text" value={s}
+                                                                onChange={e=>updateScriptureRef("intro", e.target.value, ri)}
+                                                                placeholder="e.g., Colossians 1:17"
+                                                                className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}/>
+                                                            <button onClick={()=>showBibleVerse(s)} disabled={!s.trim()} className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30"><BookOpen size={13}/></button>
+                                                            <button onClick={()=>removeScriptureRef("intro",ri)} className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"><X size={13}/></button>
+                                                        </div>
+                                                    ))}
+                                                    <button onClick={()=>addScriptureRef("intro")} className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-1"><Plus size={12}/> Add scripture button</button>
+                                                </div>
+                                            </>)
+                                            :(<p className="leading-relaxed">{contentData.introduction}
+                                                <div className="mt-4 flex flex-wrap gap-2">
+                                                    {contentData.lessonIntroScriptures.map(s=>(
+                                                        <button key={s} onClick={()=>showBibleVerse(s)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"><BookOpen size={13}/>{s}</button>
+                                                    ))}
+                                                </div>
+                                            </p>)
+                                        }
                                 </div>
                                 <div className={`${darkMode?"bg-green-900/30":"bg-green-50"} p-6 rounded-xl`}>
                                     <h3 className="text-xl font-bold mb-3">Aims & Objectives</h3>
@@ -2003,79 +2007,75 @@
 
         {/* Scripture Buttons (ADMIN EDIT MODE) */}
       {/* SCRIPTURE EDITOR (ADMIN ONLY) */}
-<div className="mb-4">
-    <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">
-        Scripture Buttons
-    </p>
+{/* SCRIPTURE EDITOR (ADMIN ONLY) — Lesson Content Scriptures */}
+        <div className="mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">
+                Lesson Content Scripture Buttons
+            </p>
 
-    {(contentData.lessonIntroScriptures || []).map((s, ri) => (
-        <div key={ri} className="flex items-center gap-2 mb-2">
-            <input
-                type="text"
-                value={s}
-                onChange={(e) => {
-                    const updated = [...contentData.lessonIntroScriptures];
-                    updated[ri] = e.target.value;
-                    updateContent("lessonIntroScriptures", updated);
-                }}
-                placeholder="e.g., John 3:16"
-                className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${
-                    darkMode
-                        ? "bg-gray-800 border-gray-600"
-                        : "bg-white border-gray-300"
-                }`}
-            />
+            {(contentData.lessonContentScriptures || []).map((s, ri) => (
+                <div key={ri} className="flex items-center gap-2 mb-2">
+                    <input
+                        type="text"
+                        value={s}
+                        onChange={(e) => {
+                            const updated = [...(contentData.lessonContentScriptures || [])];
+                            updated[ri] = e.target.value;
+                            updateContent("lessonContentScriptures", updated);
+                        }}
+                        placeholder="e.g., Gen. 12:1-5"
+                        className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${
+                            darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"
+                        }`}
+                    />
+                    <button
+                        onClick={() => showBibleVerse(s)}
+                        disabled={!s.trim()}
+                        className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30"
+                    >
+                        <BookOpen size={13} />
+                    </button>
+                    <button
+                        onClick={() => {
+                            const updated = (contentData.lessonContentScriptures || []).filter(
+                                (_, i) => i !== ri
+                            );
+                            updateContent("lessonContentScriptures", updated);
+                        }}
+                        className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"
+                    >
+                        <X size={13} />
+                    </button>
+                </div>
+            ))}
 
             <button
-                onClick={() => showBibleVerse(s)}
-                disabled={!s.trim()}
-                className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30"
+                onClick={() =>
+                    updateContent("lessonContentScriptures", [
+                        ...(contentData.lessonContentScriptures || []),
+                        "",
+                    ])
+                }
+                className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 mt-1"
             >
-                <BookOpen size={13} />
-            </button>
-
-            <button
-                onClick={() => {
-                    const updated = contentData.lessonIntroScriptures.filter(
-                        (_, i) => i !== ri
-                    );
-                    updateContent("lessonIntroScriptures", updated);
-                }}
-                className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"
-            >
-                <X size={13} />
+                <Plus size={12} /> Add lesson content scripture
             </button>
         </div>
-    ))}
-
-    <button
-        onClick={() =>
-            updateContent("lessonIntroScriptures", [
-                ...(contentData.lessonIntroScriptures || []),
-                "",
-            ])
-        }
-        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-1"
-    >
-        <Plus size={12} /> Add scripture button
-    </button>
-</div>
     </>
 ) : (
     <>
         <p className="leading-relaxed mb-6 opacity-90">
             {contentData?.lessonIntro || "No introduction text."}
         </p>
-
-        {/* USER VIEW SCRIPTURE BUTTONS */}
+        {/* USER VIEW SCRIPTURE BUTTONS — Lesson Content */}
         <div className="flex flex-wrap gap-2">
-            {(contentData.lessonIntroScriptures || [])
+            {(contentData.lessonContentScriptures || [])
                 .filter(s => s?.trim())
                 .map((s, i) => (
                     <button
                         key={i}
                         onClick={() => showBibleVerse(s)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm transition"
+                        className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
                     >
                         <BookOpen size={13} />
                         {s}
@@ -2158,7 +2158,7 @@
                             {/* Main Point Scripture Manager */}
                             <div className="flex flex-wrap gap-2 py-2">
                                 {(section?.scriptures || []).map((s, si) => (
-                                    <span key={si} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                                    <span key={si} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
                                         {s} <X size={10} className="cursor-pointer" onClick={() => {
                                             const filtered = section.scriptures.filter((_, i) => i !== si);
                                             updateLessonPoint(idx, "scriptures", filtered);
@@ -2277,7 +2277,7 @@
                                     <button 
                                         key={s} 
                                         onClick={() => showBibleVerse(s)} 
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-md border-none transition-transform active:scale-95"
+                                        className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
                                     >
                                         <BookOpen size={12} /> <span>{s}</span>
                                     </button>
@@ -2300,7 +2300,7 @@
                                                         <button 
                                                             key={`${si}-${ssi}`} 
                                                             onClick={() => showBibleVerse(ss)} 
-                                                            className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm transition-colors"
+                                                            className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
                                                         >
                                                             {ss}
                                                         </button>
@@ -2371,7 +2371,7 @@
                     <p className="text-lg leading-relaxed opacity-90">{contentData?.conclusion || "No conclusion yet."}</p>
                     <div className="flex flex-wrap gap-3">
                         {(contentData?.conclusionScriptures || []).map(s => (
-                            <button key={s} onClick={() => showBibleVerse(s)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-lg shadow-blue-500/20">
+                            <button key={s} onClick={() => showBibleVerse(s)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
                                 <BookOpen size={16} /> {s}
                             </button>
                         ))}
@@ -2493,7 +2493,7 @@
                                                         <p className="text-xs opacity-40 mt-0.5">{Object.values(scriptureDB[ref]).filter(v=>v).length}/7 translations</p>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <button onClick={()=>showBibleVerse(ref)} className="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 text-xs font-semibold flex items-center gap-1 transition"><BookOpen size={12}/> View</button>
+                                                        <button onClick={()=>showBibleVerse(ref)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"><BookOpen size={12}/> View</button>
                                                         {isAdmin&&!isEditing&&(<>
                                                             <button onClick={()=>startEditScripture(ref)} className="px-3 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 text-xs font-semibold flex items-center gap-1 transition"><Edit2 size={12}/> Edit</button>
                                                             {isConfirmDel
