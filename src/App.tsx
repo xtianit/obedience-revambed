@@ -1050,9 +1050,19 @@
                 // return () => {
                 //     void supabase.removeChannel(channel);
                 // };
-                const handleVisibility = () => {
-                    if (document.visibilityState === "visible") {
-                        void loadLessons();
+                const handleVisibility = async () => {
+                    if (document.visibilityState !== "visible") return;
+                    // Silent refresh — only update data, never show spinner
+                    const { data, error } = await supabase
+                        .from("lessons")
+                        .select("*")
+                        .order("created_at", { ascending: false });
+                    if (!error && data && data.length > 0) {
+                        const rows = data as LessonRow[];
+                        setLessons(rows);
+                        // Only update active content if the active lesson itself changed
+                        const active = rows.find(l => l.id === activeLessonId);
+                        if (active) setContentData(hydrateLessonData(active.content));
                     }
                 };
                 document.addEventListener("visibilitychange", handleVisibility);
