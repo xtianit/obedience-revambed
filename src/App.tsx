@@ -1446,7 +1446,7 @@
         //  BOOT SCREEN
         // ═════════════════════════════════════════════════════════════════════════
         if (screen==="boot"||loadingPct<100) {
-            const animText="Supernatural Victory and Progress Through Thanksgiving".split("");
+            const animText="May is My Month of Divine Mercy Eccl. 33:17-19".split("");
             return (
                 <div className="fixed inset-0 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 flex items-center justify-center z-50">
                     <div className="text-center px-4">
