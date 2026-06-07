@@ -748,7 +748,15 @@
         const loadingPctRef   = useRef(0);
         const scriptureSeeded = useRef(false);  // prevents infinite seed loop
         const scriptureOpRef  = useRef(false);  // FIX: operation lock — prevents concurrent DB writes
+        // const lessonSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
+        // REPLACE WITH:
         const lessonSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
+        const activeLessonIdRef = useRef<string|null>(null);
+
+        const setActiveLesson = (id: string | null) => {
+            activeLessonIdRef.current = id;
+            setActiveLessonId(id);
+        };
         // Cleanup debounce timer on unmount
         useEffect(() => { return () => { if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current); }; }, []);
 
@@ -786,10 +794,10 @@
                 }
 
             if (data && data.length > 0) {
-               const rows = data as LessonRow[];
+                 const rows = data as LessonRow[];
                 setLessons(rows);
-                const active = rows[0];
-                setActiveLessonId(active.id);
+                const active = rows.find(l => l.is_active) ?? rows[0];
+                setActiveLesson(active.id);
                 setContentData(hydrateLessonData(active.content));
             
            } else if (!scriptureSeeded.current) {
@@ -800,9 +808,14 @@
                     .insert({ title: "OBEDIENCE", is_active: true, content: def })
                     .select()
                     .single();
+                // if (!insErr && ins) {
+                //     setLessons([ins as LessonRow]);
+                //     setActiveLessonId(ins.id);
+                //     setContentData(hydrateLessonData(def));
+                // }
                 if (!insErr && ins) {
                     setLessons([ins as LessonRow]);
-                    setActiveLessonId(ins.id);
+                    setActiveLesson(ins.id);
                     setContentData(hydrateLessonData(def));
                 }
             }
@@ -830,9 +843,14 @@
             if (activeLessonId && activeLessonId !== lesson.id) {
                 await supabase.from("lessons").update({is_active:false}).eq("id", activeLessonId);
             }
+            // await supabase.from("lessons").update({is_active:true}).eq("id", lesson.id);
+            // setActiveLessonId(lesson.id);
+            // setContentData(lesson.content as LessonContent);
             await supabase.from("lessons").update({is_active:true}).eq("id", lesson.id);
-            setActiveLessonId(lesson.id);
+            setActiveLesson(lesson.id);
             setContentData(lesson.content as LessonContent);
+
+            
             setLessons(prev => prev.map(l => ({...l, is_active: l.id===lesson.id})));
             setShowLessonPicker(false);
             setEditingContent(null);
@@ -1041,8 +1059,17 @@
         // useEffect(() => {
         //     if (screen==="app") { void loadLessons(); void loadScripturesFromDB(); }
         // }, [screen, loadLessons, loadScripturesFromDB]);
+        // useEffect(() => {
+        //     if (screen !== "app") return;
+
+        //     void loadLessons();
+        //     void loadScripturesFromDB();
         useEffect(() => {
             if (screen !== "app") return;
+
+            // Reset guards so lessons always reload fresh on every login
+            lessonsLoadingRef.current = false;
+            scriptureSeeded.current = false;
 
             void loadLessons();
             void loadScripturesFromDB();
@@ -1053,11 +1080,10 @@
                 .on(
                     "postgres_changes",
                     { event: "UPDATE", schema: "public", table: "lessons" },
-                    (payload) => {
-                        // Only react when is_active flips to true (admin switched lesson)
+                     (payload) => {
                         if (payload.new?.is_active === true) {
                             const newLesson = payload.new as LessonRow;
-                            setActiveLessonId(newLesson.id);
+                            setActiveLesson(newLesson.id);
                             setContentData(hydrateLessonData(newLesson.content));
                             setLessons(prev =>
                                 prev.map(l => ({ ...l, is_active: l.id === newLesson.id }))
@@ -1071,9 +1097,23 @@
                 // return () => {
                 //     void supabase.removeChannel(channel);
                 // };
-                const handleVisibility = async () => {
+                // const handleVisibility = async () => {
+                //     if (document.visibilityState !== "visible") return;
+                //     // Silent refresh — only update data, never show spinner
+                //     const { data, error } = await supabase
+                //         .from("lessons")
+                //         .select("*")
+                //         .order("created_at", { ascending: false });
+                //     if (!error && data && data.length > 0) {
+                //         const rows = data as LessonRow[];
+                //         setLessons(rows);
+                //         // Only update active content if the active lesson itself changed
+                //         const active = rows.find(l => l.id === activeLessonId);
+                //         if (active) setContentData(hydrateLessonData(active.content));
+                //     }
+                // };
+                 const handleVisibility = async () => {
                     if (document.visibilityState !== "visible") return;
-                    // Silent refresh — only update data, never show spinner
                     const { data, error } = await supabase
                         .from("lessons")
                         .select("*")
@@ -1081,9 +1121,12 @@
                     if (!error && data && data.length > 0) {
                         const rows = data as LessonRow[];
                         setLessons(rows);
-                        // Only update active content if the active lesson itself changed
-                        const active = rows.find(l => l.id === activeLessonId);
-                        if (active) setContentData(hydrateLessonData(active.content));
+                        // ✅ use ref — avoids stale closure bug
+                        const active = rows.find(l => l.is_active)
+                            ?? rows.find(l => l.id === activeLessonIdRef.current)
+                            ?? rows[0];
+                        setActiveLesson(active.id);
+                        setContentData(hydrateLessonData(active.content));
                     }
                 };
                 document.addEventListener("visibilitychange", handleVisibility);
