@@ -753,10 +753,15 @@
         const lessonSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
         const activeLessonIdRef = useRef<string|null>(null);
 
-        const setActiveLesson = (id: string | null) => {
+        // const setActiveLesson = (id: string | null) => {
+        //     activeLessonIdRef.current = id;
+        //     setActiveLessonId(id);
+        // };
+        // REPLACE WITH:
+        const setActiveLesson = useCallback((id: string | null) => {
             activeLessonIdRef.current = id;
             setActiveLessonId(id);
-        };
+        }, []);
         // Cleanup debounce timer on unmount
         useEffect(() => { return () => { if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current); }; }, []);
 
@@ -822,7 +827,7 @@
 
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
-        }, []);
+        }, [setActiveLesson]);
         // Debounced save — waits 1.2s after last edit before writing to DB
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
@@ -1862,7 +1867,7 @@
                         )}
 
                         {/* ── INTRO ── */}
-                        {activeTab==="intro"&&(
+                        {!lessonsLoading && activeTab==="intro"&&(
                             <div className="space-y-6">
                                 {editBanner("intro")}
                                 <div className={`${darkMode?"bg-blue-900/30":"bg-blue-50"} p-6 rounded-xl border-l-4 border-blue-500`}>
@@ -2060,7 +2065,8 @@
 
 
 
-    {isAdmin && editingContent === "lesson" && (
+    {/* {isAdmin && editingContent === "lesson" && ( */}
+    {!lessonsLoading && isAdmin && editingContent === "lesson" && (
 
         <div className="mt-10 pt-6 border-t-2 border-dashed border-gray-200 dark:border-gray-800">
             <button
@@ -2097,7 +2103,8 @@
 
 
 
-    {activeTab === "lesson" && (
+    
+    {!lessonsLoading && activeTab === "lesson" && (
     <div className="space-y-6 animate-in fade-in duration-300">
         {editBanner("lesson")}
         <h3 className="text-2xl font-bold">Lesson Contents</h3>
@@ -2448,7 +2455,8 @@
 
 
     {/* ── CONCLUSION ── */}
-    {activeTab === "conclusion" && (
+    {/* {activeTab === "conclusion" && ( */}
+     {!lessonsLoading && activeTab === "conclusion" && (
         <div className="space-y-6">
             {editBanner("conclusion")}
             <h3 className="text-2xl font-bold">Conclusion</h3>
@@ -2514,7 +2522,8 @@
                     
 
                         {/* ── MANAGE (scriptures) ── */}
-                        {activeTab==="manage"&&(
+                        {/* {activeTab==="manage"&&( */}
+                        {!lessonsLoading && activeTab==="manage"&&(
                             <div className="space-y-5">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                     <div>
@@ -2673,8 +2682,9 @@
                         )}
 
                         {/* ── ADMIN PANEL ── */}
-                        {activeTab==="admin"&&isAdmin&&<AdminPanel darkMode={darkMode} currentUserId={authUser?.id||""}/>}
-                        {activeTab==="admin"&&!isAdmin&&(
+                        {/* {activeTab==="admin"&&isAdmin&&<AdminPanel darkMode={darkMode} currentUserId={authUser?.id||""}/>} */}
+                        {!lessonsLoading && activeTab==="admin"&&isAdmin&&<AdminPanel darkMode={darkMode} currentUserId={authUser?.id||""}/>}
+                         {!lessonsLoading && activeTab==="admin"&&!isAdmin&&(
                             <div className="text-center py-16">
                                 <ShieldCheck size={64} className="mx-auto mb-4 text-purple-400 opacity-30"/>
                                 <h3 className="text-xl font-bold opacity-50">Admin access only</h3>
