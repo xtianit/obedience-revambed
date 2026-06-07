@@ -689,6 +689,9 @@
         const [newLessonDate,    setNewLessonDate]    = useState("");
         const [creatingLesson,   setCreatingLesson]   = useState(false);
 
+        const [editingTitle, setEditingTitle] = useState(false);
+        const [titleDraft,   setTitleDraft]   = useState("");
+
         // ── Scripture ─────────────────────────────────────────────────────────────
         const [scriptureDB,      setScriptureDB]      = useState<ScriptureDB>({});
         const [scriptureLoading, setScriptureLoading] = useState(false);
@@ -837,6 +840,24 @@
         }, [activeLessonId]);
 
         // FIX #1 — Admin creates a new lesson with a given title, saved to DB
+        const saveTitle = async () => {
+    const trimmed = titleDraft.trim();
+    if (!trimmed || !activeLessonId) { setEditingTitle(false); return; }
+    // Optimistic update
+    updateContent("lessonTitle", trimmed);
+    setLessons(prev => prev.map(l => l.id === activeLessonId ? { ...l, title: trimmed } : l));
+    setEditingTitle(false);
+    // Persist to DB
+    const { error } = await supabase
+        .from("lessons")
+        .update({ title: trimmed, updated_at: new Date().toISOString() })
+        .eq("id", activeLessonId);
+    if (error) {
+        alert("Failed to save title: " + error.message);
+        // Rollback on error
+        updateContent("lessonTitle", contentData.lessonTitle);
+    }
+};
         const createNewLesson = async () => {
             if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
             setCreatingLesson(true);
@@ -1695,9 +1716,53 @@
                             )} {/* end isAdmin dropdown */}
                         </div>
 
-                        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        {/* <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                             {contentData.lessonTitle}
-                        </h2>
+                        </h2> */}
+                        {isAdmin && editingTitle ? (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={titleDraft}
+                                        onChange={e => setTitleDraft(e.target.value)}
+                                        onKeyDown={async e => {
+                                            if (e.key === "Enter") await saveTitle();
+                                            if (e.key === "Escape") setEditingTitle(false);
+                                        }}
+                                        className={`text-xl md:text-2xl font-bold px-3 py-1 rounded-xl border outline-none focus:ring-2 focus:ring-purple-400 bg-transparent ${darkMode ? "border-white/30 text-white" : "border-gray-400 text-gray-900"}`}
+                                    />
+                                    <button
+                                        onClick={saveTitle}
+                                        className="p-2 rounded-xl bg-green-500/20 hover:bg-green-500/40 text-green-400 transition"
+                                        title="Save title"
+                                    >
+                                        <Save size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setEditingTitle(false)}
+                                        className="p-2 rounded-xl bg-red-500/20 hover:bg-red-500/40 text-red-400 transition"
+                                        title="Cancel"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 group">
+                                    <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                                        {contentData.lessonTitle}
+                                    </h2>
+                                    {isAdmin && (
+                                        <button
+                                            onClick={() => { setTitleDraft(contentData.lessonTitle); setEditingTitle(true); }}
+                                            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-1.5 rounded-lg bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 transition"
+                                            title="Edit lesson title"
+                                        >
+                                            <Edit2 size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                     </div>
 
                     {/* ── NEW LESSON MODAL ── */}
