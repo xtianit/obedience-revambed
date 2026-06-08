@@ -868,7 +868,8 @@
     //     }
     // }, [profile?.role, setActiveLesson]);
     // Load all lessons from DB. Fixes empty arrays & continuous array evaluations on mobile view ports.
-    const loadLessons = useCallback(async () => {
+        // REPLACE WITH:
+    const loadLessons = useCallback(async (role?: string) => {
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
@@ -886,14 +887,12 @@
             if (rows.length > 0) {
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
-                if (profile?.role === "admin") {
-                    // CRITICAL FIX: Admin must see ALL fetched rows (Obedience, Disobedience, etc.)
+                if (role === "admin") {
                     setLessons(rows);
                     const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
                     setActiveLesson(currentActive.id);
                     setContentData(hydrateLessonData(currentActive.content));
                 } else {
-                    // Regular users observe only the designated single active broadcast target
                     setLessons([liveLesson]);
                     setActiveLesson(liveLesson.id);
                     setContentData(hydrateLessonData(liveLesson.content));
@@ -909,7 +908,7 @@
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, [profile?.role, setActiveLesson]);
+    }, [setActiveLesson]);
 
     
         // Debounced save — waits 1.2s after last edit before writing to DB
@@ -1268,9 +1267,23 @@
                     withRetry(()=>getProfile(user.id)),
                     withRetry(()=>getActiveSubscription(user.id)),
                 ]);
+                // setProfile(prof); setSubscription(sub); setIsAdmin(prof?.role==="admin"); setSubChecking(false);
+                // if (sub) { writeSubCache(user.id,sub.end_date); setScreen("app"); }
+                // else     { clearSubCache(); setScreen("payment"); }
+
+                // REPLACE WITH:
                 setProfile(prof); setSubscription(sub); setIsAdmin(prof?.role==="admin"); setSubChecking(false);
-                if (sub) { writeSubCache(user.id,sub.end_date); setScreen("app"); }
-                else     { clearSubCache(); setScreen("payment"); }
+                if (sub) {
+                    writeSubCache(user.id,sub.end_date);
+                    lessonsLoadingRef.current = false;
+                    scriptureSeeded.current = false;
+                    setScreen("app");
+                    // Load with the freshly resolved role — not stale profile state
+                    void loadLessons(prof?.role ?? undefined);
+                    void loadScripturesFromDB();
+                } else {
+                    clearSubCache(); setScreen("payment");
+                }
             } finally { resolvingRef.current = false; }
         }, []);
 
@@ -1291,30 +1304,10 @@
         //     void loadLessons();
         //     void loadScripturesFromDB();
         // REPLACE WITH:
-        useEffect(() => {
-        if (screen !== "app") return;
+           useEffect(() => {
+            if (screen !== "app") return;
 
-        let isMounted = true;
-        scriptureSeeded.current = false;
-
-        const initializeData = async () => {
-            // Mobile Guard: If already running an execution frame, back off instantly
-            if (lessonsLoadingRef.current) return;
-
-            try {
-                // Execute database synchronization hooks in parallel safely
-                await Promise.all([
-                    loadLessons(),
-                    loadScripturesFromDB()
-                ]);
-            } catch (err) {
-                console.error("App startup initialization failed:", err);
-            }
-        };
-
-        if (isMounted) {
-            void initializeData();
-        }
+            let isMounted = true;
 
         // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
         const channel = supabase
@@ -1345,7 +1338,9 @@
             isMounted = false;
             void supabase.removeChannel(channel);
         };
-    }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson, profile?.role]);
+    // }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson, profile?.role]);
+    }, [screen, setActiveLesson, profile?.role]);
+
 
 
 
