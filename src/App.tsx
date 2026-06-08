@@ -805,7 +805,7 @@
                 setActiveLesson(active.id);
                 setContentData(hydrateLessonData(active.content));
             
-            } else if (!scriptureSeeded.current) {
+           } else if (!scriptureSeeded.current) {
                 scriptureSeeded.current = true;
                 const def = makeDefaultContent();
                 const { data: ins, error: insErr } = await supabase
