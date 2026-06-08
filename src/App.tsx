@@ -607,13 +607,13 @@ import logo from "./assets/logo.png";
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
                 if (profile?.role === "admin") {
-                    // Admins see all rows from the database (Obedience, Disobedience, etc.)
+                    // Admin view gets the entire list intact (Obedience, Disobedience, etc.)
                     setLessons(rows);
                     const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
                     setActiveLessonId(currentActive.id);
                     setContentData(hydrateLessonData(currentActive.content));
                 } else {
-                    // Standard users view only the active lesson
+                    // Standard users get filtered down to only the active broadcast lesson
                     setLessons([liveLesson]);
                     setActiveLessonId(liveLesson.id);
                     setContentData(hydrateLessonData(liveLesson.content));
@@ -629,8 +629,7 @@ import logo from "./assets/logo.png";
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-        // 🧠 Leave profile?.role as the only metric here
-    }, [profile?.role]);
+    }, [profile?.role]); // Only depend on the user role status tracking flag
 
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
@@ -880,29 +879,29 @@ import logo from "./assets/logo.png";
 
 
 
-       useEffect(() => {
-        // Only run when the app screen becomes active
+      useEffect(() => {
+        // Tight Guard: Quit immediately if we are not on the main application viewport
         if (screen !== "app") return;
 
         let isMounted = true;
         scriptureSeeded.current = false;
 
-        // PROGRAMMATIC CLEAR: Forcefully unstick loading flags on mount
+        // Code Clear: Forcefully strip out active loading states on initial screen mount
         lessonsLoadingRef.current = false;
         setLessonsLoading(false);
 
         const safeBootstrap = async () => {
-            // Guard flag to prevent double-firing on slower mobile networks
+            // Guard: If an execution sequence thread is already mid-flight, step away
             if (lessonsLoadingRef.current) return;
             
             try {
-                // Fetch lessons and scriptures concurrently in a single flight
+                // Execute master collections concurrently in parallel
                 await Promise.all([
                     loadLessons(),
                     loadScripturesFromDB()
                 ]);
             } catch (err) {
-                console.error("Programmatic bootstrap failed:", err);
+                console.error("Application initialization process failure:", err);
             }
         };
 
@@ -921,13 +920,13 @@ import logo from "./assets/logo.png";
                     const updatedLesson = payload.new as LessonRow;
                     
                     if (profile?.role === "admin") {
-                        // Admin: Keep the full database list completely intact
+                        // Admin updates specific entries within their master inventory list
                         setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
                         if (updatedLesson.id === activeLessonIdRef.current) {
                             setContentData(hydrateLessonData(updatedLesson.content));
                         }
                     } else if (updatedLesson.is_active) {
-                        // Regular User: Switch view to the new live lesson instantly
+                        // Regular students switch cleanly to the new live broadcast
                         setActiveLessonId(updatedLesson.id);
                         setContentData(hydrateLessonData(updatedLesson.content));
                         setLessons([updatedLesson]);
@@ -940,7 +939,7 @@ import logo from "./assets/logo.png";
             isMounted = false;
             void supabase.removeChannel(channel);
         };
-        // 🧠 FIXED DEPENDENCY: Removing functions here permanently kills the infinite mobile spin
+        // 🧠 FIXED: Locking this array to [screen] halts infinite execution loops for live mobile users
     }, [screen]);
 
 
