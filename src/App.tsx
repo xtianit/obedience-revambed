@@ -76,50 +76,50 @@
     };
 
     // ─── DEFAULT LESSON FACTORY ───────────────────────────────────────────────────
-    const makeDefaultContent = (title = "OBEDIENCE", date = "July 3, 2016"): LessonContent => ({
-        lessonDate:  date,
-        lessonTitle: title,
-        memoryVerse: "And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross - Phil. 2:8.",
-        memoryVerseRef: "Phil. 2:8",
-        lessonReadingScriptures: ["Matthew 13:24-30"],
-        lessonIntroScriptures: ["Colossians 1:17","2 Cor. 10:5"],
-        lessonContentScriptures: ["Gen. 12:1-5"],
-        introduction: "Obedience is a matter of relationship between two persons, one higher and the other lesser. It therefore has to do with being submissive to another's will, instructions, terms, commandments, conditions or the keeping of another's will/wish. The Bible has proven God beyond any doubt to be the creator and possessor of Heaven and Earth. In them he has made other persons lesser to himself for his pleasure to co-inhabit. This is where obedience steps into the scene of the kingdom of God or else things would fall apart. The creator of wisdom has more wisdom than wisdom and by Christ Jesus he holds all things together in obedience to himself - Colossians 1:17, 2 Corinthians 10:5.",
-        aims:        "This subject is aimed at bringing every man to the obedience of Christ.",
-        objectives:  "That there may be a peaceful co-existence between God and man, and between man and man.",
-        lessonIntro: "Abraham the son of Terah, a descendant of a Godly seed Shem was asked by God to leave Haran, his family and to move to a land unknown at the time of instruction. Gen. 12:1-5. Many promises were attached to this commandment that was obeyed by Abram, a man like you and I. The lesson drawn from the text is enumerated below:",
-        lessonPoints: [
-            {
-                title:"THE FOUNDATION OF OBEDIENCE",
-                content:"Obedience is a matter of two parties involving a higher authority and a lesser subject. It requires a mandatory response to divine instructions as seen in the call of Abram. Gen. 12:1.",
-                scriptures:["Gen. 12:1-5"],
-                subPoints:[
-                    { title:"TWO PARTIES INVOLVED", content:"Obedience is a matter of two parties, 'THE LORD SAID TO ABRAM'. Lord and Abram. This means that the Lord requires the obedience of any of us. Gen. 12:1.", scriptures:["Gen. 12:1"] },
-                    { title:"SURRENDER OF WILL",    content:"Abram's will was buried in God's will and that is what He requires of your will also. As Christ Jesus holds all things together, we must align our will with His. Col. 1:17.", scriptures:["Colossians 1:17"] },
-                    { title:"DIVINE COMMAND",       content:"Abram was not given a choice to choose between going and staying back. It shows that God commands and not suggest. The lesser person which is you has to obey mandatorily. If you disobey the instruction, it becomes sin. The Bible is the book where God's instructions are found.", scriptures:[] },
-                ],
-            },
-            {
-                title:"THE COST, FAITH, AND REWARD OF OBEDIENCE",
-                content:"True obedience disregards personal convenience and feelings, requiring a blind trust in God's leading, exemplified by Christ's obedience unto death. Phil. 2:8.",
-                scriptures:["Phil. 2:8","2 Cor. 10:5"],
-                subPoints:[
-                    { title:"CONVENIENCE AND PLEASURE", content:"Abram's convenience was not considered. For a man to be obedient to God, he must forget about his convenience. Remember that you are made for his pleasure and if your convenience double-crosses his pleasure, he will not compromise.", scriptures:[] },
-                    { title:"DISREGARDING FEELINGS",    content:"God does not care about how you or others feel about what he instructs you to do. Abram had to leave his home-land, family and quit business. We must drop our feelings and fulfill God's conditions and terms. 2 Cor. 10:5.", scriptures:["2 Cor. 10:5"] },
-                    { title:"BLIND TRUST",              content:"The word 'unto the land that I will show thee' speaks of uncertainty, a blind trust and suggests irrationality. Gen 12:1. YOU MAY NOT KNOW WHERE YOUR OBEDIENCE TO GOD WILL TAKE YOU but you are required to TRUST AND OBEY.", scriptures:["Genesis 12:1"] },
-                    { title:"REWARDS OF OBEDIENCE",     content:"The text shows that blessings and benefits are rewards of obedience.", scriptures:[] },
-                ],
-            },
-        ],
-        conclusion: "Obedience is the only thing that will keep our relationship with God and the key to God's storehouse of blessing. Jesus our perfect example was also human like us, whose obedience even led him to death. Phil. 2:8. Many things God demand of us are not as much as that and this is why we don't have excuses today if we aren't obedient.",
-        conclusionScriptures: [],
-        prayerPoints: [
-            "Father, help me to bring my will into total subjection to Yours, just as Abram did. Gen. 12:4.",
-            "Lord, give me the grace to choose Your pleasure over my personal convenience every day.",
-            "Father, strengthen my heart to trust and obey You even when the destination is not clear. Gen. 12:1.",
-            "Lord Jesus, empower me by Your Spirit to walk in the same level of obedience that You displayed on the cross. Phil. 2:8.",
-        ],
-    });
+    // const makeDefaultContent = (title = "OBEDIENCE", date = "July 3, 2016"): LessonContent => ({
+    //     lessonDate:  date,
+    //     lessonTitle: title,
+    //     memoryVerse: "And being found in fashion as a man, he humbled himself, and became obedient unto death, even the death of the cross - Phil. 2:8.",
+    //     memoryVerseRef: "Phil. 2:8",
+    //     lessonReadingScriptures: ["Matthew 13:24-30"],
+    //     lessonIntroScriptures: ["Colossians 1:17","2 Cor. 10:5"],
+    //     lessonContentScriptures: ["Gen. 12:1-5"],
+    //     introduction: "Obedience is a matter of relationship between two persons, one higher and the other lesser. It therefore has to do with being submissive to another's will, instructions, terms, commandments, conditions or the keeping of another's will/wish. The Bible has proven God beyond any doubt to be the creator and possessor of Heaven and Earth. In them he has made other persons lesser to himself for his pleasure to co-inhabit. This is where obedience steps into the scene of the kingdom of God or else things would fall apart. The creator of wisdom has more wisdom than wisdom and by Christ Jesus he holds all things together in obedience to himself - Colossians 1:17, 2 Corinthians 10:5.",
+    //     aims:        "This subject is aimed at bringing every man to the obedience of Christ.",
+    //     objectives:  "That there may be a peaceful co-existence between God and man, and between man and man.",
+    //     lessonIntro: "Abraham the son of Terah, a descendant of a Godly seed Shem was asked by God to leave Haran, his family and to move to a land unknown at the time of instruction. Gen. 12:1-5. Many promises were attached to this commandment that was obeyed by Abram, a man like you and I. The lesson drawn from the text is enumerated below:",
+    //     lessonPoints: [
+    //         {
+    //             title:"THE FOUNDATION OF OBEDIENCE",
+    //             content:"Obedience is a matter of two parties involving a higher authority and a lesser subject. It requires a mandatory response to divine instructions as seen in the call of Abram. Gen. 12:1.",
+    //             scriptures:["Gen. 12:1-5"],
+    //             subPoints:[
+    //                 { title:"TWO PARTIES INVOLVED", content:"Obedience is a matter of two parties, 'THE LORD SAID TO ABRAM'. Lord and Abram. This means that the Lord requires the obedience of any of us. Gen. 12:1.", scriptures:["Gen. 12:1"] },
+    //                 { title:"SURRENDER OF WILL",    content:"Abram's will was buried in God's will and that is what He requires of your will also. As Christ Jesus holds all things together, we must align our will with His. Col. 1:17.", scriptures:["Colossians 1:17"] },
+    //                 { title:"DIVINE COMMAND",       content:"Abram was not given a choice to choose between going and staying back. It shows that God commands and not suggest. The lesser person which is you has to obey mandatorily. If you disobey the instruction, it becomes sin. The Bible is the book where God's instructions are found.", scriptures:[] },
+    //             ],
+    //         },
+    //         {
+    //             title:"THE COST, FAITH, AND REWARD OF OBEDIENCE",
+    //             content:"True obedience disregards personal convenience and feelings, requiring a blind trust in God's leading, exemplified by Christ's obedience unto death. Phil. 2:8.",
+    //             scriptures:["Phil. 2:8","2 Cor. 10:5"],
+    //             subPoints:[
+    //                 { title:"CONVENIENCE AND PLEASURE", content:"Abram's convenience was not considered. For a man to be obedient to God, he must forget about his convenience. Remember that you are made for his pleasure and if your convenience double-crosses his pleasure, he will not compromise.", scriptures:[] },
+    //                 { title:"DISREGARDING FEELINGS",    content:"God does not care about how you or others feel about what he instructs you to do. Abram had to leave his home-land, family and quit business. We must drop our feelings and fulfill God's conditions and terms. 2 Cor. 10:5.", scriptures:["2 Cor. 10:5"] },
+    //                 { title:"BLIND TRUST",              content:"The word 'unto the land that I will show thee' speaks of uncertainty, a blind trust and suggests irrationality. Gen 12:1. YOU MAY NOT KNOW WHERE YOUR OBEDIENCE TO GOD WILL TAKE YOU but you are required to TRUST AND OBEY.", scriptures:["Genesis 12:1"] },
+    //                 { title:"REWARDS OF OBEDIENCE",     content:"The text shows that blessings and benefits are rewards of obedience.", scriptures:[] },
+    //             ],
+    //         },
+    //     ],
+    //     conclusion: "Obedience is the only thing that will keep our relationship with God and the key to God's storehouse of blessing. Jesus our perfect example was also human like us, whose obedience even led him to death. Phil. 2:8. Many things God demand of us are not as much as that and this is why we don't have excuses today if we aren't obedient.",
+    //     conclusionScriptures: [],
+    //     prayerPoints: [
+    //         "Father, help me to bring my will into total subjection to Yours, just as Abram did. Gen. 12:4.",
+    //         "Lord, give me the grace to choose Your pleasure over my personal convenience every day.",
+    //         "Father, strengthen my heart to trust and obey You even when the destination is not clear. Gen. 12:1.",
+    //         "Lord Jesus, empower me by Your Spirit to walk in the same level of obedience that You displayed on the cross. Phil. 2:8.",
+    //     ],
+    // });
 
     // ─── QUIZ QUESTIONS ───────────────────────────────────────────────────────────
 
