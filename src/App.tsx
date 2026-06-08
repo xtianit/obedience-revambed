@@ -589,7 +589,6 @@ import logo from "./assets/logo.png";
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
         const loadLessons = useCallback(async () => {
-        // Gated reference check to absolutely stop mobile rendering deadlocks
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
@@ -607,14 +606,15 @@ import logo from "./assets/logo.png";
             if (rows.length > 0) {
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
-                // FIX: Separates Admin inventory arrays from single row visibility constraints
                 if (profile?.role === "admin") {
-                    setLessons(rows); // Admin retains all lessons (Obedience, Disobedience, etc.)
+                    // Admins see all rows from the database (Obedience, Disobedience, etc.)
+                    setLessons(rows);
                     const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
                     setActiveLessonId(currentActive.id);
                     setContentData(hydrateLessonData(currentActive.content));
                 } else {
-                    setLessons([liveLesson]); // Regular user sees only the live broadcast row
+                    // Standard users view only the active lesson
+                    setLessons([liveLesson]);
                     setActiveLessonId(liveLesson.id);
                     setContentData(hydrateLessonData(liveLesson.content));
                 }
@@ -624,12 +624,13 @@ import logo from "./assets/logo.png";
                 setContentData(makeDefaultContent());
             }
         } catch (err) {
-            console.error("loadLessons execution error:", err);
+            console.error("loadLessons handling failure:", err);
         } finally {
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, [profile?.role, setActiveLessonId]);
+        // 🧠 Leave profile?.role as the only metric here
+    }, [profile?.role]);
 
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
@@ -690,7 +691,7 @@ import logo from "./assets/logo.png";
                 .from("lessons")
                 .insert({ 
                     title: newLessonTitle.trim(), 
-                    is_active: false, // Saves as draft option to avoid cascading lockups
+                    is_active: false, // Saves as background draft option
                     content: newContent 
                 })
                 .select()
@@ -700,7 +701,7 @@ import logo from "./assets/logo.png";
 
             const row = data as LessonRow;
 
-            // Direct local layout injections bypass rendering pipeline lockups
+            // Update states directly without introducing async execution delays
             setLessons(prev => [row, ...prev]);
             setActiveLessonId(row.id);
             setContentData(hydrateLessonData(row.content));
@@ -710,11 +711,16 @@ import logo from "./assets/logo.png";
             setNewLessonDate("");
             
         } catch (error: unknown) {
-            alert("Failed to create lesson: " + (error as Error).message);
+            const msg = error instanceof Error ? error.message : String(error);
+            alert("Failed to build new lesson: " + msg);
         } finally {
             setCreatingLesson(false);
         }
     };
+
+
+
+
 
 
         const deleteLesson = async (lessonId:string) => {
@@ -872,29 +878,36 @@ import logo from "./assets/logo.png";
             return () => listener.unsubscribe();
         }, [resolveUser]);
 
-        useEffect(() => {
+
+
+       useEffect(() => {
+        // Only run when the app screen becomes active
         if (screen !== "app") return;
 
         let isMounted = true;
         scriptureSeeded.current = false;
 
-        const initializeData = async () => {
-            // Mobile Guard: Skip call if an active request thread is mid-flight
-            if (lessonsLoadingRef.current) return;
+        // PROGRAMMATIC CLEAR: Forcefully unstick loading flags on mount
+        lessonsLoadingRef.current = false;
+        setLessonsLoading(false);
 
+        const safeBootstrap = async () => {
+            // Guard flag to prevent double-firing on slower mobile networks
+            if (lessonsLoadingRef.current) return;
+            
             try {
-                // Execute database synchronization requests in parallel cleanly
+                // Fetch lessons and scriptures concurrently in a single flight
                 await Promise.all([
                     loadLessons(),
                     loadScripturesFromDB()
                 ]);
             } catch (err) {
-                console.error("App startup initialization failed:", err);
+                console.error("Programmatic bootstrap failed:", err);
             }
         };
 
         if (isMounted) {
-            void initializeData();
+            void safeBootstrap();
         }
 
         // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
@@ -904,16 +917,17 @@ import logo from "./assets/logo.png";
                 "postgres_changes",
                 { event: "UPDATE", schema: "public", table: "lessons" },
                 (payload) => {
+                    if (!isMounted) return;
                     const updatedLesson = payload.new as LessonRow;
                     
                     if (profile?.role === "admin") {
-                        // Safely replace the target item record without wiping out the admin state table list
+                        // Admin: Keep the full database list completely intact
                         setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
                         if (updatedLesson.id === activeLessonIdRef.current) {
                             setContentData(hydrateLessonData(updatedLesson.content));
                         }
                     } else if (updatedLesson.is_active) {
-                        // Automatically update interface maps for normal students
+                        // Regular User: Switch view to the new live lesson instantly
                         setActiveLessonId(updatedLesson.id);
                         setContentData(hydrateLessonData(updatedLesson.content));
                         setLessons([updatedLesson]);
@@ -926,7 +940,11 @@ import logo from "./assets/logo.png";
             isMounted = false;
             void supabase.removeChannel(channel);
         };
-    }, [screen, loadLessons, loadScripturesFromDB, profile?.role]);
+        // 🧠 FIXED DEPENDENCY: Removing functions here permanently kills the infinite mobile spin
+    }, [screen]);
+
+
+
 
         useEffect(() => {
             const h=(e:KeyboardEvent)=>{ if(e.ctrlKey&&e.shiftKey&&e.key==="E"&&isAdmin){e.preventDefault();setEditingContent(p=>p?null:activeTab);} };
