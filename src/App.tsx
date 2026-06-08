@@ -775,70 +775,20 @@
             return () => clearInterval(iv);
         }, []);
 
-        // ─────────────────────────────────────────────────────────────────────────
-        //  LESSON HELPERS
-        // ─────────────────────────────────────────────────────────────────────────
-
-        // Load all lessons from DB. FIX #1/#4 — lessons stored in DB with title,
-        // all same page, only data changes when switching.
-            // const loadLessons = useCallback(async () => {
-            //     if (lessonsLoadingRef.current) return; // block concurrent calls
-            //         lessonsLoadingRef.current = true;
-            //         setLessonsLoading(true);
-
-            //         const { data, error } = await supabase
-            //             .from("lessons")
-            //             .select("*")
-            //             .order("created_at", { ascending: false });
-
-            //     if (error) {
-            //         console.error("loadLessons:", error);
-            //         setLessonsLoading(false);
-            //         lessonsLoadingRef.current = false;
-            //         return;
-            //     }
-
-            //     if (data && data.length > 0) {
-            //         const rows = data as LessonRow[];
-            //         setLessons(rows);
-            //         const active = rows.find(l => l.is_active) ?? rows[0];
-            //         setActiveLesson(active.id);
-            //         setContentData(hydrateLessonData(active.content));
-                
-            //     } else if (!scriptureSeeded.current) {
-            //         scriptureSeeded.current = true;
-            //         const def = makeDefaultContent();
-            //         const { data: ins, error: insErr } = await supabase
-            //             .from("lessons")
-            //             .insert({ title: "OBEDIENCE", is_active: true, content: def })
-            //             .select()
-            //             .single();
-            //         // if (!insErr && ins) {
-            //         //     setLessons([ins as LessonRow]);
-            //         //     setActiveLessonId(ins.id);
-            //         //     setContentData(hydrateLessonData(def));
-            //         // }
-            //         if (!insErr && ins) {
-            //             setLessons([ins as LessonRow]);
-            //             setActiveLesson(ins.id);
-            //             setContentData(hydrateLessonData(def));
-            //         }
-            //     }
-
-            //     setLessonsLoading(false);
-            //     lessonsLoadingRef.current = false;
-            // }, [setActiveLesson]);
+       
             const loadLessons = useCallback(async () => {
                 if (lessonsLoadingRef.current) return;
 
                 lessonsLoadingRef.current = true;
                 setLessonsLoading(true);
+                
 
                 try {
                     const { data, error } = await supabase
                         .from("lessons")
                         .select("*")
                         .order("created_at", { ascending: false });
+                        
 
                     if (error) throw error;
 
@@ -860,6 +810,7 @@
                 } finally {
                     lessonsLoadingRef.current = false;
                     setLessonsLoading(false);
+
                 }
             }, [setActiveLesson]);
 
@@ -1109,16 +1060,96 @@
         //     void loadLessons();
         //     void loadScripturesFromDB();
         // REPLACE WITH:
+        // useEffect(() => {
+        //     if (screen !== "app") return;
+
+        //     // Always reset before loading so refresh never gets stuck
+        //     lessonsLoadingRef.current = false;
+        //     scriptureSeeded.current = false;
+        //     setLessonsLoading(false); // ← clear any stale spinner state
+
+        //     void loadLessons();
+        //     void loadScripturesFromDB();
+
+        //     // ── Realtime: push new active lesson to ALL connected devices ──────────
+        //     const channel = supabase
+        //         .channel("lessons-realtime")
+        //         .on(
+        //             "postgres_changes",
+        //             { event: "UPDATE", schema: "public", table: "lessons" },
+        //              (payload) => {
+        //                 if (payload.new?.is_active === true) {
+        //                     const newLesson = payload.new as LessonRow;
+        //                     setActiveLesson(newLesson.id);
+        //                     setContentData(hydrateLessonData(newLesson.content));
+        //                     setLessons(prev =>
+        //                         prev.map(l => ({ ...l, is_active: l.id === newLesson.id }))
+        //                     );
+        //                 }
+        //             }
+        //         )
+        //         .subscribe();
+    
+        //          const handleVisibility = async () => {
+        //             if (document.visibilityState !== "visible") return;
+        //             const { data, error } = await supabase
+        //                 .from("lessons")
+        //                 .select("*")
+        //                 .order("created_at", { ascending: false });
+        //             if (!error && data && data.length > 0) {
+        //                 const rows = data as LessonRow[];
+        //                 setLessons(rows);
+        //                 // ✅ use ref — avoids stale closure bug
+        //                 const active = rows.find(l => l.is_active)
+        //                     ?? rows.find(l => l.id === activeLessonIdRef.current)
+        //                     ?? rows[0];
+        //                 setActiveLesson(active.id);
+        //                 setContentData(hydrateLessonData(active.content));
+        //             }
+        //         };
+        //         document.addEventListener("visibilitychange", handleVisibility);
+        //         // ───────────────────────────────────────────────────────────────
+
+        //         return () => {
+        //             void supabase.removeChannel(channel);
+        //             document.removeEventListener("visibilitychange", handleVisibility); // ← add this too
+        //         };
+        // }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson]);
+
+        //  UPDATED ROBUST CODE
         useEffect(() => {
             if (screen !== "app") return;
 
-            // Always reset before loading so refresh never gets stuck
-            lessonsLoadingRef.current = false;
-            scriptureSeeded.current = false;
-            setLessonsLoading(false); // ← clear any stale spinner state
+            let isMounted = true;
 
-            void loadLessons();
-            void loadScripturesFromDB();
+            // Reset initial states safely
+            scriptureSeeded.current = false;
+
+            const initializeAppData = async () => {
+                // Prevent concurrent triggers if already fetching
+                if (lessonsLoadingRef.current) return;
+                
+                lessonsLoadingRef.current = true;
+                setLessonsLoading(true);
+
+                try {
+                    // Load both datasets concurrently to improve mobile load speed
+                    await Promise.all([
+                        loadLessons(),
+                        loadScripturesFromDB()
+                    ]);
+                } catch (error) {
+                    console.error("Failed to load app data on refresh:", error);
+                } finally {
+                    // Only toggle states if the user hasn't refreshed/unmounted again mid-request
+                    if (isMounted) {
+                        lessonsLoadingRef.current = false;
+                        setLessonsLoading(false);
+                    }
+                }
+            };
+
+            void initializeAppData();
 
             // ── Realtime: push new active lesson to ALL connected devices ──────────
             const channel = supabase
@@ -1126,63 +1157,23 @@
                 .on(
                     "postgres_changes",
                     { event: "UPDATE", schema: "public", table: "lessons" },
-                     (payload) => {
+                    (payload) => {
                         if (payload.new?.is_active === true) {
                             const newLesson = payload.new as LessonRow;
                             setActiveLesson(newLesson.id);
                             setContentData(hydrateLessonData(newLesson.content));
-                            setLessons(prev =>
-                                prev.map(l => ({ ...l, is_active: l.id === newLesson.id }))
-                            );
+                            setLessons(prev => prev.map(l => ({ ...l, is_active: l.id === newLesson.id })) );
                         }
                     }
                 )
                 .subscribe();
-                
 
-                // return () => {
-                //     void supabase.removeChannel(channel);
-                // };
-                // const handleVisibility = async () => {
-                //     if (document.visibilityState !== "visible") return;
-                //     // Silent refresh — only update data, never show spinner
-                //     const { data, error } = await supabase
-                //         .from("lessons")
-                //         .select("*")
-                //         .order("created_at", { ascending: false });
-                //     if (!error && data && data.length > 0) {
-                //         const rows = data as LessonRow[];
-                //         setLessons(rows);
-                //         // Only update active content if the active lesson itself changed
-                //         const active = rows.find(l => l.id === activeLessonId);
-                //         if (active) setContentData(hydrateLessonData(active.content));
-                //     }
-                // };
-                 const handleVisibility = async () => {
-                    if (document.visibilityState !== "visible") return;
-                    const { data, error } = await supabase
-                        .from("lessons")
-                        .select("*")
-                        .order("created_at", { ascending: false });
-                    if (!error && data && data.length > 0) {
-                        const rows = data as LessonRow[];
-                        setLessons(rows);
-                        // ✅ use ref — avoids stale closure bug
-                        const active = rows.find(l => l.is_active)
-                            ?? rows.find(l => l.id === activeLessonIdRef.current)
-                            ?? rows[0];
-                        setActiveLesson(active.id);
-                        setContentData(hydrateLessonData(active.content));
-                    }
-                };
-                document.addEventListener("visibilitychange", handleVisibility);
-                // ───────────────────────────────────────────────────────────────
-
-                return () => {
-                    void supabase.removeChannel(channel);
-                    document.removeEventListener("visibilitychange", handleVisibility); // ← add this too
-                };
-            }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson]);
+            // Cleanup hook returns
+            return () => {
+                isMounted = false;
+                void supabase.removeChannel(channel);
+            };
+        }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson]); // Make sure dependencies match your hook context
 
 
 
