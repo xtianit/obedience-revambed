@@ -75,7 +75,7 @@
         updated_at: string;
     };
 
-    ─── DEFAULT LESSON FACTORY ───────────────────────────────────────────────────
+    // ─── DEFAULT LESSON FACTORY ───────────────────────────────────────────────────
     const makeDefaultContent = (title = "OBEDIENCE", date = "July 3, 2016"): LessonContent => ({
         lessonDate:  date,
         lessonTitle: title,
@@ -748,7 +748,9 @@
         // const lessonSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
         // REPLACE WITH:
         const lessonSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
+        // const activeLessonIdRef = useRef<string|null>(null);
         const activeLessonIdRef = useRef<string|null>(null);
+        const profileRoleRef = useRef<string>("user");
 
         // const setActiveLesson = (id: string | null) => {
         //     activeLessonIdRef.current = id;
@@ -866,7 +868,8 @@
     // }, [profile?.role, setActiveLesson]);
     // Load all lessons from DB. Fixes empty arrays & continuous array evaluations on mobile view ports.
         // REPLACE WITH:
-    const loadLessons = useCallback(async (role?: string) => {
+    // REPLACE WITH:
+    const loadLessons = useCallback(async () => {
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
@@ -880,7 +883,8 @@
             if (error) throw error;
 
             const rows = (data ?? []) as LessonRow[];
-            
+            const role = profileRoleRef.current;
+
             if (rows.length > 0) {
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
@@ -1252,46 +1256,71 @@
         //  AUTH
         // ─────────────────────────────────────────────────────────────────────────
         // const resolveUser = useCallback(async (user:User|null) => {
-        const resolveUser = useCallback(async (user:User|null) => {
-            // if (resolvingRef.current) return;
-            if (resolvingRef.current) return;
-            resolvingRef.current = true;
-            try {
-                if (!user) { resolvingRef.current = false; setScreen("auth"); return; }
-                    setAuthUser(user);
-                    setSubChecking(true);
-                const [prof,sub] = await Promise.all([
-                    withRetry(()=>getProfile(user.id)),
-                    withRetry(()=>getActiveSubscription(user.id)),
-                ]);
-                // setProfile(prof); setSubscription(sub); setIsAdmin(prof?.role==="admin"); setSubChecking(false);
-                // if (sub) { writeSubCache(user.id,sub.end_date); setScreen("app"); }
-                // else     { clearSubCache(); setScreen("payment"); }
+        // REPLACE WITH:
+        const resolveUser = useCallback(async (user: User | null, event: string) => {
+            // On SIGNED_OUT always reset
+            if (!user) {
+                resolvingRef.current = false;
+                setAuthUser(null);
+                setProfile(null);
+                setSubscription(null);
+                setIsAdmin(false);
+                setScreen("auth");
+                return;
+            }
 
-                // REPLACE WITH:
-                setProfile(prof); setSubscription(sub); setIsAdmin(prof?.role==="admin"); setSubChecking(false);
+            // Ignore duplicate firings — but always allow TOKEN_REFRESHED and SIGNED_IN
+            if (resolvingRef.current && event === "INITIAL_SESSION") return;
+            resolvingRef.current = true;
+
+            try {
+                setAuthUser(user);
+                setSubChecking(true);
+
+                const [prof, sub] = await Promise.all([
+                    withRetry(() => getProfile(user.id)),
+                    withRetry(() => getActiveSubscription(user.id)),
+                ]);
+
+                const role = prof?.role ?? "user";
+                setProfile(prof);
+                setSubscription(sub);
+                setIsAdmin(role === "admin");
+                setSubChecking(false);
+
                 if (sub) {
                     writeSubCache(user.id, sub.end_date);
-                    // Always reset both guards before loading so refresh never blocks
+                    // Reset all loading guards before transitioning
                     lessonsLoadingRef.current = false;
                     scriptureSeeded.current = false;
                     setLessonsLoading(false);
-                    // Set screen AFTER resetting guards
+                    // Store role on a ref so loadLessons always has it
+                    profileRoleRef.current = role;
                     setScreen("app");
-                    // Pass role directly — profile state may not have updated yet
-                    void loadLessons(prof?.role ?? undefined);
-                    void loadScripturesFromDB();
                 } else {
                     clearSubCache();
                     setScreen("payment");
                 }
-            } finally { resolvingRef.current = false; }
+            } catch (err) {
+                console.error("resolveUser error:", err);
+                setSubChecking(false);
+            } finally {
+                resolvingRef.current = false;
+            }
         }, []);
 
+        // useEffect(() => {
+        //     const { data:{subscription:listener} } = supabase.auth.onAuthStateChange(async(_ev,session) => {
+        //         if (loadingPctRef.current<100) await new Promise(r=>setTimeout(r,2000));
+        //         await resolveUser(session?.user??null);
+        //     });
+        //     return () => listener.unsubscribe();
+        // }, [resolveUser]);
+        // REPLACE WITH:
         useEffect(() => {
-            const { data:{subscription:listener} } = supabase.auth.onAuthStateChange(async(_ev,session) => {
-                if (loadingPctRef.current<100) await new Promise(r=>setTimeout(r,2000));
-                await resolveUser(session?.user??null);
+            const { data:{subscription:listener} } = supabase.auth.onAuthStateChange(async(event, session) => {
+                if (loadingPctRef.current < 100) await new Promise(r => setTimeout(r, 2000));
+                await resolveUser(session?.user ?? null, event);
             });
             return () => listener.unsubscribe();
         }, [resolveUser]);
@@ -1305,43 +1334,42 @@
         //     void loadLessons();
         //     void loadScripturesFromDB();
         // REPLACE WITH:
-          useEffect(() => {
-        if (screen !== "app") return;
+        // REPLACE WITH:
+        useEffect(() => {
+            if (screen !== "app") return;
 
-        let isMounted = true;
-        void isMounted; // suppress unused warning
+            // Data is loaded by resolveUser — this effect only manages realtime
+            const channel = supabase
+                .channel("lessons-realtime")
+                .on(
+                    "postgres_changes",
+                    { event: "UPDATE", schema: "public", table: "lessons" },
+                    (payload) => {
+                        const updatedLesson = payload.new as LessonRow;
+                        const role = profileRoleRef.current;
 
-        // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
-        const channel = supabase
-            .channel("lessons-realtime")
-            .on(
-                "postgres_changes",
-                { event: "UPDATE", schema: "public", table: "lessons" },
-                (payload) => {
-                    const updatedLesson = payload.new as LessonRow;
-                    
-                    if (profile?.role === "admin") {
-                        // Admin safely updates that specific row inside their full master list array
-                        setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
-                        if (updatedLesson.id === activeLessonIdRef.current) {
+                        if (role === "admin") {
+                            setLessons(prev => prev.map(l =>
+                                l.id === updatedLesson.id ? updatedLesson : l
+                            ));
+                            if (updatedLesson.id === activeLessonIdRef.current) {
+                                setContentData(hydrateLessonData(updatedLesson.content));
+                            }
+                        } else if (updatedLesson.is_active) {
+                            setActiveLesson(updatedLesson.id);
                             setContentData(hydrateLessonData(updatedLesson.content));
+                            setLessons([updatedLesson]);
                         }
-                    } else if (updatedLesson.is_active) {
-                        // Standard users shift immediately to the updated active view context
-                        setActiveLesson(updatedLesson.id);
-                        setContentData(hydrateLessonData(updatedLesson.content));
-                        setLessons([updatedLesson]);
                     }
-                }
-            )
-            .subscribe();
+                )
+                .subscribe();
 
-        return () => {
-            isMounted = false;
-            void supabase.removeChannel(channel);
-        };
-    // }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson, profile?.role]);
-    }, [screen, setActiveLesson, profile?.role]);
+            return () => {
+                void supabase.removeChannel(channel);
+            };
+        }, [screen, setActiveLesson, loadLessons, loadScripturesFromDB]);
+        // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
+        
 
 
 
