@@ -1342,15 +1342,7 @@ import logo from "./assets/logo.png";
         if (screen === "app" && (!profile || (lessonsLoading && lessons.length === 0))) {
             
             // AUTOMATIC RESCUE: If mobile network lags for more than 4 seconds, force open!
-            setTimeout(() => {
-                if (lessonsLoading) {
-                    console.warn("Mobile loading freeze broken automatically.");
-                    // Forcefully drop loading flags directly
-                    setLessonsLoading(false);
-                    if (lessonsLoadingRef) lessonsLoadingRef.current = false;
-                }
-            }, 4000);
-
+            
             return (
                 <div className="fixed inset-0 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 flex flex-col items-center justify-center z-50">
                     <div className="text-center px-4">
