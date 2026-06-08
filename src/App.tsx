@@ -513,23 +513,7 @@ import logo from "./assets/logo.png";
         const [lessons,          setLessons]          = useState<LessonRow[]>([]);
         const [activeLessonId,   setActiveLessonId]   = useState<string|null>(null);
         const [contentData,      setContentData]      = useState<LessonContent>(makeDefaultContent());
-        
-        const [lessonsLoading]   = useState(true);
-        const setLessonsLoading = useCallback((val: boolean) => {
-            lessonsLoadingRef.current = val;
-            setLessonsLoading(val);
-
-            // ⚡ EMERGENCY VALVE: Force-releases the UI guard lock on mobile connection lags
-            if (val) {
-                setTimeout(() => {
-                    if (lessonsLoadingRef.current) {
-                        console.warn("Mobile network thread unjammed safely.");
-                        lessonsLoadingRef.current = false;
-                        setLessonsLoading(false);
-                    }
-                }, 1500);
-            }
-        }, []);
+        const [lessonsLoading,   setLessonsLoading]   = useState(true);
         const lessonsLoadingRef = useRef(false);
         const [lessonSaving,     setLessonSaving]     = useState(false);
         const [showLessonPicker, setShowLessonPicker] = useState(false);
@@ -604,72 +588,49 @@ import logo from "./assets/logo.png";
         // ─────────────────────────────────────────────────────────────────────────
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
-    // 🧠 PROFILE-GATED SYSTEM LOADING BOOTSTRAP (Fixes mobile "Welcome Back" trap)
-    // ─────────────────────────────────────────────────────────────────────────
-    //  LESSON HELPERS (REPAIRED & UNLOOSEABLE FOR ALL PLATFORMS)
-    // ─────────────────────────────────────────────────────────────────────────
     const loadLessons = useCallback(async () => {
-        // Prevent duplicate simultaneous trigger requests
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
 
         try {
-            console.log("Fetching lesson data from Supabase channel...");
             const { data, error } = await supabase
                 .from("lessons")
                 .select("*")
                 .order("created_at", { ascending: false });
 
-            if (error) {
-                console.error("Supabase table fetch error:", error);
-                throw error;
-            }
+            if (error) throw error;
 
             const rows = (data ?? []) as LessonRow[];
-            console.log(`Lessons successfully loaded. Row count: ${rows.length}`);
             
             if (rows.length > 0) {
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
                 if (profile?.role === "admin") {
+                    // Admin retains all fetched entries intact (Obedience, Disobedience, etc.)
                     setLessons(rows);
                     const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
                     setActiveLessonId(currentActive.id);
                     setContentData(hydrateLessonData(currentActive.content));
                 } else {
+                    // Standard users narrow focus strictly onto the broadcast window target
                     setLessons([liveLesson]);
                     setActiveLessonId(liveLesson.id);
                     setContentData(hydrateLessonData(liveLesson.content));
                 }
             } else {
-                // If table is completely empty, serve factory template smoothly
-                console.warn("No lesson rows returned. Falling back to default template.");
                 setLessons([]);
                 setActiveLessonId(null);
                 setContentData(makeDefaultContent());
             }
         } catch (err) {
-            console.error("Critical fallback caught inside loadLessons pipeline:", err);
-            // GUARANTEE CRASH SAFENESS: Populate a default view so the user isn't stuck on a black loader screen
-            setLessons([]);
-            setActiveLessonId(null);
-            setContentData(makeDefaultContent());
+            console.error("loadLessons internal pipeline processing failure:", err);
         } finally {
-            console.log("Forcing layout lock teardown flag.");
+            // Tightly lock baseline thread parameters
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, [profile?.role, setLessonsLoading]);
-
-    // ⚡ PROTECTED INITIALIZATION MOUNT
-    useEffect(() => {
-        // CRITICAL MOBILE RECOVERY: Exit early if the profile payload has not yet arrived.
-        // This stops the app from rendering a premature layout frame before it knows who the user is!
-        if (!profile) return;
-
-        void loadLessons();
-    }, [profile, loadLessons]);
+    }, [profile?.role]); // Drop secondary hooks from tracking arrays to enforce static compilation signatures
 
     // Ensure lessons are loaded on mount and when profile role changes
     useEffect(() => { void loadLessons(); }, [loadLessons]);
@@ -919,50 +880,6 @@ import logo from "./assets/logo.png";
             });
             return () => listener.unsubscribe();
         }, [resolveUser]);
-
-        useEffect(() => {
-            // Safe initialize listener for Supabase authentication states
-            const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange(async (event, session) => {
-                const user = session?.user ?? null;
-                setAuthUser(user);
-
-                if (!user) {
-                    // Once loading bar hits 100%, safely render auth panel if user is missing
-                    if (loadingPct === 100) {
-                        setScreen("auth");
-                        setLessonsLoading(false);
-                    }
-                    return;
-                }
-
-                try {
-                    // Active session detected -> hydrate application context layers
-                    const prof = await getProfile(user.id);
-                    setProfile(prof);
-                    setIsAdmin(prof?.role === 'admin');
-
-                    const sub = await getActiveSubscription(user.id);
-                    setSubscription(sub);
-
-                    if (loadingPct === 100) {
-                        if (prof?.role === 'admin' || sub) {
-                            setScreen("app");
-                        } else {
-                            setScreen("payment");
-                        }
-                    }
-                } catch (err) {
-                    console.error("Auth context pipeline initialization error:", err);
-                    if (loadingPct === 100) setScreen("auth");
-                } finally {
-                    if (loadingPct === 100) setLessonsLoading(false);
-                }
-            });
-
-            return () => {
-                authListener.unsubscribe();
-            };
-        }, [loadingPct, setScreen, setLessonsLoading]);
 
 
 
@@ -1337,23 +1254,6 @@ import logo from "./assets/logo.png";
                 </div>
             );
         }
-
-        // ─── ⚡ SELF-HEALING UI LAYER BOUNDARY GUARD ──────────────────────────
-        if (screen === "app" && (!profile || (lessonsLoading && lessons.length === 0))) {
-            
-            // AUTOMATIC RESCUE: If mobile network lags for more than 4 seconds, force open!
-            
-            return (
-                <div className="fixed inset-0 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 flex flex-col items-center justify-center z-50">
-                    <div className="text-center px-4">
-                        <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-4 mx-auto" />
-                        <h1 className="text-2xl font-bold text-white mb-1">Life Gate Ministries Worldwide</h1>
-                        <p className="text-blue-200 text-sm font-medium tracking-wide animate-pulse opacity-80">Synchronizing lesson records safely...</p>
-                    </div>
-                </div>
-            );
-        }
-        // ───────────────────────────────────────────────────────────────────────
 
         // ═════════════════════════════════════════════════════════════════════════
         //  AUTH SCREEN
