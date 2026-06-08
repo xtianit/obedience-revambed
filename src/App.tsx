@@ -1145,7 +1145,7 @@
                     void supabase.removeChannel(channel);
                     document.removeEventListener("visibilitychange", handleVisibility); // ← add this too
                 };
-            }, [screen, loadLessons, loadScripturesFromDB]);
+            }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson]);
 
 
 
