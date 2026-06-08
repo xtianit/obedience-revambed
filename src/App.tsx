@@ -781,53 +781,90 @@
 
         // Load all lessons from DB. FIX #1/#4 — lessons stored in DB with title,
         // all same page, only data changes when switching.
-            const loadLessons = useCallback(async () => {
-                if (lessonsLoadingRef.current) return; // block concurrent calls
-                    lessonsLoadingRef.current = true;
-                    setLessonsLoading(true);
+            // const loadLessons = useCallback(async () => {
+            //     if (lessonsLoadingRef.current) return; // block concurrent calls
+            //         lessonsLoadingRef.current = true;
+            //         setLessonsLoading(true);
 
+            //         const { data, error } = await supabase
+            //             .from("lessons")
+            //             .select("*")
+            //             .order("created_at", { ascending: false });
+
+            //     if (error) {
+            //         console.error("loadLessons:", error);
+            //         setLessonsLoading(false);
+            //         lessonsLoadingRef.current = false;
+            //         return;
+            //     }
+
+            //     if (data && data.length > 0) {
+            //         const rows = data as LessonRow[];
+            //         setLessons(rows);
+            //         const active = rows.find(l => l.is_active) ?? rows[0];
+            //         setActiveLesson(active.id);
+            //         setContentData(hydrateLessonData(active.content));
+                
+            //     } else if (!scriptureSeeded.current) {
+            //         scriptureSeeded.current = true;
+            //         const def = makeDefaultContent();
+            //         const { data: ins, error: insErr } = await supabase
+            //             .from("lessons")
+            //             .insert({ title: "OBEDIENCE", is_active: true, content: def })
+            //             .select()
+            //             .single();
+            //         // if (!insErr && ins) {
+            //         //     setLessons([ins as LessonRow]);
+            //         //     setActiveLessonId(ins.id);
+            //         //     setContentData(hydrateLessonData(def));
+            //         // }
+            //         if (!insErr && ins) {
+            //             setLessons([ins as LessonRow]);
+            //             setActiveLesson(ins.id);
+            //             setContentData(hydrateLessonData(def));
+            //         }
+            //     }
+
+            //     setLessonsLoading(false);
+            //     lessonsLoadingRef.current = false;
+            // }, [setActiveLesson]);
+            const loadLessons = useCallback(async () => {
+                if (lessonsLoadingRef.current) return;
+
+                lessonsLoadingRef.current = true;
+                setLessonsLoading(true);
+
+                try {
                     const { data, error } = await supabase
                         .from("lessons")
                         .select("*")
                         .order("created_at", { ascending: false });
 
-                if (error) {
-                    console.error("loadLessons:", error);
-                    setLessonsLoading(false);
+                    if (error) throw error;
+
+                    const rows = (data ?? []) as LessonRow[];
+
+                    if (rows.length > 0) {
+                        const active =
+                            rows.find(l => l.is_active) ??
+                            rows[0];
+
+                        setLessons(rows);
+                        setActiveLesson(active.id);
+                        setContentData(
+                            hydrateLessonData(active.content)
+                        );
+                    }
+                } catch (err) {
+                    console.error(err);
+                } finally {
                     lessonsLoadingRef.current = false;
-                    return;
+                    setLessonsLoading(false);
                 }
+            }, [setActiveLesson]);
 
-            if (data && data.length > 0) {
-                 const rows = data as LessonRow[];
-                setLessons(rows);
-                const active = rows.find(l => l.is_active) ?? rows[0];
-                setActiveLesson(active.id);
-                setContentData(hydrateLessonData(active.content));
-            
-           } else if (!scriptureSeeded.current) {
-                scriptureSeeded.current = true;
-                const def = makeDefaultContent();
-                const { data: ins, error: insErr } = await supabase
-                    .from("lessons")
-                    .insert({ title: "OBEDIENCE", is_active: true, content: def })
-                    .select()
-                    .single();
-                // if (!insErr && ins) {
-                //     setLessons([ins as LessonRow]);
-                //     setActiveLessonId(ins.id);
-                //     setContentData(hydrateLessonData(def));
-                // }
-                if (!insErr && ins) {
-                    setLessons([ins as LessonRow]);
-                    setActiveLesson(ins.id);
-                    setContentData(hydrateLessonData(def));
-                }
-            }
 
-            setLessonsLoading(false);
-            lessonsLoadingRef.current = false;
-        }, [setActiveLesson]);
+
         // Debounced save — waits 1.2s after last edit before writing to DB
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
