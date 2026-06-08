@@ -909,6 +909,50 @@ import logo from "./assets/logo.png";
             return () => listener.unsubscribe();
         }, [resolveUser]);
 
+        useEffect(() => {
+            // Safe initialize listener for Supabase authentication states
+            const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                const user = session?.user ?? null;
+                setAuthUser(user);
+
+                if (!user) {
+                    // Once loading bar hits 100%, safely render auth panel if user is missing
+                    if (loadingPct === 100) {
+                        setScreen("auth");
+                        setLessonsLoading(false);
+                    }
+                    return;
+                }
+
+                try {
+                    // Active session detected -> hydrate application context layers
+                    const prof = await getProfile(user.id);
+                    setProfile(prof);
+                    setIsAdmin(prof?.role === 'admin');
+
+                    const sub = await getActiveSubscription(user.id);
+                    setSubscription(sub);
+
+                    if (loadingPct === 100) {
+                        if (prof?.role === 'admin' || sub) {
+                            setScreen("app");
+                        } else {
+                            setScreen("payment");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Auth context pipeline initialization error:", err);
+                    if (loadingPct === 100) setScreen("auth");
+                } finally {
+                    if (loadingPct === 100) setLessonsLoading(false);
+                }
+            });
+
+            return () => {
+                authListener.unsubscribe();
+            };
+        }, [loadingPct, setScreen, setLessonsLoading]);
+
 
 
     // 🧠 FIXED PRODUCTION INITIALIZATION (Replaces the two startup effects)
