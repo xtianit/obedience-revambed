@@ -588,7 +588,7 @@ import logo from "./assets/logo.png";
         // ─────────────────────────────────────────────────────────────────────────
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
-       const loadLessons = useCallback(async () => {
+    const loadLessons = useCallback(async () => {
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
@@ -599,42 +599,41 @@ import logo from "./assets/logo.png";
                 .select("*")
                 .order("created_at", { ascending: false });
 
-            if (error) {
-                console.error("loadLessons handling failure:", error);
-                setLessonsLoading(false);
-                lessonsLoadingRef.current = false;
-                return;
-            }
+            if (error) throw error;
 
-            if (data && data.length > 0) {
-                const rows = data as LessonRow[];
-                
-                // 🧠 BATCH STEP: Consolidate state modifications into a single execution step
-                setLessons(rows);
-                const active = rows[0];
-                setActiveLessonId(active.id);
-                setContentData(hydrateLessonData(active.content));
-            } else if (!scriptureSeeded.current) {
-                scriptureSeeded.current = true;
-                const def = makeDefaultContent();
-                const { data: ins, error: insErr } = await supabase
-                    .from("lessons")
-                    .insert({ title: "OBEDIENCE", is_active: true, content: def })
-                    .select()
-                    .single();
+            const rows = (data ?? []) as LessonRow[];
+            
+            if (rows.length > 0) {
+                const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
-                if (!insErr && ins) {
-                    setLessons([ins as LessonRow]);
-                    setActiveLessonId(ins.id);
-                    setContentData(hydrateLessonData(def));
+                if (profile?.role === "admin") {
+                    // Admin retains all fetched entries intact (Obedience, Disobedience, etc.)
+                    setLessons(rows);
+                    const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
+                    setActiveLessonId(currentActive.id);
+                    setContentData(hydrateLessonData(currentActive.content));
+                } else {
+                    // Standard users narrow focus strictly onto the broadcast window target
+                    setLessons([liveLesson]);
+                    setActiveLessonId(liveLesson.id);
+                    setContentData(hydrateLessonData(liveLesson.content));
                 }
+            } else {
+                setLessons([]);
+                setActiveLessonId(null);
+                setContentData(makeDefaultContent());
             }
+        } catch (err) {
+            console.error("loadLessons internal pipeline processing failure:", err);
         } finally {
-            // Keep status variables tightly guarded
+            // Tightly lock baseline thread parameters
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, []); // Identity reference pointer remains completely static
+    }, [profile?.role]); // Drop secondary hooks from tracking arrays to enforce static compilation signatures
+
+    // Ensure lessons are loaded on mount and when profile role changes
+    useEffect(() => { void loadLessons(); }, [loadLessons]);
 
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
@@ -887,36 +886,29 @@ import logo from "./assets/logo.png";
     // 🧠 FIXED PRODUCTION INITIALIZATION (Replaces the two startup effects)
    // 🧠 CODE-ONLY PRODUCTION REMEDIAL CLEAR
     // 🧠 FIXED PRODUCTION ARCHITECTURE (Halts recursive mobile loops)
+    // 🧠 LIVE PRODUCTION CIRCUIT BREAKER: Clears infinite loading loops WITHOUT browser refresh
     useEffect(() => {
         if (screen !== "app") return;
 
-        let isMounted = true;
-        scriptureSeeded.current = false;
-
-        const executeSecureBootstrap = async () => {
-            // Guard: Stand down if a thread is already actively running
-            if (lessonsLoadingRef.current) return;
-            
-            try {
-                // Fetch lessons and scripture databases concurrently in a parallel layout block
-                await Promise.all([
-                    loadLessons(),
-                    loadScripturesFromDB()
-                ]);
-            } catch (err) {
-                console.error("System bootstrap execution anomaly:", err);
+        // If the screen stays stuck on a spinner for more than 3.5 seconds, force-clear it
+        const circuitBreaker = setTimeout(() => {
+            if (lessonsLoading) {
+                console.warn("Infinite mobile loop detected. Engaging automatic circuit breaker...");
+                
+                // ⚡ FORCE CLEAR: Drop flags directly through reference hooks to bypass state jam
+                lessonsLoadingRef.current = false;
+                setLessonsLoading(false);
+                
+                // Fallback: If lessons array is completely empty, hydrate standard baseline view
+                if (lessons.length === 0) {
+                    const fallbackContent = makeDefaultContent("Welcome Back", new Date().toLocaleDateString());
+                    setContentData(hydrateLessonData(fallbackContent));
+                }
             }
-        };
+        }, 3500); // 3.5 Seconds threshold maximum limit
 
-        if (isMounted) {
-            void executeSecureBootstrap();
-        }
-
-        return () => {
-            isMounted = false;
-        };
-        // ⚡ VERDICT REMEDY: Tracking ONLY [screen] breaks the infinite mobile thread loop completely
-    }, [screen]);
+        return () => clearTimeout(circuitBreaker);
+    }, [screen, lessonsLoading, lessons.length]);
 
 
 
