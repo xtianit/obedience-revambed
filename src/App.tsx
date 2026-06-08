@@ -776,43 +776,75 @@
         }, []);
 
        
-            const loadLessons = useCallback(async () => {
-                if (lessonsLoadingRef.current) return;
+            // const loadLessons = useCallback(async () => {
+            //     if (lessonsLoadingRef.current) return;
 
-                lessonsLoadingRef.current = true;
-                setLessonsLoading(true);
+            //     lessonsLoadingRef.current = true;
+            //     setLessonsLoading(true);
                 
 
-                try {
-                    const { data, error } = await supabase
-                        .from("lessons")
-                        .select("*")
-                        .order("created_at", { ascending: false });
+            //     try {
+            //         const { data, error } = await supabase
+            //             .from("lessons")
+            //             .select("*")
+            //             .order("created_at", { ascending: false });
                         
 
-                    if (error) throw error;
+            //         if (error) throw error;
 
-                    const rows = (data ?? []) as LessonRow[];
+            //         const rows = (data ?? []) as LessonRow[];
 
-                    if (rows.length > 0) {
-                        const active =
-                            rows.find(l => l.is_active) ??
-                            rows[0];
+            //         if (rows.length > 0) {
+            //             const active =
+            //                 rows.find(l => l.is_active) ??
+            //                 rows[0];
 
-                        setLessons(rows);
-                        setActiveLesson(active.id);
-                        setContentData(
-                            hydrateLessonData(active.content)
-                        );
-                    }
-                } catch (err) {
-                    console.error(err);
-                } finally {
-                    lessonsLoadingRef.current = false;
-                    setLessonsLoading(false);
+            //             setLessons(rows);
+            //             setActiveLesson(active.id);
+            //             setContentData(
+            //                 hydrateLessonData(active.content)
+            //             );
+            //         }
+            //     } catch (err) {
+            //         console.error(err);
+            //     } finally {
+            //         lessonsLoadingRef.current = false;
+            //         setLessonsLoading(false);
 
+            //     }
+            // }, [setActiveLesson]);
+            const loadLessons = useCallback(async () => {
+            // 1. Safety check to prevent double-calls
+            if (lessonsLoadingRef.current) return;
+            
+            lessonsLoadingRef.current = true;
+            setLessonsLoading(true);
+
+            try {
+                const { data, error } = await supabase
+                    .from("lessons")
+                    .select("*")
+                    .order("created_at", { ascending: false });
+
+                if (error) throw error;
+
+                const rows = (data ?? []) as LessonRow[];
+                setLessons(rows); // Always set the list, even if empty
+
+                if (rows.length > 0) {
+                    const active = rows.find(l => l.is_active) ?? rows[0];
+                    setActiveLesson(active.id);
+                    setContentData(hydrateLessonData(active.content));
                 }
-            }, [setActiveLesson]);
+            } catch (err) {
+                console.error("Error loading lessons:", err);
+                // On mobile, you might want to show an alert here
+            } finally {
+                // 2. CRITICAL: This must be outside the 'if' to stop the spinner
+                lessonsLoadingRef.current = false;
+                setLessonsLoading(false);
+            }
+        }, [setActiveLesson]);
 
 
 
