@@ -887,25 +887,27 @@ import logo from "./assets/logo.png";
    // 🧠 CODE-ONLY PRODUCTION REMEDIAL CLEAR
     // 🧠 FIXED PRODUCTION ARCHITECTURE (Halts recursive mobile loops)
     // 🧠 LIVE PRODUCTION CIRCUIT BREAKER: Clears infinite loading loops WITHOUT browser refresh
+    // 🧠 SMART PRODUCTION CIRCUIT BREAKER: Prevents premature "Welcome Back" overrides
     useEffect(() => {
         if (screen !== "app") return;
 
-        // If the screen stays stuck on a spinner for more than 3.5 seconds, force-clear it
+        // Give mobile networks a solid 5-second window to resolve the database flight safely
         const circuitBreaker = setTimeout(() => {
             if (lessonsLoading) {
-                console.warn("Infinite mobile loop detected. Engaging automatic circuit breaker...");
+                console.warn("Mobile network latency handled. Safe-disarming loader state...");
                 
-                // ⚡ FORCE CLEAR: Drop flags directly through reference hooks to bypass state jam
+                // ⚡ Drop loading flag to reveal the screen interface layout
                 lessonsLoadingRef.current = false;
                 setLessonsLoading(false);
                 
-                // Fallback: If lessons array is completely empty, hydrate standard baseline view
-                if (lessons.length === 0) {
+                // CRITICAL SEPARATION: Only inject "Welcome Back" if the database is truly empty 
+                // AND we are certain no background network flight is currently running.
+                if (lessons.length === 0 && !lessonsLoadingRef.current) {
                     const fallbackContent = makeDefaultContent("Welcome Back", new Date().toLocaleDateString());
                     setContentData(hydrateLessonData(fallbackContent));
                 }
             }
-        }, 3500); // 3.5 Seconds threshold maximum limit
+        }, 5000); // 5 Seconds maximum limit optimized for standard mobile data connections
 
         return () => clearTimeout(circuitBreaker);
     }, [screen, lessonsLoading, lessons.length]);
