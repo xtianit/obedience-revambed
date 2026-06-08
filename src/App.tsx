@@ -129,9 +129,6 @@
     const writeSubCache = (uid:string, end:string) => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({uid,end})); } catch {
         return null;
     } };
-    const readSubCache  = (uid:string): boolean => {
-        try { const r = localStorage.getItem(CACHE_KEY); if (!r) return false; const d=JSON.parse(r); return d.uid===uid && new Date(d.end)>new Date(); } catch { return false; }
-    };
     const clearSubCache = () => { try { localStorage.removeItem(CACHE_KEY); } catch {
         return null;
     } };
@@ -1108,7 +1105,8 @@
             setNewLessonDate("");
             
         } catch (error: unknown) {
-            alert("Failed to create lesson: " + (error.message || error));
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            alert("Failed to create lesson: " + errorMessage);
         } finally {
             setCreatingLesson(false);
         }
@@ -1262,7 +1260,6 @@
                 if (!user) { resolvingRef.current = false; setScreen("auth"); return; }
                     setAuthUser(user);
                     setSubChecking(true);
-                if (readSubCache(user.id)) setScreen("app");
                 const [prof,sub] = await Promise.all([
                     withRetry(()=>getProfile(user.id)),
                     withRetry(()=>getActiveSubscription(user.id)),
@@ -1274,15 +1271,19 @@
                 // REPLACE WITH:
                 setProfile(prof); setSubscription(sub); setIsAdmin(prof?.role==="admin"); setSubChecking(false);
                 if (sub) {
-                    writeSubCache(user.id,sub.end_date);
+                    writeSubCache(user.id, sub.end_date);
+                    // Always reset both guards before loading so refresh never blocks
                     lessonsLoadingRef.current = false;
                     scriptureSeeded.current = false;
+                    setLessonsLoading(false);
+                    // Set screen AFTER resetting guards
                     setScreen("app");
-                    // Load with the freshly resolved role — not stale profile state
+                    // Pass role directly — profile state may not have updated yet
                     void loadLessons(prof?.role ?? undefined);
                     void loadScripturesFromDB();
                 } else {
-                    clearSubCache(); setScreen("payment");
+                    clearSubCache();
+                    setScreen("payment");
                 }
             } finally { resolvingRef.current = false; }
         }, []);
@@ -1304,10 +1305,11 @@
         //     void loadLessons();
         //     void loadScripturesFromDB();
         // REPLACE WITH:
-           useEffect(() => {
-            if (screen !== "app") return;
+          useEffect(() => {
+        if (screen !== "app") return;
 
-            let isMounted = true;
+        let isMounted = true;
+        void isMounted; // suppress unused warning
 
         // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
         const channel = supabase
