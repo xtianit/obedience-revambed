@@ -781,53 +781,51 @@
 
         // Load all lessons from DB. FIX #1/#4 — lessons stored in DB with title,
         // all same page, only data changes when switching.
-            const loadLessons = useCallback(async () => {
-                if (lessonsLoadingRef.current) return; // block concurrent calls
-                    lessonsLoadingRef.current = true;
-                    setLessonsLoading(true);
+        // Load all lessons from DB. Fixes empty arrays & continuous array evaluations on mobile view ports.
+    const loadLessons = useCallback(async () => {
+        if (lessonsLoadingRef.current) return;
+        lessonsLoadingRef.current = true;
+        setLessonsLoading(true);
 
-                    const { data, error } = await supabase
-                        .from("lessons")
-                        .select("*")
-                        .order("created_at", { ascending: false });
+        try {
+            const { data, error } = await supabase
+                .from("lessons")
+                .select("*")
+                .order("created_at", { ascending: false });
 
-                if (error) {
-                    console.error("loadLessons:", error);
-                    setLessonsLoading(false);
-                    lessonsLoadingRef.current = false;
-                    return;
-                }
+            if (error) throw error;
 
-            if (data && data.length > 0) {
-                 const rows = data as LessonRow[];
-                setLessons(rows);
-                const active = rows.find(l => l.is_active) ?? rows[0];
-                setActiveLesson(active.id);
-                setContentData(hydrateLessonData(active.content));
+            const rows = (data ?? []) as LessonRow[];
             
-           } else if (!scriptureSeeded.current) {
-                scriptureSeeded.current = true;
-                const def = makeDefaultContent();
-                const { data: ins, error: insErr } = await supabase
-                    .from("lessons")
-                    .insert({ title: "OBEDIENCE", is_active: true, content: def })
-                    .select()
-                    .single();
-                // if (!insErr && ins) {
-                //     setLessons([ins as LessonRow]);
-                //     setActiveLessonId(ins.id);
-                //     setContentData(hydrateLessonData(def));
-                // }
-                if (!insErr && ins) {
-                    setLessons([ins as LessonRow]);
-                    setActiveLesson(ins.id);
-                    setContentData(hydrateLessonData(def));
-                }
-            }
+            if (rows.length > 0) {
+                const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
+                if (profile?.role === "admin") {
+                    // Admins load the entire sequence context safely (Obedience, Disobedience, etc.)
+                    setLessons(rows);
+                    const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
+                    setActiveLesson(currentActive.id);
+                    setContentData(hydrateLessonData(currentActive.content));
+                } else {
+                    // Regular users observe only the designated single active broadcast target
+                    setLessons([liveLesson]);
+                    setActiveLesson(liveLesson.id);
+                    setContentData(hydrateLessonData(liveLesson.content));
+                }
+            } else {
+                setLessons([]);
+                setActiveLesson(null);
+                setContentData(makeDefaultContent());
+            }
+        } catch (err) {
+            console.error("loadLessons execution error:", err);
+        } finally {
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
-        }, [setActiveLesson]);
+        }
+    }, [profile?.role, setActiveLesson]);
+
+    
         // Debounced save — waits 1.2s after last edit before writing to DB
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
@@ -881,22 +879,71 @@
         updateContent("lessonTitle", contentData.lessonTitle);
     }
 };
+        // const createNewLesson = async () => {
+        //     if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
+        //     setCreatingLesson(true);
+        //     const newContent = makeDefaultContent(newLessonTitle.trim(), newLessonDate.trim() || new Date().toLocaleDateString());
+        //     const { data, error } = await supabase
+        //         .from("lessons")
+        //         .insert({ title:newLessonTitle.trim(), is_active:true, content:newContent })
+        //         .select().single();
+        //     if (error) { alert("Failed to create lesson: "+error.message); setCreatingLesson(false); return; }
+        //     const row = data as LessonRow;
+        //     setLessons(prev => [row, ...prev]);
+        //     setCreatingLesson(false);
+        //     setShowNewLesson(false);
+        //     setNewLessonTitle(""); setNewLessonDate("");
+        //     await switchLesson(row);
+        // };
+
+
         const createNewLesson = async () => {
             if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
             setCreatingLesson(true);
-            const newContent = makeDefaultContent(newLessonTitle.trim(), newLessonDate.trim() || new Date().toLocaleDateString());
-            const { data, error } = await supabase
-                .from("lessons")
-                .insert({ title:newLessonTitle.trim(), is_active:true, content:newContent })
-                .select().single();
-            if (error) { alert("Failed to create lesson: "+error.message); setCreatingLesson(false); return; }
-            const row = data as LessonRow;
-            setLessons(prev => [row, ...prev]);
-            setCreatingLesson(false);
-            setShowNewLesson(false);
-            setNewLessonTitle(""); setNewLessonDate("");
-            await switchLesson(row);
+            
+            const newContent = makeDefaultContent(
+                newLessonTitle.trim(), 
+                newLessonDate.trim() || new Date().toLocaleDateString()
+            );
+
+            try {
+                // Fix: Create the new lesson as a regular background draft (is_active: false)
+                // This stops it from instantly interrupting users or hiding your admin inventory list
+                const { data, error } = await supabase
+                    .from("lessons")
+                    .insert({ 
+                        title: newLessonTitle.trim(), 
+                        is_active: false, 
+                        content: newContent 
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                const row = data as LessonRow;
+
+                // Update the admin's dropdown state array immediately
+                setLessons(prev => [row, ...prev]);
+                
+                // Explicitly map local view content without calling the problematic 'switchLesson' await loop
+                setActiveLesson(row.id);
+                setContentData(hydrateLessonData(row.content));
+
+                // Reset modal states cleanly
+                setShowNewLesson(false);
+                setNewLessonTitle(""); 
+                setNewLessonDate("");
+                
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : String(error);
+                alert("Failed to create lesson: " + message);
+            } finally {
+                setCreatingLesson(false);
+            }
         };
+
+
 
         const deleteLesson = async (lessonId:string) => {
             if (!confirm("Delete this lesson permanently?")) return;
