@@ -605,51 +605,62 @@ import logo from "./assets/logo.png";
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
     // 🧠 PROFILE-GATED SYSTEM LOADING BOOTSTRAP (Fixes mobile "Welcome Back" trap)
+    // ─────────────────────────────────────────────────────────────────────────
+    //  LESSON HELPERS (REPAIRED & UNLOOSEABLE FOR ALL PLATFORMS)
+    // ─────────────────────────────────────────────────────────────────────────
     const loadLessons = useCallback(async () => {
-        // Guard: If an execution thread is already fetching, stand down
+        // Prevent duplicate simultaneous trigger requests
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
 
         try {
+            console.log("Fetching lesson data from Supabase channel...");
             const { data, error } = await supabase
                 .from("lessons")
                 .select("*")
                 .order("created_at", { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase table fetch error:", error);
+                throw error;
+            }
 
             const rows = (data ?? []) as LessonRow[];
+            console.log(`Lessons successfully loaded. Row count: ${rows.length}`);
             
             if (rows.length > 0) {
-                // Find whichever lesson is currently toggled as broadcast-active
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
                 if (profile?.role === "admin") {
-                    // Admin retains all fetched entries intact (Obedience, Disobedience, etc.)
                     setLessons(rows);
                     const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
                     setActiveLessonId(currentActive.id);
                     setContentData(hydrateLessonData(currentActive.content));
                 } else {
-                    // Standard users narrow focus strictly onto the broadcast window target
                     setLessons([liveLesson]);
                     setActiveLessonId(liveLesson.id);
                     setContentData(hydrateLessonData(liveLesson.content));
                 }
             } else {
-                // FALLBACK: Only fire if the database is genuinely, 100% empty
+                // If table is completely empty, serve factory template smoothly
+                console.warn("No lesson rows returned. Falling back to default template.");
                 setLessons([]);
                 setActiveLessonId(null);
-                setContentData(makeDefaultContent("OBEDIENCE", new Date().toLocaleDateString()));
+                setContentData(makeDefaultContent());
             }
         } catch (err) {
-            console.error("loadLessons internal pipeline processing failure:", err);
+            console.error("Critical fallback caught inside loadLessons pipeline:", err);
+            // GUARANTEE CRASH SAFENESS: Populate a default view so the user isn't stuck on a black loader screen
+            setLessons([]);
+            setActiveLessonId(null);
+            setContentData(makeDefaultContent());
         } finally {
+            console.log("Forcing layout lock teardown flag.");
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, [profile]); // Lock memory identity explicitly to the complete profile lifecycle
+    }, [profile?.role, setLessonsLoading]);
 
     // ⚡ PROTECTED INITIALIZATION MOUNT
     useEffect(() => {
