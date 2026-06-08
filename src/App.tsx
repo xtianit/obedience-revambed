@@ -1,4 +1,4 @@
-    import logo from "./assets/logo.png";
+import logo from "./assets/logo.png";
     import Header from "./components/Header";
     import { AdminPanel } from "./components/AdminPanel";
     import { useState, useEffect, useCallback, useRef, useMemo } from "react";
@@ -55,7 +55,7 @@
         memoryVerseRef:        string;
         introduction:          string;
         lessonIntroScriptures: string[];
-        lessonContentScriptures: string[];   // ← ADD THIS
+        lessonContentScriptures: string[];
         lessonReadingScriptures: string[];
         aims:                  string;
         objectives:            string;
@@ -121,17 +121,13 @@
         ],
     });
 
-    // ─── QUIZ QUESTIONS ───────────────────────────────────────────────────────────
-
-
     // ─── CACHE HELPERS ────────────────────────────────────────────────────────────
     const CACHE_KEY = "ssa_sub_cache";
-    const writeSubCache = (uid:string, end:string) => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({uid,end})); } catch {
-        return null;
-    } };
-    const clearSubCache = () => { try { localStorage.removeItem(CACHE_KEY); } catch {
-        return null;
-    } };
+    const writeSubCache = (uid:string, end:string) => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({uid,end})); } catch { return null; } };
+    const readSubCache  = (uid:string): boolean => {
+        try { const r = localStorage.getItem(CACHE_KEY); if (!r) return false; const d=JSON.parse(r); return d.uid===uid && new Date(d.end)>new Date(); } catch { return false; }
+    };
+    const clearSubCache = () => { try { localStorage.removeItem(CACHE_KEY); } catch { return null; } };
 
     // ─── RETRY HELPER ─────────────────────────────────────────────────────────────
     async function withRetry<T>(fn:()=>Promise<T|null>, tries=3, ms=600): Promise<T|null> {
@@ -142,9 +138,8 @@
         return null;
     }
 
-
     //==============================================================================
-    //Scriptures arena
+    // Scriptures arena
     //==============================================================================
 
     const IMPORT_VERSIONS = ["KJV","NKJV","NIV","ESV","AMP","NLT","MSG"] as const;
@@ -157,33 +152,16 @@
         error?:    string;
     };
 
-   
     function parseScriptureInput(raw: string): ImportRow[] {
         if (!raw.trim()) return [];
-
         try {
             let cleaned = raw.trim();
-
-            // remove "export default"
             cleaned = cleaned.replace(/^export\s+default\s+/m, "");
-
-            // remove "const something ="
-            cleaned = cleaned.replace(
-                /^const\s+\w+\s*=\s*/m,
-                ""
-            );
-
-            // remove trailing semicolon
+            cleaned = cleaned.replace(/^const\s+\w+\s*=\s*/m, "");
             cleaned = cleaned.replace(/;$/, "");
-
-            const obj = JSON.parse(cleaned) as Record<
-                string,
-                Partial<BibleVersions>
-            >;
-
+            const obj = JSON.parse(cleaned) as Record<string, Partial<BibleVersions>>;
             return Object.entries(obj).map(([reference, versions]) => ({
                 reference: reference.trim(),
-
                 versions: {
                     KJV: versions.KJV ?? "",
                     NKJV: versions.NKJV ?? "",
@@ -193,33 +171,19 @@
                     NLT: versions.NLT ?? "",
                     MSG: versions.MSG ?? "",
                 },
-
                 status: "pending",
             }));
         } catch (e) {
-            throw new Error(
-                e instanceof Error
-                    ? e.message
-                    : "Invalid JSON."
-            );
+            throw new Error(e instanceof Error ? e.message : "Invalid JSON.");
         }
     }
-
-
-   
-
-
-
-
 
     async function saveScriptureRow(s: ImportRow): Promise<string | null> {
         try {
             const cleanReference = s.reference.trim();
             if (!cleanReference) return "Reference is required.";
-
             const hasTranslation = Object.values(s.versions).some(v => v.trim() !== "");
             if (!hasTranslation) return "At least one translation is required.";
-
             const payload = {
                 reference: cleanReference,
                 kjv: s.versions.KJV?.trim() || "",
@@ -230,41 +194,20 @@
                 nlt: s.versions.NLT?.trim() || "",
                 msg: s.versions.MSG?.trim() || "",
             };
-
             const request = supabase.from("scriptures").upsert(payload, { onConflict: "reference" });
-
-                    // Race against a 15s timeout
-                const result = await Promise.race([
+            const result = await Promise.race([
                 request,
-                new Promise<never>((_, reject) => 
+                new Promise<never>((_, reject) =>
                     setTimeout(() => reject(new Error("Database request timeout.")), 15000)
                 )
             ]);
-
-            // If Supabase returns an error object, return that message
             if (result.error) return result.error.message;
-
-            return null; // Success
+            return null;
         } catch (e) {
             console.error("saveScriptureRow crash:", e);
             return e instanceof Error ? e.message : "Unknown database error.";
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     interface ScriptureImporterProps { darkMode:boolean; onDone?:()=>void; }
 
@@ -305,68 +248,30 @@
             } catch(e){ setParseErr((e as Error).message); }
         };
 
-        // const runImport = async (list:ImportRow[]) => {
-        //     if (opRef.current) return;
-        //     opRef.current = true; setImporting(true);
-        //     const upd=[...rows];
-        //     for(let i=0;i<upd.length;i++){
-        //         if(!list.find(l=>l.reference===upd[i].reference)) continue;
-        //         if(upd[i].status==="saved") continue;
-        //         upd[i]={...upd[i],status:"saving"}; setRows([...upd]);
-        //         const err=await saveScriptureRow(upd[i]);
-        //         upd[i]=err?{...upd[i],status:"error",error:err}:{...upd[i],status:"saved"};
-        //         setRows([...upd]);
-        //     }
-        //     setImporting(false); opRef.current=false;
-        //     if(upd.every(r=>r.status==="saved") && onDone) onDone();
-        // };
-
-
-
-
         const runImport = async (list: ImportRow[]) => {
-        if (opRef.current) return;
-        opRef.current = true; 
-        setImporting(true);
+            if (opRef.current) return;
+            opRef.current = true;
+            setImporting(true);
+            for (const item of list) {
+                if (item.status === "saved") continue;
+                setRows(prev => prev.map(r => r.reference === item.reference ? { ...r, status: "saving" } : r));
+                const err = await saveScriptureRow(item);
+                setRows(prev => prev.map(r =>
+                    r.reference === item.reference
+                        ? { ...r, status: err ? "error" : "saved", error: err || undefined }
+                        : r
+                ));
+            }
+            setImporting(false);
+            opRef.current = false;
+            setRows(current => {
+                if (current.every(r => r.status === "saved") && onDone) onDone();
+                return current;
+            });
+        };
 
-        for (const item of list) {
-            // Skip already saved rows
-            if (item.status === "saved") continue;
-
-            // 1. Set status to "saving"
-            setRows(prev => prev.map(r => r.reference === item.reference ? { ...r, status: "saving" } : r));
-
-            // 2. Perform the DB action
-            const err = await saveScriptureRow(item);
-
-            // 3. Set the result
-            setRows(prev => prev.map(r => 
-                r.reference === item.reference 
-                    ? { ...r, status: err ? "error" : "saved", error: err || undefined } 
-                    : r
-            ));
-        }
-
-        setImporting(false); 
-        opRef.current = false;
-        
-        // Final callback check
-        setRows(current => {
-            if (current.every(r => r.status === "saved") && onDone) onDone();
-            return current;
-        });
-    };
-
-
-
-
-
-
-
-
-
-        const savedC  = rows.filter(r=>r.status==="saved").length;
-        const errorC  = rows.filter(r=>r.status==="error").length;
+        const savedC   = rows.filter(r=>r.status==="saved").length;
+        const errorC   = rows.filter(r=>r.status==="error").length;
         const pendingC = rows.filter(r=>r.status==="pending"||r.status==="saving").length;
 
         const handleSingleSave = async () => {
@@ -380,60 +285,31 @@
             else { flash(setSingleMsg,`✅ Saved "${singleRef.trim()}"!`,true); setSingleRef(""); setSingleV(EMPTY_V()); if(onDone) onDone(); }
         };
 
-    const handleMultiSave = async () => {
+        const handleMultiSave = async () => {
             if (opRef.current) return;
-        
-            // 1. Filter out completely empty rows
-            const valid = multiRows.filter(r => 
-                r.reference.trim() && Object.values(r.versions).some(v => v.trim())
-            );
-
-            if (!valid.length) {
-                flash(setMultiMsg, "No valid rows to save.", false);
-                return;
-            }
-
+            const valid = multiRows.filter(r => r.reference.trim() && Object.values(r.versions).some(v => v.trim()));
+            if (!valid.length) { flash(setMultiMsg, "No valid rows to save.", false); return; }
             opRef.current = true;
             setMultiBusy(true);
-
             let savedCount = 0;
             let failCount = 0;
-
-            // 2. Loop through and update individual row statuses in the UI
             for (const row of multiRows) {
-                // Skip rows that are empty or already saved
                 if (!row.reference.trim() || row.status === "saved") continue;
-
-                // Mark this specific row as saving
-                setMultiRows(prev => prev.map(r => 
-                    r === row ? { ...r, status: "saving" } : r
-                ));
-
+                setMultiRows(prev => prev.map(r => r === row ? { ...r, status: "saving" } : r));
                 const error = await saveScriptureRow(row);
-
                 if (error) {
                     failCount++;
-                    setMultiRows(prev => prev.map(r => 
-                        r === row ? { ...r, status: "error", error } : r
-                    ));
+                    setMultiRows(prev => prev.map(r => r === row ? { ...r, status: "error", error } : r));
                 } else {
                     savedCount++;
-                    setMultiRows(prev => prev.map(r => 
-                        r === row ? { ...r, status: "saved" } : r
-                    ));
+                    setMultiRows(prev => prev.map(r => r === row ? { ...r, status: "saved" } : r));
                 }
             }
-
             setMultiBusy(false);
             opRef.current = false;
-
-            // 3. Final Reporting
             if (failCount === 0) {
                 flash(setMultiMsg, `✅ Successfully saved ${savedCount} scriptures!`, true);
-                // Optional: Clear only the saved rows, or reset if all done
-                setTimeout(() => {
-                    setMultiRows([{ reference: "", versions: EMPTY_V(), status: "pending" }]);
-                }, 1500);
+                setTimeout(() => { setMultiRows([{ reference: "", versions: EMPTY_V(), status: "pending" }]); }, 1500);
                 if (onDone) onDone();
             } else {
                 flash(setMultiMsg, `⚠️ Saved ${savedCount}, but ${failCount} failed.`, false);
@@ -481,64 +357,31 @@
                         <div className="flex justify-between mb-1">
                             <span className="text-xs opacity-40 font-bold uppercase tracking-widest">Paste here</span>
                             <div className="flex gap-2">
-
-
-                            <input
-        ref={fileRef}
-        type="file"
-        accept=".json,.ts,.txt,.js"
-        className="hidden"
-        onChange={(e) => {
-            const file = e.target.files?.[0];
-
-            if (!file) return;
-
-            const reader = new FileReader();
-
-            reader.onload = (ev) => {
-                const text = ev.target?.result;
-
-                if (typeof text !== "string") {
-                    setParseErr("Failed to read file.");
-                    return;
-                }
-
-                setJsonInput(text);
-                setRows([]);
-                setParseErr("");
-            };
-
-            reader.onerror = () => {
-                setParseErr("Failed to load file.");
-            };
-
-            reader.readAsText(file);
-        }}
-    />
-
+                                <input
+                                    ref={fileRef}
+                                    type="file"
+                                    accept=".json,.ts,.txt,.js"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => {
+                                            const text = ev.target?.result;
+                                            if (typeof text !== "string") { setParseErr("Failed to read file."); return; }
+                                            setJsonInput(text); setRows([]); setParseErr("");
+                                        };
+                                        reader.onerror = () => setParseErr("Failed to load file.");
+                                        reader.readAsText(file);
+                                    }}
+                                />
                                 <button onClick={()=>fileRef.current?.click()} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 text-xs font-semibold"><Upload size={11}/> File</button>
                                 {jsonInput&&<button onClick={()=>{setJsonInput("");setRows([]);setParseErr("");}} className="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs"><X size={11}/></button>}
                             </div>
                         </div>
-
-
-
-                    <textarea value={jsonInput} onChange={(e) => {setJsonInput(e.target.value);
-                    setRows([]);
-                            setParseErr("");
-                        }} 
-                        placeholder={`{
-                        "John 3:16": {
-                            "KJV": "For God so loved..."
-                        }
-                        }`} 
-                        rows={9} 
-                        className={ta}
-                        />
-
-
-
-
+                        <textarea value={jsonInput} onChange={(e) => { setJsonInput(e.target.value); setRows([]); setParseErr(""); }}
+                            placeholder={`{\n  "John 3:16": {\n    "KJV": "For God so loved..."\n  }\n}`}
+                            rows={9} className={ta}/>
                         {parseErr&&<div className="flex items-start gap-2 mt-2 px-3 py-2 bg-red-500/20 border border-red-500/40 rounded-xl text-red-300 text-xs"><AlertTriangle size={13} className="flex-shrink-0 mt-0.5"/>{parseErr}</div>}
                     </div>
                     {!rows.length&&<button onClick={handleParse} disabled={!jsonInput.trim()} className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 flex items-center justify-center gap-2 disabled:opacity-40 transition"><FileText size={15}/> Parse Scriptures</button>}
@@ -639,12 +482,6 @@
     };
 
 
-
-
-
-
-
-
     // ════════════════════════════════════════════════════════════════════════════
     //  MAIN COMPONENT
     // ════════════════════════════════════════════════════════════════════════════
@@ -676,8 +513,7 @@
         const [lessons,          setLessons]          = useState<LessonRow[]>([]);
         const [activeLessonId,   setActiveLessonId]   = useState<string|null>(null);
         const [contentData,      setContentData]      = useState<LessonContent>(makeDefaultContent());
-        // const [lessonsLoading,   setLessonsLoading]   = useState(false);
-        const [lessonsLoading,   setLessonsLoading]   = useState(false);
+        const [lessonsLoading,   setLessonsLoading]   = useState(true);
         const lessonsLoadingRef = useRef(false);
         const [lessonSaving,     setLessonSaving]     = useState(false);
         const [showLessonPicker, setShowLessonPicker] = useState(false);
@@ -685,9 +521,6 @@
         const [newLessonTitle,   setNewLessonTitle]   = useState("");
         const [newLessonDate,    setNewLessonDate]    = useState("");
         const [creatingLesson,   setCreatingLesson]   = useState(false);
-
-        const [editingTitle, setEditingTitle] = useState(false);
-        const [titleDraft,   setTitleDraft]   = useState("");
 
         // ── Scripture ─────────────────────────────────────────────────────────────
         const [scriptureDB,      setScriptureDB]      = useState<ScriptureDB>({});
@@ -705,20 +538,17 @@
         const [showImporter,     setShowImporter]     = useState(false);
 
         // ── Speed: memoize expensive derived values ───────────────────────────────
-        // Only recomputes when scriptureDB or scriptureSearch changes
         const filteredScriptureKeys = useMemo(() => {
             const q = scriptureSearch.toLowerCase();
-            return Object.keys(scriptureDB)
-                .filter(r => r.toLowerCase().includes(q))
-                .sort();
+            return Object.keys(scriptureDB).filter(r => r.toLowerCase().includes(q)).sort();
         }, [scriptureDB, scriptureSearch]);
 
-        // Only recomputes when subscriptions changes
         const subDaysLeft = useMemo(() =>
             subscription
                 ? Math.max(0, Math.ceil((new Date(subscription.end_date).getTime() - Date.now()) / 86_400_000))
                 : 0,
         [subscription]);
+
         const [editingRef,       setEditingRef]       = useState<string|null>(null);
         const [editingRefNew,    setEditingRefNew]    = useState("");
         const [editingVersions,  setEditingVersions]  = useState<BibleVersions>({KJV:"",NKJV:"",NIV:"",ESV:"",AMP:"",NLT:"",MSG:""});
@@ -731,39 +561,20 @@
         const [fontSize,       setFontSize]       = useState(16);
         const [tabLoading,     setTabLoading]     = useState(false);
         const [editingContent, setEditingContent] = useState<string|null>(null);
-        // const [quizActive,     setQuizActive]     = useState(false);
-        // const [currentQ,       setCurrentQ]       = useState(0);
-        
-        // const [timeLeft,       setTimeLeft]       = useState(50);
-        // const [showResults,    setShowResults]    = useState(false);
-        
-        // const [commitInput,    setCommitInput]    = useState("");
-        
 
         // ── Refs ──────────────────────────────────────────────────────────────────
         const resolvingRef    = useRef(false);
         const loadingPctRef   = useRef(0);
-        const scriptureSeeded = useRef(false);  // prevents infinite seed loop
-        const scriptureOpRef  = useRef(false);  // FIX: operation lock — prevents concurrent DB writes
-        // const lessonSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
-        // REPLACE WITH:
+        const scriptureSeeded = useRef(false);
+        const scriptureOpRef  = useRef(false);
         const lessonSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
-        // const activeLessonIdRef = useRef<string|null>(null);
+
+        // Keep a stable ref to activeLessonId so the visibility handler can read it
+        // without being re-created on every render
         const activeLessonIdRef = useRef<string|null>(null);
-        const profileRoleRef = useRef<string>("user");
+        useEffect(() => { activeLessonIdRef.current = activeLessonId; }, [activeLessonId]);
 
-        // const setActiveLesson = (id: string | null) => {
-        //     activeLessonIdRef.current = id;
-        //     setActiveLessonId(id);
-        // };
-        // REPLACE WITH:
-        const setActiveLesson = useCallback((id: string | null) => {
-            activeLessonIdRef.current = id;
-            setActiveLessonId(id);
-        }, []);
-        // Cleanup debounce timer on unmount
         useEffect(() => { return () => { if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current); }; }, []);
-
         useEffect(() => { loadingPctRef.current = loadingPct; }, [loadingPct]);
 
         // ── Boot animation ────────────────────────────────────────────────────────
@@ -777,142 +588,48 @@
         // ─────────────────────────────────────────────────────────────────────────
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
+        const loadLessons = useCallback(async () => {
+            if (lessonsLoadingRef.current) return;
+            lessonsLoadingRef.current = true;
+            setLessonsLoading(true);
 
-        // Load all lessons from DB. FIX #1/#4 — lessons stored in DB with title,
-        // all same page, only data changes when switching.
-        // Load all lessons from DB. Fixes empty arrays & continuous array evaluations on mobile view ports.
-    // const loadLessons = useCallback(async () => {
-    //     if (lessonsLoadingRef.current) return;
-    //     lessonsLoadingRef.current = true;
-    //     setLessonsLoading(true);
-
-    //     try {
-    //         const { data, error } = await supabase
-    //             .from("lessons")
-    //             .select("*")
-    //             .order("created_at", { ascending: false });
-
-    //         if (error) throw error;
-
-    //         const rows = (data ?? []) as LessonRow[];
-            
-    //         if (rows.length > 0) {
-    //             const liveLesson = rows.find(l => l.is_active) ?? rows[0];
-
-    //             if (profile?.role === "admin") {
-    //                 // Admins load the entire sequence context safely (Obedience, Disobedience, etc.)
-    //                 setLessons(rows);
-    //                 const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
-    //                 setActiveLesson(currentActive.id);
-    //                 setContentData(hydrateLessonData(currentActive.content));
-    //             } else {
-    //                 // Regular users observe only the designated single active broadcast target
-    //                 setLessons([liveLesson]);
-    //                 setActiveLesson(liveLesson.id);
-    //                 setContentData(hydrateLessonData(liveLesson.content));
-    //             }
-    //         } else {
-    //             setLessons([]);
-    //             setActiveLesson(null);
-    //             setContentData(makeDefaultContent());
-    //         }
-    //     } catch (err) {
-    //         console.error("loadLessons execution error:", err);
-    //     } finally {
-    //         setLessonsLoading(false);
-    //         lessonsLoadingRef.current = false;
-    //     }
-    // }, [profile?.role, setActiveLesson]);
-
-
-    // const loadLessons = useCallback(async () => {
-    //     if (lessonsLoadingRef.current) return;
-    //     lessonsLoadingRef.current = true;
-    //     setLessonsLoading(true);
-
-    //     try {
-    //         const { data, error } = await supabase
-    //             .from("lessons")
-    //             .select("*")
-    //             .order("created_at", { ascending: false });
-
-    //         if (error) throw error;
-
-    //         const rows = (data ?? []) as LessonRow[];
-            
-    //         // 🧠 CRITICAL: Admins need the full database array to manage everything!
-    //         if (profile?.role === "admin") {
-    //             setLessons(rows);
-    //             if (rows.length > 0) {
-    //                 const currentActive = rows.find(l => l.id === activeLessonIdRef.current) || rows.find(l => l.is_active) || rows[0];
-    //                 setActiveLesson(currentActive.id);
-    //                 setContentData(hydrateLessonData(currentActive.content));
-    //             }
-    //         } else {
-    //             // Regular users only see the designated single active broadcast target
-    //             const liveLesson = rows.find(l => l.is_active) ?? rows[0];
-    //             if (liveLesson) {
-    //                 setLessons([liveLesson]);
-    //                 setActiveLesson(liveLesson.id);
-    //                 setContentData(hydrateLessonData(liveLesson.content));
-    //             } else {
-    //                 setLessons([]);
-    //             }
-    //         }
-    //     } catch (err) {
-    //         console.error("loadLessons execution error:", err);
-    //     } finally {
-    //         setLessonsLoading(false);
-    //         lessonsLoadingRef.current = false;
-    //     }
-    // }, [profile?.role, setActiveLesson]);
-    // Load all lessons from DB. Fixes empty arrays & continuous array evaluations on mobile view ports.
-        // REPLACE WITH:
-    // REPLACE WITH:
-    const loadLessons = useCallback(async () => {
-        if (lessonsLoadingRef.current) return;
-        lessonsLoadingRef.current = true;
-        setLessonsLoading(true);
-
-        try {
             const { data, error } = await supabase
                 .from("lessons")
                 .select("*")
                 .order("created_at", { ascending: false });
 
-            if (error) throw error;
-
-            const rows = (data ?? []) as LessonRow[];
-            const role = profileRoleRef.current;
-
-            if (rows.length > 0) {
-                const liveLesson = rows.find(l => l.is_active) ?? rows[0];
-
-                if (role === "admin") {
-                    setLessons(rows);
-                    const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
-                    setActiveLesson(currentActive.id);
-                    setContentData(hydrateLessonData(currentActive.content));
-                } else {
-                    setLessons([liveLesson]);
-                    setActiveLesson(liveLesson.id);
-                    setContentData(hydrateLessonData(liveLesson.content));
-                }
-            } else {
-                setLessons([]);
-                setActiveLesson(null);
-                setContentData(makeDefaultContent());
+            if (error) {
+                console.error("loadLessons:", error);
+                setLessonsLoading(false);
+                lessonsLoadingRef.current = false;
+                return;
             }
-        } catch (err) {
-            console.error("loadLessons execution error:", err);
-        } finally {
+
+            if (data && data.length > 0) {
+                const rows = data as LessonRow[];
+                setLessons(rows);
+                const active = rows[0];
+                setActiveLessonId(active.id);
+                setContentData(hydrateLessonData(active.content));
+            } else if (!scriptureSeeded.current) {
+                scriptureSeeded.current = true;
+                const def = makeDefaultContent();
+                const { data: ins, error: insErr } = await supabase
+                    .from("lessons")
+                    .insert({ title: "OBEDIENCE", is_active: true, content: def })
+                    .select()
+                    .single();
+                if (!insErr && ins) {
+                    setLessons([ins as LessonRow]);
+                    setActiveLessonId(ins.id);
+                    setContentData(hydrateLessonData(def));
+                }
+            }
+
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
-        }
-    }, [setActiveLesson]);
+        }, []);
 
-    
-        // Debounced save — waits 1.2s after last edit before writing to DB
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
             lessonSaveTimer.current = setTimeout(async () => {
@@ -927,196 +644,35 @@
             }, 1200);
         }, []);
 
-        // Switch to a different lesson — FIX #4: same page, only contentData changes
         const switchLesson = useCallback(async (lesson:LessonRow) => {
             if (activeLessonId && activeLessonId !== lesson.id) {
                 await supabase.from("lessons").update({is_active:false}).eq("id", activeLessonId);
             }
-            // await supabase.from("lessons").update({is_active:true}).eq("id", lesson.id);
-            // setActiveLessonId(lesson.id);
-            // setContentData(lesson.content as LessonContent);
             await supabase.from("lessons").update({is_active:true}).eq("id", lesson.id);
-            setActiveLesson(lesson.id);
+            setActiveLessonId(lesson.id);
             setContentData(lesson.content as LessonContent);
-
-            
             setLessons(prev => prev.map(l => ({...l, is_active: l.id===lesson.id})));
             setShowLessonPicker(false);
             setEditingContent(null);
             setActiveTab("intro");
         }, [activeLessonId]);
 
-        // FIX #1 — Admin creates a new lesson with a given title, saved to DB
-        const saveTitle = async () => {
-    const trimmed = titleDraft.trim();
-    if (!trimmed || !activeLessonId) { setEditingTitle(false); return; }
-    // Optimistic update
-    updateContent("lessonTitle", trimmed);
-    setLessons(prev => prev.map(l => l.id === activeLessonId ? { ...l, title: trimmed } : l));
-    setEditingTitle(false);
-    // Persist to DB
-    const { error } = await supabase
-        .from("lessons")
-        .update({ title: trimmed, updated_at: new Date().toISOString() })
-        .eq("id", activeLessonId);
-    if (error) {
-        alert("Failed to save title: " + error.message);
-        // Rollback on error
-        updateContent("lessonTitle", contentData.lessonTitle);
-    }
-};
-        // const createNewLesson = async () => {
-        //     if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
-        //     setCreatingLesson(true);
-        //     const newContent = makeDefaultContent(newLessonTitle.trim(), newLessonDate.trim() || new Date().toLocaleDateString());
-        //     const { data, error } = await supabase
-        //         .from("lessons")
-        //         .insert({ title:newLessonTitle.trim(), is_active:true, content:newContent })
-        //         .select().single();
-        //     if (error) { alert("Failed to create lesson: "+error.message); setCreatingLesson(false); return; }
-        //     const row = data as LessonRow;
-        //     setLessons(prev => [row, ...prev]);
-        //     setCreatingLesson(false);
-        //     setShowNewLesson(false);
-        //     setNewLessonTitle(""); setNewLessonDate("");
-        //     await switchLesson(row);
-        // };
-
-
-        // const createNewLesson = async () => {
-        //     if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
-        //     setCreatingLesson(true);
-            
-        //     const newContent = makeDefaultContent(
-        //         newLessonTitle.trim(), 
-        //         newLessonDate.trim() || new Date().toLocaleDateString()
-        //     );
-
-        //     try {
-        //         // Fix: Create the new lesson as a regular background draft (is_active: false)
-        //         // This stops it from instantly interrupting users or hiding your admin inventory list
-        //         const { data, error } = await supabase
-        //             .from("lessons")
-        //             .insert({ 
-        //                 title: newLessonTitle.trim(), 
-        //                 is_active: false, 
-        //                 content: newContent 
-        //             })
-        //             .select()
-        //             .single();
-
-        //         if (error) throw error;
-
-        //         const row = data as LessonRow;
-
-        //         // Update the admin's dropdown state array immediately
-        //         setLessons(prev => [row, ...prev]);
-                
-        //         // Explicitly map local view content without calling the problematic 'switchLesson' await loop
-        //         setActiveLesson(row.id);
-        //         setContentData(hydrateLessonData(row.content));
-
-        //         // Reset modal states cleanly
-        //         setShowNewLesson(false);
-        //         setNewLessonTitle(""); 
-        //         setNewLessonDate("");
-                
-        //     } catch (error: unknown) {
-        //         const message = error instanceof Error ? error.message : String(error);
-        //         alert("Failed to create lesson: " + message);
-        //     } finally {
-        //         setCreatingLesson(false);
-        //     }
-        // };
-
-    //     const createNewLesson = async () => {
-    //     if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
-    //     setCreatingLesson(true);
-        
-    //     const newContent = makeDefaultContent(
-    //         newLessonTitle.trim(), 
-    //         newLessonDate.trim() || new Date().toLocaleDateString()
-    //     );
-
-    //     try {
-    //         const { data, error } = await supabase
-    //             .from("lessons")
-    //             .insert({ 
-    //                 title: newLessonTitle.trim(), 
-    //                 is_active: false, //  Saves cleanly as a background draft!
-    //                 content: newContent 
-    //             })
-    //             .select()
-    //             .single();
-
-    //         if (error) throw error;
-
-    //         const row = data as LessonRow;
-
-    //         // Prepend directly into the admin list array
-    //         setLessons(prev => [row, ...prev]);
-            
-    //         // Focus on it locally
-    //         setActiveLesson(row.id);
-    //         setContentData(hydrateLessonData(row.content));
-
-    //         setShowNewLesson(false);
-    //         setNewLessonTitle(""); 
-    //         setNewLessonDate("");
-            
-    //     } catch (error: any) {
-    //         alert("Failed to create lesson: " + (error.message || error));
-    //     } finally {
-    //         setCreatingLesson(false);
-    //     }
-    // };
-    const createNewLesson = async () => {
-        if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
-        setCreatingLesson(true);
-        
-        const newContent = makeDefaultContent(
-            newLessonTitle.trim(), 
-            newLessonDate.trim() || new Date().toLocaleDateString()
-        );
-
-        try {
-            // Fix: Create the new lesson as a regular background draft (is_active: false)
-            // This stops it from instantly interrupting users or hiding your admin inventory list
+        const createNewLesson = async () => {
+            if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
+            setCreatingLesson(true);
+            const newContent = makeDefaultContent(newLessonTitle.trim(), newLessonDate.trim() || new Date().toLocaleDateString());
             const { data, error } = await supabase
                 .from("lessons")
-                .insert({ 
-                    title: newLessonTitle.trim(), 
-                    is_active: false, 
-                    content: newContent 
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
-
+                .insert({ title:newLessonTitle.trim(), is_active:true, content:newContent })
+                .select().single();
+            if (error) { alert("Failed to create lesson: "+error.message); setCreatingLesson(false); return; }
             const row = data as LessonRow;
-
-            // Update the admin's list state array immediately
             setLessons(prev => [row, ...prev]);
-            
-            // Explicitly map local view content without triggering the switchLesson await deadlock
-            setActiveLesson(row.id);
-            setContentData(hydrateLessonData(row.content));
-
-            // Reset modal layout views
-            setShowNewLesson(false);
-            setNewLessonTitle(""); 
-            setNewLessonDate("");
-            
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            alert("Failed to create lesson: " + errorMessage);
-        } finally {
             setCreatingLesson(false);
-        }
-    };
-
-
+            setShowNewLesson(false);
+            setNewLessonTitle(""); setNewLessonDate("");
+            await switchLesson(row);
+        };
 
         const deleteLesson = async (lessonId:string) => {
             if (!confirm("Delete this lesson permanently?")) return;
@@ -1128,12 +684,12 @@
         };
 
         // ─────────────────────────────────────────────────────────────────────────
-        //  SCRIPTURE HELPERS  (FIX #2 — scriptureSeeded ref stops infinite loop)
+        //  SCRIPTURE HELPERS
         // ─────────────────────────────────────────────────────────────────────────
         const rowToEntry = useCallback((row:Record<string,string>): [string,BibleVersions] => [
             row.reference,
             { KJV:row.kjv||"", NKJV:row.nkjv||"", NIV:row.niv||"",
-            ESV:row.esv||"", AMP:row.amp||"", NLT:row.nlt||"", MSG:row.msg||"" },
+              ESV:row.esv||"", AMP:row.amp||"", NLT:row.nlt||"", MSG:row.msg||"" },
         ], []);
 
         const loadScripturesFromDB = useCallback(async () => {
@@ -1146,18 +702,14 @@
                 data.forEach((row:Record<string,string>) => { const [r,v]=rowToEntry(row); db[r]=v; });
                 setScriptureDB(db);
             } else if (!scriptureSeeded.current) {
-                // FIX #2: mark seeded immediately so we never loop
                 scriptureSeeded.current = true;
-                // DB is empty — admin must add scriptures via the Manage tab
             }
             setScriptureLoading(false);
         }, [rowToEntry]);
 
         // ── Scripture operation helpers ───────────────────────────────────────────
-        // All mutations go through acquireScriptureOp() which acts as a mutex.
-        // This prevents double-saves when buttons are clicked rapidly or re-renders fire.
         const acquireScriptureOp = (): boolean => {
-            if (scriptureOpRef.current) return false; // already in progress
+            if (scriptureOpRef.current) return false;
             scriptureOpRef.current = true;
             setScriptureSyncing(true);
             return true;
@@ -1167,7 +719,6 @@
             setScriptureSyncing(false);
         };
 
-        // Build a DB row from the current versions object (avoids repetition)
         const versionsToRow = (ref: string, v: BibleVersions) => ({
             reference: ref,
             kjv: v.KJV, nkjv: v.NKJV, niv: v.NIV,
@@ -1177,13 +728,12 @@
         const addNewScripture = async () => {
             const ref = newVerse.reference.trim();
             if (!ref || !Object.values(newVerse.versions).some(v => v)) return;
-            if (!acquireScriptureOp()) return; // FIX: block if already saving
+            if (!acquireScriptureOp()) return;
             try {
                 const { error } = await supabase
                     .from("scriptures")
                     .upsert(versionsToRow(ref, newVerse.versions), { onConflict: "reference" });
                 if (error) { alert("Failed to save: " + error.message); return; }
-                // Optimistic local update — no need to refetch
                 setScriptureDB(p => ({ ...p, [ref]: newVerse.versions }));
                 setScriptureSaved(ref);
                 setTimeout(() => setScriptureSaved(null), 2500);
@@ -1195,7 +745,7 @@
         };
 
         const startEditScripture = (ref: string) => {
-            if (scriptureOpRef.current) return; // block if an op is in progress
+            if (scriptureOpRef.current) return;
             setEditingRef(ref);
             setEditingRefNew(ref);
             setEditingVersions({ ...scriptureDB[ref] });
@@ -1211,10 +761,9 @@
 
         const saveEditScripture = async () => {
             if (!editingRef) return;
-            if (!acquireScriptureOp()) return; // FIX: block concurrent saves
+            if (!acquireScriptureOp()) return;
             const target = editingRefNew.trim() || editingRef;
             try {
-                // If renamed: delete old key then upsert new — done atomically
                 if (target !== editingRef) {
                     const { error: delErr } = await supabase
                         .from("scriptures").delete().eq("reference", editingRef);
@@ -1224,7 +773,6 @@
                     .from("scriptures")
                     .upsert(versionsToRow(target, editingVersions), { onConflict: "reference" });
                 if (error) { alert("Failed to update: " + error.message); return; }
-                // Optimistic local update
                 setScriptureDB(prev => {
                     const u = { ...prev };
                     if (target !== editingRef) delete u[editingRef];
@@ -1240,7 +788,7 @@
         };
 
         const deleteScripture = async (ref: string) => {
-            if (!acquireScriptureOp()) return; // FIX: block if already busy
+            if (!acquireScriptureOp()) return;
             try {
                 const { error } = await supabase.from("scriptures").delete().eq("reference", ref);
                 if (error) { alert("Failed to delete: " + error.message); return; }
@@ -1255,157 +803,91 @@
         // ─────────────────────────────────────────────────────────────────────────
         //  AUTH
         // ─────────────────────────────────────────────────────────────────────────
-        // const resolveUser = useCallback(async (user:User|null) => {
-        // REPLACE WITH:
-        const resolveUser = useCallback(async (user: User | null, event: string) => {
-            // On SIGNED_OUT always reset
-            if (!user) {
-                resolvingRef.current = false;
-                setAuthUser(null);
-                setProfile(null);
-                setSubscription(null);
-                setIsAdmin(false);
-                setScreen("auth");
-                return;
-            }
-
-            // Ignore duplicate firings — but always allow TOKEN_REFRESHED and SIGNED_IN
-            if (resolvingRef.current && event === "INITIAL_SESSION") return;
+        const resolveUser = useCallback(async (user:User|null) => {
+            if (resolvingRef.current) return;
             resolvingRef.current = true;
-
             try {
+                if (!user) { setScreen("auth"); return; }
                 setAuthUser(user);
                 setSubChecking(true);
-
-                const [prof, sub] = await Promise.all([
-                    withRetry(() => getProfile(user.id)),
-                    withRetry(() => getActiveSubscription(user.id)),
+                if (readSubCache(user.id)) setScreen("app");
+                const [prof,sub] = await Promise.all([
+                    withRetry(()=>getProfile(user.id)),
+                    withRetry(()=>getActiveSubscription(user.id)),
                 ]);
-
-                const role = prof?.role ?? "user";
-                setProfile(prof);
-                setSubscription(sub);
-                setIsAdmin(role === "admin");
-                setSubChecking(false);
-
-                if (sub) {
-                    writeSubCache(user.id, sub.end_date);
-                    // Reset all loading guards before transitioning
-                    lessonsLoadingRef.current = false;
-                    scriptureSeeded.current = false;
-                    setLessonsLoading(false);
-                    // Store role on a ref so loadLessons always has it
-                    profileRoleRef.current = role;
-                    setScreen("app");
-                } else {
-                    clearSubCache();
-                    setScreen("payment");
-                }
-            } catch (err) {
-                console.error("resolveUser error:", err);
-                setSubChecking(false);
-            } finally {
-                resolvingRef.current = false;
-            }
+                setProfile(prof); setSubscription(sub); setIsAdmin(prof?.role==="admin"); setSubChecking(false);
+                if (sub) { writeSubCache(user.id,sub.end_date); setScreen("app"); }
+                else     { clearSubCache(); setScreen("payment"); }
+            } finally { resolvingRef.current = false; }
         }, []);
 
-        // useEffect(() => {
-        //     const { data:{subscription:listener} } = supabase.auth.onAuthStateChange(async(_ev,session) => {
-        //         if (loadingPctRef.current<100) await new Promise(r=>setTimeout(r,2000));
-        //         await resolveUser(session?.user??null);
-        //     });
-        //     return () => listener.unsubscribe();
-        // }, [resolveUser]);
-        // REPLACE WITH:
         useEffect(() => {
-            const { data:{subscription:listener} } = supabase.auth.onAuthStateChange(async(event, session) => {
-                if (loadingPctRef.current < 100) await new Promise(r => setTimeout(r, 2000));
-                await resolveUser(session?.user ?? null, event);
+            const { data:{subscription:listener} } = supabase.auth.onAuthStateChange(async(_ev,session) => {
+                if (loadingPctRef.current<100) await new Promise(r=>setTimeout(r,2000));
+                await resolveUser(session?.user??null);
             });
             return () => listener.unsubscribe();
         }, [resolveUser]);
 
-        // useEffect(() => {
-        //     if (screen==="app") { void loadLessons(); void loadScripturesFromDB(); }
-        // }, [screen, loadLessons, loadScripturesFromDB]);
-        // useEffect(() => {
-        //     if (screen !== "app") return;
+        useEffect(() => {
+            if (screen !== "app") return;
 
-        //     void loadLessons();
-        //     void loadScripturesFromDB();
-        // REPLACE WITH:
-       useEffect(() => {
-        if (screen !== "app") return;
+            void loadLessons();
+            void loadScripturesFromDB();
 
-        let isMounted = true;
-        scriptureSeeded.current = false;
-
-        const initializeData = async () => {
-            // Mobile Guard: If already running an execution frame, back off instantly
-            if (lessonsLoadingRef.current) return;
-
-            try {
-                // Execute database synchronization hooks in parallel safely
-                await Promise.all([
-                    loadLessons(),
-                    loadScripturesFromDB()
-                ]);
-            } catch (err) {
-                console.error("App startup initialization failed:", err);
-            }
-        };
-
-        if (isMounted) {
-            void initializeData();
-        }
-
-        // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
-        const channel = supabase
-            .channel("lessons-realtime")
-            .on(
-                "postgres_changes",
-                { event: "UPDATE", schema: "public", table: "lessons" },
-                (payload) => {
-                    const updatedLesson = payload.new as LessonRow;
-                    
-                    if (profile?.role === "admin") {
-                        // Admin safely updates that specific row inside their full master list array
-                        setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
-                        if (updatedLesson.id === activeLessonIdRef.current) {
-                            setContentData(hydrateLessonData(updatedLesson.content));
+            // ── Realtime: push new active lesson to ALL connected devices ──────────
+            const channel = supabase
+                .channel("lessons-realtime")
+                .on(
+                    "postgres_changes",
+                    { event: "UPDATE", schema: "public", table: "lessons" },
+                    (payload) => {
+                        if (payload.new?.is_active === true) {
+                            const newLesson = payload.new as LessonRow;
+                            setActiveLessonId(newLesson.id);
+                            setContentData(hydrateLessonData(newLesson.content));
+                            setLessons(prev =>
+                                prev.map(l => ({ ...l, is_active: l.id === newLesson.id }))
+                            );
                         }
-                    } else if (updatedLesson.is_active) {
-                        // Standard users shift immediately to the updated active view context
-                        setActiveLesson(updatedLesson.id);
-                        setContentData(hydrateLessonData(updatedLesson.content));
-                        setLessons([updatedLesson]);
                     }
+                )
+                .subscribe();
+
+            // ── FIX: Silent background refresh on tab focus — no spinner ──────────
+            // Does NOT call loadLessons() (which sets lessonsLoading=true).
+            // Instead, fetches quietly and only updates state, keeping the UI stable.
+            const handleVisibility = async () => {
+                if (document.visibilityState !== "visible") return;
+                const { data, error } = await supabase
+                    .from("lessons")
+                    .select("*")
+                    .order("created_at", { ascending: false });
+                if (!error && data && data.length > 0) {
+                    const rows = data as LessonRow[];
+                    setLessons(rows);
+                    // Only refresh content for whichever lesson is currently active
+                    const currentId = activeLessonIdRef.current;
+                    const active = currentId ? rows.find(l => l.id === currentId) : rows[0];
+                    if (active) setContentData(hydrateLessonData(active.content));
                 }
-            )
-            .subscribe();
+            };
 
-        return () => {
-            isMounted = false;
-            void supabase.removeChannel(channel);
-        };
-    }, [screen, loadLessons, loadScripturesFromDB, profile?.role, setActiveLesson]);
-        // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
-        
+            document.addEventListener("visibilitychange", handleVisibility);
 
-
-
-
-
+            return () => {
+                void supabase.removeChannel(channel);
+                document.removeEventListener("visibilitychange", handleVisibility);
+            };
+        }, [screen, loadLessons, loadScripturesFromDB]);
 
         useEffect(() => {
             const h=(e:KeyboardEvent)=>{ if(e.ctrlKey&&e.shiftKey&&e.key==="E"&&isAdmin){e.preventDefault();setEditingContent(p=>p?null:activeTab);} };
             window.addEventListener("keydown",h); return ()=>window.removeEventListener("keydown",h);
         },[activeTab,isAdmin]);
 
-        
-
         // ─────────────────────────────────────────────────────────────────────────
-        //  EMAIL AUTH  (FIX #3 — duplicate email rejected with clear message)
+        //  EMAIL AUTH
         // ─────────────────────────────────────────────────────────────────────────
         const clearAuthForm = () => { setAuthError("");setAuthSuccess("");setAuthEmail("");setAuthPassword("");setAuthFullName("");setAuthConfirm("");setShowPassword(false);setShowConfirm(false); };
         const switchAuthMode = (m:AuthMode) => { clearAuthForm(); setAuthMode(m); };
@@ -1417,15 +899,12 @@
             if (authPassword.length<6)       { setAuthError("Password must be at least 6 characters."); return; }
             if (authPassword!==authConfirm)  { setAuthError("Passwords do not match."); return; }
             setAuthLoading(true);
-
-            // FIX #3: check for existing email BEFORE calling signUp
             const { data:existing } = await supabase
                 .from("profiles").select("id").eq("email",authEmail.trim().toLowerCase()).maybeSingle();
             if (existing) {
                 setAuthError("This email is already registered. Please sign in instead.");
                 setAuthLoading(false); return;
             }
-
             const { data, error } = await supabase.auth.signUp({
                 email:authEmail.trim().toLowerCase(), password:authPassword,
                 options:{ data:{ full_name:authFullName.trim(), avatar_url:null }, emailRedirectTo:window.location.origin },
@@ -1499,7 +978,7 @@
         };
 
         // ─────────────────────────────────────────────────────────────────────────
-        //  CONTENT UPDATERS  — debounced auto-save to DB
+        //  CONTENT UPDATERS — debounced auto-save to DB
         // ─────────────────────────────────────────────────────────────────────────
         const upd = (fn:(p:LessonContent)=>LessonContent) => {
             setContentData(prev => {
@@ -1508,86 +987,59 @@
                 return updated;
             });
         };
-    
 
-
-        // 1. For Main Lesson Points
-    const updateLessonPoint = <K extends keyof LessonPoint>(index: number, f: K, v: LessonPoint[K]) => {
-        const newPoints = [...contentData.lessonPoints];
-        newPoints[index][f] = v;
-        upd(p => ({ ...p, lessonPoints: newPoints }));
-    };
-
-    // 2. For Sub-Points
-    const updateSubPoint = <K extends keyof SubPoint>(pIdx: number, sIdx: number, f: K, v: SubPoint[K]) => {
-        const newPoints = [...contentData.lessonPoints];
-        newPoints[pIdx].subPoints[sIdx][f] = v;
-        upd(p => ({ ...p, lessonPoints: newPoints }));
-    };
-
-    // 3. For the General Content
-    const updateContent = <K extends keyof LessonContent>(f: K, v: LessonContent[K]) => {
-        upd(p => ({ ...p, [f]: v }));
-    };
-
-
-
-
-        const addSubPoint        = (pi:number)                        => upd(p=>({...p,lessonPoints:p.lessonPoints.map((pt,i)=>i===pi?{...pt,subPoints:[...pt.subPoints,{title:"New Point",content:"",scriptures:[]}]}:pt)}));
-        const deleteSubPoint     = (pi:number,si:number)              => upd(p=>({...p,lessonPoints:p.lessonPoints.map((pt,i)=>i===pi?{...pt,subPoints:pt.subPoints.filter((_,j)=>j!==si)}:pt)}));
-        
-        // ── Scripture reference array helpers (for edit mode) ───────────────────
-        // These let admin edit the scripture reference tags on buttons inline.
-        // Create a helper to "repair" incoming data from the DB
-
-        /** 
-     * Use Partial<LessonContent> to tell TS that 'data' might have some or 
-     * none of the LessonContent properties, which is exactly what happens with old DB records.
-     */
-    const hydrateLessonData = (data: Partial<LessonContent>): LessonContent => {
-        // 1. Get our baseline defaults
-        const defaults = makeDefaultContent(data.lessonTitle, data.lessonDate);
-
-        return {
-            ...defaults,
-            ...data, 
-            // 2. Explicitly guard the new array fields
-            lessonReadingScriptures: data.lessonReadingScriptures || [],
-            lessonIntroScriptures: data.lessonIntroScriptures || [],
-            lessonContentScriptures: data.lessonContentScriptures || [], 
-            conclusionScriptures: data.conclusionScriptures || [],
-            
-            // 3. Deeply map lessonPoints to ensure nested arrays aren't null
-            lessonPoints: (data.lessonPoints || defaults.lessonPoints).map((pt) => ({
-                ...pt,
-                scriptures: pt.scriptures || [],
-                subPoints: (pt.subPoints || []).map((sp) => ({
-                    ...sp,
-                    scriptures: sp.scriptures || []
-                }))
-            }))
+        const updateLessonPoint = <K extends keyof LessonPoint>(index: number, f: K, v: LessonPoint[K]) => {
+            const newPoints = [...contentData.lessonPoints];
+            newPoints[index][f] = v;
+            upd(p => ({ ...p, lessonPoints: newPoints }));
         };
-    };
 
+        const updateSubPoint = <K extends keyof SubPoint>(pIdx: number, sIdx: number, f: K, v: SubPoint[K]) => {
+            const newPoints = [...contentData.lessonPoints];
+            newPoints[pIdx].subPoints[sIdx][f] = v;
+            upd(p => ({ ...p, lessonPoints: newPoints }));
+        };
 
+        const updateContent = <K extends keyof LessonContent>(f: K, v: LessonContent[K]) => {
+            upd(p => ({ ...p, [f]: v }));
+        };
 
+        const addSubPoint    = (pi:number) => upd(p=>({...p,lessonPoints:p.lessonPoints.map((pt,i)=>i===pi?{...pt,subPoints:[...pt.subPoints,{title:"New Point",content:"",scriptures:[]}]}:pt)}));
+        const deleteSubPoint = (pi:number,si:number) => upd(p=>({...p,lessonPoints:p.lessonPoints.map((pt,i)=>i===pi?{...pt,subPoints:pt.subPoints.filter((_,j)=>j!==si)}:pt)}));
 
-    const addScriptureRef = (
-            path: "intro" | "lesson" | "conclusion" | "subpoint" | "reading", 
-            idx?: number, 
+        const hydrateLessonData = (data: Partial<LessonContent>): LessonContent => {
+            const defaults = makeDefaultContent(data.lessonTitle, data.lessonDate);
+            return {
+                ...defaults,
+                ...data,
+                lessonReadingScriptures:   data.lessonReadingScriptures   || [],
+                lessonIntroScriptures:     data.lessonIntroScriptures     || [],
+                lessonContentScriptures:   data.lessonContentScriptures   || [],
+                conclusionScriptures:      data.conclusionScriptures      || [],
+                lessonPoints: (data.lessonPoints || defaults.lessonPoints).map((pt) => ({
+                    ...pt,
+                    scriptures: pt.scriptures || [],
+                    subPoints: (pt.subPoints || []).map((sp) => ({
+                        ...sp,
+                        scriptures: sp.scriptures || []
+                    }))
+                }))
+            };
+        };
+
+        const addScriptureRef = (
+            path: "intro" | "lesson" | "conclusion" | "subpoint" | "reading",
+            idx?: number,
             subIdx?: number
         ) => {
             if (path === "reading") {
-                upd(p => ({ 
-                    ...p, 
-                    lessonReadingScriptures: [...(p.lessonReadingScriptures || []), ""] 
-                }));
+                upd(p => ({ ...p, lessonReadingScriptures: [...(p.lessonReadingScriptures || []), ""] }));
             } else if (path === "intro") {
                 upd(p => ({ ...p, lessonIntroScriptures: [...p.lessonIntroScriptures, ""] }));
             } else if (path === "lesson" && idx !== undefined) {
                 upd(p => ({
                     ...p,
-                    lessonPoints: p.lessonPoints.map((pt, i) => 
+                    lessonPoints: p.lessonPoints.map((pt, i) =>
                         i === idx ? { ...pt, scriptures: [...pt.scriptures, ""] } : pt
                     )
                 }));
@@ -1608,151 +1060,124 @@
             }
         };
 
-        
-
-
-       const updateScriptureRef = (
-    path: "intro" | "reading" | "conclusion" | "lesson" | "subpoint",
-    val: string,
-    idx: number,
-    subIdx?: number,      // The Sub-point Index
-    scriptureIdx?: number // The specific Scripture Index (The 5th arg)
-) => {
-    upd(p => {
-        if (path === "intro") {
-            return { ...p, lessonIntroScriptures: p.lessonIntroScriptures.map((s, i) => i === idx ? val : s) };
-        }
-        if (path === "reading") {
-            return { ...p, lessonReadingScriptures: p.lessonReadingScriptures.map((s, i) => i === idx ? val : s) };
-        }
-        if (path === "conclusion") {
-            return { ...p, conclusionScriptures: p.conclusionScriptures.map((s, i) => i === idx ? val : s) };
-        }
-        if (path === "lesson") {
-            return {
-                ...p,
-                lessonPoints: p.lessonPoints.map((pt, i) =>
-                    i === idx ? { ...pt, scriptures: pt.scriptures.map((s, j) => j === (subIdx ?? 0) ? val : s) } : pt
-                )
-            };
-        }
-        if (path === "subpoint" && subIdx !== undefined && scriptureIdx !== undefined) {
-            return {
-                ...p,
-                lessonPoints: p.lessonPoints.map((pt, i) =>
-                    i === idx ? {
-                        ...pt,
-                        subPoints: pt.subPoints.map((sp, j) =>
-                            j === subIdx ? { 
-                                ...sp, 
-                                // map through the scriptures array of the specific subpoint
-                                scriptures: (sp.scriptures || []).map((s, k) => k === scriptureIdx ? val : s) 
-                            } : sp
+        const updateScriptureRef = (
+            path: "intro" | "reading" | "conclusion" | "lesson" | "subpoint",
+            val: string,
+            idx: number,
+            subIdx?: number,
+            scriptureIdx?: number
+        ) => {
+            upd(p => {
+                if (path === "intro") {
+                    return { ...p, lessonIntroScriptures: p.lessonIntroScriptures.map((s, i) => i === idx ? val : s) };
+                }
+                if (path === "reading") {
+                    return { ...p, lessonReadingScriptures: p.lessonReadingScriptures.map((s, i) => i === idx ? val : s) };
+                }
+                if (path === "conclusion") {
+                    return { ...p, conclusionScriptures: p.conclusionScriptures.map((s, i) => i === idx ? val : s) };
+                }
+                if (path === "lesson") {
+                    return {
+                        ...p,
+                        lessonPoints: p.lessonPoints.map((pt, i) =>
+                            i === idx ? { ...pt, scriptures: pt.scriptures.map((s, j) => j === (subIdx ?? 0) ? val : s) } : pt
                         )
-                    } : pt
-                )
-            };
-        }
-        return p;
-    });
-};
+                    };
+                }
+                if (path === "subpoint" && subIdx !== undefined && scriptureIdx !== undefined) {
+                    return {
+                        ...p,
+                        lessonPoints: p.lessonPoints.map((pt, i) =>
+                            i === idx ? {
+                                ...pt,
+                                subPoints: pt.subPoints.map((sp, j) =>
+                                    j === subIdx ? {
+                                        ...sp,
+                                        scriptures: (sp.scriptures || []).map((s, k) => k === scriptureIdx ? val : s)
+                                    } : sp
+                                )
+                            } : pt
+                        )
+                    };
+                }
+                return p;
+            });
+        };
 
-
-
-
-
-
-            const removeScriptureRef = (
-                path: "intro" | "reading" | "conclusion" | "lesson" | "subpoint",
-                idx: number,
-                subIdx?: number,
-                scriptureIdx?: number
-    ) => {
-        upd(p => {
-            if (path === "reading") {
-                return { ...p, lessonReadingScriptures: p.lessonReadingScriptures.filter((_, i) => i !== idx) };
-            }
-            if (path === "intro") {
-                return { ...p, lessonIntroScriptures: p.lessonIntroScriptures.filter((_, i) => i !== idx) };
-            }
-            if (path === "conclusion") {
-                return { ...p, conclusionScriptures: p.conclusionScriptures.filter((_, i) => i !== idx) };
-            }
-            if (path === "lesson") {
-                return {
-                    ...p,
-                    lessonPoints: p.lessonPoints.map((pt, i) =>
-                        i === idx ? { ...pt, scriptures: pt.scriptures.filter((_, j) => j !== (subIdx ?? 0)) } : pt
-                    )
-                };
-            }
-            if (path === "subpoint" && subIdx !== undefined && scriptureIdx !== undefined) {
-                // idx = point index, subIdx = subpoint index, scriptureIdx = the specific scripture to remove
-                return {
-                    ...p,
-                    lessonPoints: p.lessonPoints.map((pt, i) =>
-                        i === idx ? {
-                            ...pt,
-                            subPoints: pt.subPoints.map((sp, j) =>
-                                j === subIdx ? { 
-                                    ...sp, 
-                                    scriptures: (sp.scriptures || []).filter((_, k) => k !== scriptureIdx) 
-                                } : sp
-                            )
-                        } : pt
-                    )
-                };
-            }
-            return p;
-        });
-    };
-
-
-        
-        // ─────────────────────────────────────────────────────────────────────────
-        //  QUIZ
-        // ─────────────────────────────────────────────────────────────────────────
-        
-        // const endQuiz    = ()            => { setQuizActive(false); setShowResults(true); };
+        const removeScriptureRef = (
+            path: "intro" | "reading" | "conclusion" | "lesson" | "subpoint",
+            idx: number,
+            subIdx?: number,
+            scriptureIdx?: number
+        ) => {
+            upd(p => {
+                if (path === "reading") {
+                    return { ...p, lessonReadingScriptures: p.lessonReadingScriptures.filter((_, i) => i !== idx) };
+                }
+                if (path === "intro") {
+                    return { ...p, lessonIntroScriptures: p.lessonIntroScriptures.filter((_, i) => i !== idx) };
+                }
+                if (path === "conclusion") {
+                    return { ...p, conclusionScriptures: p.conclusionScriptures.filter((_, i) => i !== idx) };
+                }
+                if (path === "lesson") {
+                    return {
+                        ...p,
+                        lessonPoints: p.lessonPoints.map((pt, i) =>
+                            i === idx ? { ...pt, scriptures: pt.scriptures.filter((_, j) => j !== (subIdx ?? 0)) } : pt
+                        )
+                    };
+                }
+                if (path === "subpoint" && subIdx !== undefined && scriptureIdx !== undefined) {
+                    return {
+                        ...p,
+                        lessonPoints: p.lessonPoints.map((pt, i) =>
+                            i === idx ? {
+                                ...pt,
+                                subPoints: pt.subPoints.map((sp, j) =>
+                                    j === subIdx ? {
+                                        ...sp,
+                                        scriptures: (sp.scriptures || []).filter((_, k) => k !== scriptureIdx)
+                                    } : sp
+                                )
+                            } : pt
+                        )
+                    };
+                }
+                return p;
+            });
+        };
 
         // ─────────────────────────────────────────────────────────────────────────
         //  UI HELPERS
         // ─────────────────────────────────────────────────────────────────────────
-        const showBibleVerse     = (ref:string)              => { setSelectedVerse(ref);setShowVerseModal(true);setVerseLoading(true);setTimeout(()=>setVerseLoading(false),700); };
-        const changeBibleVersion = (v:keyof BibleVersions)  => { setVerseLoading(true);setTimeout(()=>{setBibleVersion(v);setVerseLoading(false);},500); };
-        const handleTabChange    = (tab:string)              => { setTabLoading(true);setTimeout(()=>{setActiveTab(tab);setTabLoading(false);},300); };
-        // const addCommitment      = ()                        => { if(!commitInput.trim())return; setCommitments(p=>[{text:commitInput,date:new Date().toLocaleDateString()},...p]);setCommitInput(""); };
-        const formatVerse        = (text:string)             => text.split(/(\d+)/).map((p,i)=>/^\d+$/.test(p)?<strong key={i}>{p}</strong>:<span key={i}>{p}</span>);
+        const showBibleVerse     = (ref:string)             => { setSelectedVerse(ref);setShowVerseModal(true);setVerseLoading(true);setTimeout(()=>setVerseLoading(false),700); };
+        const changeBibleVersion = (v:keyof BibleVersions) => { setVerseLoading(true);setTimeout(()=>{setBibleVersion(v);setVerseLoading(false);},500); };
+        const handleTabChange    = (tab:string)             => { setTabLoading(true);setTimeout(()=>{setActiveTab(tab);setTabLoading(false);},300); };
+        const formatVerse        = (text:string)            => text.split(/(\d+)/).map((p,i)=>/^\d+$/.test(p)?<strong key={i}>{p}</strong>:<span key={i}>{p}</span>);
 
         const th     = darkMode?"bg-gradient-to-br from-gray-900 via-blue-900 to-green-900 text-white":"bg-gradient-to-br from-amber-50 via-orange-50 to-rose-100 text-gray-900";
         const cardBg = darkMode?"bg-white/10 backdrop-blur-xl border-white/20":"bg-white/80 border-gray-200";
         const inp    = (extra="") => `${extra} px-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-purple-400 ${darkMode?"bg-white/10 border-white/20 text-white placeholder-white/40":"bg-white border-gray-300 text-gray-800 placeholder-gray-400"}`;
-        // const subDaysLeft = subscription?Math.max(0,Math.ceil((new Date(subscription.end_date).getTime()-Date.now())/86_400_000)):0;
 
         const editBanner = (tab:string) => {
             if(!isAdmin) return null;
-
-
-
-               if (editingContent === tab) return (
-                    <div className="sticky top-0 z-50 mx-2 shadow-lg bg-yellow-500/20 border border-yellow-400/40 rounded-xl p-3 mb-4 flex items-center justify-between backdrop-blur-md">
-                        <span className="flex items-center gap-2 text-yellow-400 text-sm font-semibold">
-                            <Edit2 size={14}/>
-                            Editing — auto-saves to database
-                            {lessonSaving && <Loader2 size={12} className="animate-spin"/>}
-                        </span>
-
-                        <button
-                            onClick={() => setEditingContent(null)}
-                            className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-4 py-1.5 rounded-lg text-xs font-bold transition"
-                        >
-                            ✓ Done Editing
-                        </button>
-                    </div>
-                );
-
-
-
+            if (editingContent === tab) return (
+                <div className="sticky top-0 z-50 mx-2 shadow-lg bg-yellow-500/20 border border-yellow-400/40 rounded-xl p-3 mb-4 flex items-center justify-between backdrop-blur-md">
+                    <span className="flex items-center gap-2 text-yellow-400 text-sm font-semibold">
+                        <Edit2 size={14}/>
+                        Editing — auto-saves to database
+                        {lessonSaving && <Loader2 size={12} className="animate-spin"/>}
+                    </span>
+                    <button
+                        onClick={() => setEditingContent(null)}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-4 py-1.5 rounded-lg text-xs font-bold transition"
+                    >
+                        ✓ Done Editing
+                    </button>
+                </div>
+            );
             return (
                 <div className="flex justify-end mb-3">
                     <button onClick={()=>setEditingContent(tab)} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs font-semibold transition">
@@ -1766,7 +1191,7 @@
         //  BOOT SCREEN
         // ═════════════════════════════════════════════════════════════════════════
         if (screen==="boot"||loadingPct<100) {
-            const animText="May is My Month of Divine Mercy Eccl. 33:17-19".split("");
+            const animText="Supernatural Victory and Progress Through Thanksgiving".split("");
             return (
                 <div className="fixed inset-0 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 flex items-center justify-center z-50">
                     <div className="text-center px-4">
@@ -1923,7 +1348,7 @@
         }
 
         // ═════════════════════════════════════════════════════════════════════════
-        //  MAIN APP — single-page, contentData changes per active lesson (FIX #4)
+        //  MAIN APP
         // ═════════════════════════════════════════════════════════════════════════
         const tabs = [
             {id:"intro",label:"Intro"},{id:"lesson",label:"Lesson"},
@@ -1962,27 +1387,23 @@
 
                 <div className="container mx-auto px-4 py-6 max-w-6xl relative z-10">
 
-                    {/* ── LESSON SELECTOR — admin only ── */}
+                    {/* ── LESSON SELECTOR ── */}
                     <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                         <div className="relative">
-                            {/* Non-admins see a static read-only label — no dropdown */}
                             {!isAdmin && (
                                 <div className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold ${darkMode?"bg-white/5 border border-white/10":"bg-white/60 border border-gray-200"}`}>
                                     <FileText size={15} className="text-purple-400"/>
                                     <span className="max-w-[200px] truncate">{contentData.lessonTitle}</span>
                                 </div>
                             )}
-
-                            {/* Admins get the full dropdown switcher */}
                             {isAdmin && (
-                            <button onClick={()=>setShowLessonPicker(p=>!p)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition shadow-sm ${darkMode?"bg-white/10 hover:bg-white/20 border border-white/10":"bg-white/80 hover:bg-white border border-gray-200"}`}>
-                                <FileText size={15} className="text-purple-400"/>
-                                <span className="max-w-[200px] truncate">{contentData.lessonTitle}</span>
-                                <ChevronDown size={14} className={`transition-transform ${showLessonPicker?"rotate-180":""}`}/>
-                            </button>
+                                <button onClick={()=>setShowLessonPicker(p=>!p)}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition shadow-sm ${darkMode?"bg-white/10 hover:bg-white/20 border border-white/10":"bg-white/80 hover:bg-white border border-gray-200"}`}>
+                                    <FileText size={15} className="text-purple-400"/>
+                                    <span className="max-w-[200px] truncate">{contentData.lessonTitle}</span>
+                                    <ChevronDown size={14} className={`transition-transform ${showLessonPicker?"rotate-180":""}`}/>
+                                </button>
                             )}
-
                             {isAdmin&&showLessonPicker&&(
                                 <div className={`absolute top-full mt-2 left-0 z-50 min-w-[270px] rounded-2xl shadow-2xl border overflow-hidden ${darkMode?"bg-gray-800 border-white/10":"bg-white border-gray-200"}`}>
                                     <div className="px-4 py-2.5 border-b border-white/10">
@@ -2006,62 +1427,18 @@
                                         }
                                     </div>
                                     <div className="p-2 border-t border-white/10">
-                                            <button onClick={()=>{setShowLessonPicker(false);setShowNewLesson(true);}}
-                                                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-green-400 hover:bg-green-500/10 transition">
-                                                <Plus size={14}/> Add New Lesson
-                                            </button>
-                                        </div>
-                                </div>
-                            )} {/* end isAdmin dropdown */}
-                        </div>
-
-                        {/* <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                            {contentData.lessonTitle}
-                        </h2> */}
-                        {isAdmin && editingTitle ? (
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        autoFocus
-                                        type="text"
-                                        value={titleDraft}
-                                        onChange={e => setTitleDraft(e.target.value)}
-                                        onKeyDown={async e => {
-                                            if (e.key === "Enter") await saveTitle();
-                                            if (e.key === "Escape") setEditingTitle(false);
-                                        }}
-                                        className={`text-xl md:text-2xl font-bold px-3 py-1 rounded-xl border outline-none focus:ring-2 focus:ring-purple-400 bg-transparent ${darkMode ? "border-white/30 text-white" : "border-gray-400 text-gray-900"}`}
-                                    />
-                                    <button
-                                        onClick={saveTitle}
-                                        className="p-2 rounded-xl bg-green-500/20 hover:bg-green-500/40 text-green-400 transition"
-                                        title="Save title"
-                                    >
-                                        <Save size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingTitle(false)}
-                                        className="p-2 rounded-xl bg-red-500/20 hover:bg-red-500/40 text-red-400 transition"
-                                        title="Cancel"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2 group">
-                                    <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                                        {contentData.lessonTitle}
-                                    </h2>
-                                    {isAdmin && (
-                                        <button
-                                            onClick={() => { setTitleDraft(contentData.lessonTitle); setEditingTitle(true); }}
-                                            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-1.5 rounded-lg bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 transition"
-                                            title="Edit lesson title"
-                                        >
-                                            <Edit2 size={14} />
+                                        <button onClick={()=>{setShowLessonPicker(false);setShowNewLesson(true);}}
+                                            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-green-400 hover:bg-green-500/10 transition">
+                                            <Plus size={14}/> Add New Lesson
                                         </button>
-                                    )}
+                                    </div>
                                 </div>
                             )}
+                        </div>
+
+                        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                            {contentData.lessonTitle}
+                        </h2>
                     </div>
 
                     {/* ── NEW LESSON MODAL ── */}
@@ -2105,844 +1482,655 @@
                         ))}
                     </div>
 
-                    {tabLoading&&<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-purple-500"/></div>}
+                    {tabLoading && (
+                        <div className="flex justify-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-purple-500"/>
+                        </div>
+                    )}
 
-                    {!tabLoading&&(
-                    <div className={`${cardBg} border rounded-2xl shadow-2xl p-6 md:p-8`}>
+                    {!tabLoading && (
+                        <div className={`${cardBg} border rounded-2xl shadow-2xl p-6 md:p-8`}>
 
-                        {lessonsLoading && (
-                            <div className="flex flex-col items-center justify-center py-24 gap-4">
-                                <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-purple-500"/>
-                                <p className={`text-sm font-semibold opacity-50`}>Loading lesson…</p>
-                            </div>
-                        )}
-
-                        {/* ── INTRO ── */}
-                        {!lessonsLoading && activeTab==="intro"&&(
-                            <div className="space-y-6">
-                                {editBanner("intro")}
-                                <div className={`${darkMode?"bg-blue-900/30":"bg-blue-50"} p-6 rounded-xl border-l-4 border-blue-500`}>
-                                    <h3 className="text-2xl font-bold mb-4 flex items-center gap-2"><BookOpen className="text-blue-500"/>Memory Verse</h3>
-                                    {(editingContent==="intro"&&isAdmin)
-                                        ?<textarea value={contentData.memoryVerse} onChange={e=>updateContent("memoryVerse",e.target.value)} className={`w-full px-4 py-2 rounded-lg border text-lg italic mb-4 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={2}/>
-                                        :<blockquote className="text-xl italic mb-4">"{contentData.memoryVerse}"</blockquote>
-                                    }
-                                    {(editingContent==="intro"&&isAdmin) ? (
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <input
-                                                type="text"
-                                                value={contentData.memoryVerseRef}
-                                                onChange={e=>updateContent("memoryVerseRef",e.target.value)}
-                                                placeholder="e.g., Phil. 2:8"
-                                                className={`px-3 py-1.5 rounded-lg border text-sm font-semibold w-36 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}
-                                            />
-                                            <button onClick={()=>showBibleVerse(contentData.memoryVerseRef)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
-                                                <BookOpen size={13}/> Preview
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button onClick={()=>showBibleVerse(contentData.memoryVerseRef)}className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
-                                            <BookOpen size={15}/> Read {contentData.memoryVerseRef}
-                                        </button>
-                                    )}
+                            {/* ── FIX: Ternary guard — spinner OR content, never both ── */}
+                            {lessonsLoading ? (
+                                <div className="flex flex-col items-center justify-center py-24 gap-4">
+                                    <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-purple-500"/>
+                                    <p className="text-sm font-semibold opacity-50">Loading lesson…</p>
                                 </div>
-
-                                
-                                
-
-
-
-
-
-
-                                    {/* --- ISOLATED BLOCK --- */}
-                                    <div className="my-8 border-t border-b py-6 border-gray-100">
-                                        {/* Header & Toggle Section */}
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-xl font-bold flex items-center gap-2 flex-wrap">
-                                                <BookOpen size={20} className="text-blue-500" />
-                                                <span>Lesson Reading:</span>
-                                                {contentData?.lessonReadingScriptures
-                                                    ?.filter(s => s?.trim())
-                                                    .map((s, idx) => (
-                                                        <span key={`title-ref-${idx}`} className="font-semibold">
-                                                            {s}{idx < (contentData.lessonReadingScriptures.filter(x => x.trim()).length - 1) ? ',' : ''}
-                                                        </span>
-                                                    ))
+                            ) : (
+                                <>
+                                    {/* ── INTRO ── */}
+                                    {activeTab==="intro"&&(
+                                        <div className="space-y-6">
+                                            {editBanner("intro")}
+                                            <div className={`${darkMode?"bg-blue-900/30":"bg-blue-50"} p-6 rounded-xl border-l-4 border-blue-500`}>
+                                                <h3 className="text-2xl font-bold mb-4 flex items-center gap-2"><BookOpen className="text-blue-500"/>Memory Verse</h3>
+                                                {(editingContent==="intro"&&isAdmin)
+                                                    ?<textarea value={contentData.memoryVerse} onChange={e=>updateContent("memoryVerse",e.target.value)} className={`w-full px-4 py-2 rounded-lg border text-lg italic mb-4 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={2}/>
+                                                    :<blockquote className="text-xl italic mb-4">"{contentData.memoryVerse}"</blockquote>
                                                 }
-                                            </h3>
-
-                                            {isAdmin && (
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => setEditingContent(editingContent === "reading" ? null : "reading")}
-                                                    className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${
-                                                        editingContent === "reading" 
-                                                        ? "bg-green-100 text-green-700 hover:bg-green-200" 
-                                                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                                    }`}
-                                                >
-                                                    {editingContent === "reading" ? "Close Editor" : "Edit Reading"}
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {/* Admin Logic: Now correctly checking for "reading" */}
-                                        {isAdmin && editingContent === "reading" ? (
-                                            <div className="space-y-2 p-4 rounded-xl border-2 border-dashed border-blue-500/30 bg-blue-500/5 animate-in fade-in slide-in-from-top-1">
-                                                <p className="text-[10px] font-black uppercase tracking-tighter opacity-60 mb-2">
-                                                    Configure Reading Buttons
-                                                </p>
-
-                                                {(contentData.lessonReadingScriptures || []).map((s, ri) => (
-                                                    <div key={`edit-ref-${ri}`} className="flex items-center gap-2 mb-2">
+                                                {(editingContent==="intro"&&isAdmin) ? (
+                                                    <div className="flex items-center gap-2 mt-2">
                                                         <input
                                                             type="text"
-                                                            value={s}
-                                                            onChange={(e) => updateScriptureRef("reading", e.target.value, ri)}
-                                                            placeholder="e.g., Matthew 13:24-30"
-                                                            className={`px-3 py-2 rounded-lg border text-sm flex-1 outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                                                                darkMode ? "bg-gray-800 border-gray-600 text-white" : "bg-white border-gray-300"
-                                                            }`}
+                                                            value={contentData.memoryVerseRef}
+                                                            onChange={e=>updateContent("memoryVerseRef",e.target.value)}
+                                                            placeholder="e.g., Phil. 2:8"
+                                                            className={`px-3 py-1.5 rounded-lg border text-sm font-semibold w-36 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}
                                                         />
+                                                        <button onClick={()=>showBibleVerse(contentData.memoryVerseRef)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
+                                                            <BookOpen size={13}/> Preview
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={()=>showBibleVerse(contentData.memoryVerseRef)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
+                                                        <BookOpen size={15}/> Read {contentData.memoryVerseRef}
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* Lesson Reading */}
+                                            <div className="my-8 border-t border-b py-6 border-gray-100">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h3 className="text-xl font-bold flex items-center gap-2 flex-wrap">
+                                                        <BookOpen size={20} className="text-blue-500" />
+                                                        <span>Lesson Reading:</span>
+                                                        {contentData?.lessonReadingScriptures
+                                                            ?.filter(s => s?.trim())
+                                                            .map((s, idx) => (
+                                                                <span key={`title-ref-${idx}`} className="font-semibold">
+                                                                    {s}{idx < (contentData.lessonReadingScriptures.filter(x => x.trim()).length - 1) ? ',' : ''}
+                                                                </span>
+                                                            ))
+                                                        }
+                                                    </h3>
+                                                    {isAdmin && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => removeScriptureRef("reading", ri)}
-                                                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
-                                                            title="Remove reference"
+                                                            onClick={() => setEditingContent(editingContent === "reading" ? null : "reading")}
+                                                            className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${
+                                                                editingContent === "reading"
+                                                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                                                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                                            }`}
                                                         >
-                                                            <X size={14} />
+                                                            {editingContent === "reading" ? "Close Editor" : "Edit Reading"}
                                                         </button>
-                                                    </div>
-                                                ))}
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addScriptureRef("reading")}
-                                                    className="flex items-center gap-1 text-xs font-bold text-blue-500 hover:text-blue-400 mt-2 p-1"
-                                                >
-                                                    <Plus size={14} /> Add Reading Reference
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            /* Display Mode: Clickable buttons for students/congregation */
-                                            <div className="flex gap-2 flex-wrap">
-                                                {contentData?.lessonReadingScriptures?.filter(s => s?.trim()).length > 0 ? (
-                                                    contentData.lessonReadingScriptures.filter(s => s?.trim()).map((s, idx) => (
-                                                        <button
-                                                            key={`read-btn-${idx}`}
-                                                            onClick={() => showBibleVerse(s)}
-                                                            
-                                                            className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
-                                                        >
-                                                            <BookOpen size={16} />
-                                                            Read {s}
-                                                        </button>
-                                                    ))
-                                                ) : (
-                                                    <p className="text-sm text-gray-400 italic">No reading references set.</p>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
-
-
-
-
-
-                                    <div>
-                                        <h3 className="text-2xl font-bold mb-3">Introduction</h3>
-                                        {(editingContent==="intro"&&isAdmin)
-                                            ?(<>
-                                                <textarea value={contentData.introduction} onChange={e=>updateContent("introduction",e.target.value)} className={`w-full px-4 py-2 rounded-lg border ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={6}/>
-                                                <div className="mt-3">
-                                                    <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">Scripture Buttons</p>
-                                                    {contentData.lessonIntroScriptures.map((s,ri)=>(
-                                                        <div key={ri} className="flex items-center gap-2 mb-2">
-                                                            <input type="text" value={s}
-                                                                onChange={e=>updateScriptureRef("intro", e.target.value, ri)}
-                                                                placeholder="e.g., Colossians 1:17"
-                                                                className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}/>
-                                                            <button onClick={()=>showBibleVerse(s)} disabled={!s.trim()} className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30"><BookOpen size={13}/></button>
-                                                            <button onClick={()=>removeScriptureRef("intro",ri)} className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"><X size={13}/></button>
-                                                        </div>
-                                                    ))}
-                                                    <button onClick={()=>addScriptureRef("intro")} className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-1"><Plus size={12}/> Add scripture button</button>
+                                                    )}
                                                 </div>
-                                            </>)
-                                            :(<p className="leading-relaxed">{contentData.introduction}
-                                                <div className="mt-4 flex flex-wrap gap-2">
-                                                    {contentData.lessonIntroScriptures.map(s=>(
-                                                        <button key={s} onClick={()=>showBibleVerse(s)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"><BookOpen size={13}/>{s}</button>
-                                                    ))}
-                                                </div>
-                                            </p>)
-                                        }
-                                </div>
-                                <div className={`${darkMode?"bg-green-900/30":"bg-green-50"} p-6 rounded-xl`}>
-                                    <h3 className="text-xl font-bold mb-3">Aims & Objectives</h3>
-                                    <div className="space-y-3">
-                                        <div>
-                                            <strong className="text-green-500">AIMS:</strong>
-                                            {(editingContent==="intro"&&isAdmin)
-                                                ?<textarea value={contentData.aims} onChange={e=>updateContent("aims",e.target.value)} className={`w-full px-3 py-2 rounded-lg border mt-2 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={2}/>
-                                                :<p className="mt-1">{contentData.aims}</p>
-                                            }
-                                        </div>
-                                        <div>
-                                            <strong className="text-green-500">OBJECTIVES:</strong>
-                                            {(editingContent==="intro"&&isAdmin)
-                                                ?<textarea value={contentData.objectives} onChange={e=>updateContent("objectives",e.target.value)} className={`w-full px-3 py-2 rounded-lg border mt-2 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={2}/>
-                                                :<p className="mt-1">{contentData.objectives}</p>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                    
-
-
-
-
-                    
-
-
-                    {/* ── LESSON ── */}
-
-                    {/* --- MASTER ADD BUTTON (Adds a whole new Section 1, 2, 3...) --- */}
-
-
-
-    {/* {isAdmin && editingContent === "lesson" && ( */}
-    {!lessonsLoading && isAdmin && editingContent === "lesson" && (
-
-        <div className="mt-10 pt-6 border-t-2 border-dashed border-gray-200 dark:border-gray-800">
-            <button
-                onClick={() => {
-                    const newSection = {
-                        title: "",
-                        content: "",
-                        scriptures: [],
-                        subPoints: [
-                            { title: "", content: "", scriptures: [] } // Starts with 1 empty subpoint for convenience
-                        ]
-                    };
-                    const updatedPoints = [...(contentData?.lessonPoints || []), newSection];
-                    updateContent("lessonPoints", updatedPoints);
-                }}
-                className="w-full py-8 rounded-2xl border-2 border-dashed border-purple-500/30 hover:border-purple-500 hover:bg-purple-500/5 transition-all group flex flex-col items-center justify-center gap-3"
-            >
-                <div className="bg-purple-500 text-white p-3 rounded-full shadow-lg group-hover:scale-110 transition-transform">
-                    <Plus size={24} strokeWidth={3} />
-                </div>
-                <div className="text-center">
-                    <p className="font-black uppercase tracking-widest text-purple-500">Add New Lesson Section</p>
-                    <p className="text-xs opacity-50">This adds a main point (e.g., Point { (contentData?.lessonPoints?.length || 0) + 1 })</p>
-                </div>
-            </button>
-
-            
-        </div>
-    )}
-
-
-
-
-
-
-
-    
-    {!lessonsLoading && activeTab === "lesson" && (
-    <div className="space-y-6 animate-in fade-in duration-300">
-        {editBanner("lesson")}
-        <h3 className="text-2xl font-bold">Lesson Contents</h3>
-        
-        
-
-
-
-
-
-
-
-
-
-        {/* Intro Section */}
-{isAdmin && editingContent === "lesson" ? (
-    <>
-        <textarea 
-            value={contentData?.lessonIntro || ""} 
-            onChange={e => updateContent("lessonIntro", e.target.value)} 
-            className={`w-full px-4 py-2 rounded-lg border mb-4 outline-none focus:ring-2 focus:ring-purple-500 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-            rows={3}
-            placeholder="Lesson Introduction..."
-        />
-
-        {/* Scripture Buttons (ADMIN EDIT MODE) */}
-      {/* SCRIPTURE EDITOR (ADMIN ONLY) */}
-{/* SCRIPTURE EDITOR (ADMIN ONLY) — Lesson Content Scriptures */}
-        <div className="mb-4">
-            <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">
-                Lesson Content Scripture Buttons
-            </p>
-
-            {(contentData.lessonContentScriptures || []).map((s, ri) => (
-                <div key={ri} className="flex items-center gap-2 mb-2">
-                    <input
-                        type="text"
-                        value={s}
-                        onChange={(e) => {
-                            const updated = [...(contentData.lessonContentScriptures || [])];
-                            updated[ri] = e.target.value;
-                            updateContent("lessonContentScriptures", updated);
-                        }}
-                        placeholder="e.g., Gen. 12:1-5"
-                        className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${
-                            darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"
-                        }`}
-                    />
-                    <button
-                        onClick={() => showBibleVerse(s)}
-                        disabled={!s.trim()}
-                        className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30"
-                    >
-                        <BookOpen size={13} />
-                    </button>
-                    <button
-                        onClick={() => {
-                            const updated = (contentData.lessonContentScriptures || []).filter(
-                                (_, i) => i !== ri
-                            );
-                            updateContent("lessonContentScriptures", updated);
-                        }}
-                        className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"
-                    >
-                        <X size={13} />
-                    </button>
-                </div>
-            ))}
-
-            <button
-                onClick={() =>
-                    updateContent("lessonContentScriptures", [
-                        ...(contentData.lessonContentScriptures || []),
-                        "",
-                    ])
-                }
-                className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 mt-1"
-            >
-                <Plus size={12} /> Add lesson content scripture
-            </button>
-        </div>
-    </>
-) : (
-    <>
-        <p className="leading-relaxed mb-6 opacity-90">
-            {contentData?.lessonIntro || "No introduction text."}
-        </p>
-        {/* USER VIEW SCRIPTURE BUTTONS — Lesson Content */}
-        <div className="flex flex-wrap gap-2">
-            {(contentData.lessonContentScriptures || [])
-                .filter(s => s?.trim())
-                .map((s, i) => (
-                    <button
-                        key={i}
-                        onClick={() => showBibleVerse(s)}
-                        className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
-                    >
-                        <BookOpen size={13} />
-                        {s}
-                    </button>
-                ))}
-        </div>
-    </>
-)}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-        {/* Main Points Loop */}
-        {(contentData?.lessonPoints || []).map((section, idx) => (
-            <div key={`point-${idx}`} className={`relative ${darkMode ? "bg-gray-700/40" : "bg-gray-50"} p-5 rounded-xl border border-transparent`}>
-                
-                {/* Delete Entire Section Button */}
-                {isAdmin && editingContent === "lesson" && (
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if(window.confirm(`Delete Point ${idx + 1}?`)) {
-                                const filtered = contentData.lessonPoints.filter((_, i) => i !== idx);
-                                updateContent("lessonPoints", filtered);
-                            }
-                        }}
-                        className="absolute -top-2 -right-2 z-50 bg-red-500 text-white p-2 rounded-full shadow-xl hover:bg-red-600 active:scale-90 transition-all border-2 border-white dark:border-gray-800"
-                        title="Delete entire section"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                )}
-
-                <div className="space-y-3">
-                    {isAdmin && editingContent === "lesson" ? (
-                        /* --- 1. ADMIN EDIT MODE --- */
-                        <>
-                            <div className="flex items-center gap-2">
-                                <span className="font-black opacity-30 text-lg">{idx + 1}</span>
-                                <input 
-                                    type="text" 
-                                    value={section?.title || ""} 
-                                    onChange={e => updateLessonPoint(idx, "title", e.target.value)} 
-                                    className={`w-full px-3 py-2 rounded-lg border font-bold ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
-                                    placeholder="Main Point Title"
-                                />
-                            </div>
-                            <textarea 
-                                value={section?.content || ""} 
-                                onChange={e => updateLessonPoint(idx, "content", e.target.value)} 
-                                className={`w-full px-3 py-2 rounded-lg border text-sm ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-                                rows={2}
-                                placeholder="Description..."
-                            />
-
-                            {/* Main Point Scripture Manager */}
-                            <div className="flex flex-wrap gap-2 py-2">
-                                {(section?.scriptures || []).map((s, si) => (
-                                    <span key={si} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
-                                        {s} <X size={10} className="cursor-pointer" onClick={() => {
-                                            const filtered = section.scriptures.filter((_, i) => i !== si);
-                                            updateLessonPoint(idx, "scriptures", filtered);
-                                        }}/>
-                                    </span>
-                                ))}
-                                <button 
-                                    onClick={() => {
-                                        const val = prompt("Enter Verse (e.g. Romans 13:1)");
-                                        if(val) updateLessonPoint(idx, "scriptures", [...(section?.scriptures || []), val]);
-                                    }}
-                                    className="text-[10px] font-bold text-blue-500 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500 hover:text-white transition"
-                                >
-                                    + Add Scripture
-                                </button>
-                            </div>
-
-                            {/* SUB-POINTS MANAGER (Fixes Edit Mode Buttons) */}
-                          {/* SUB-POINTS MANAGER (Fixes both Normal and Edit modes) */}
-<div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
-    {(section?.subPoints ?? []).map((sp, si) => (
-        <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
-            
-            {isAdmin && editingContent === "lesson" ? (
-                /* --- EDIT MODE (image_2d0bba.jpg) --- */
-                <>
-                    <button onClick={() => deleteSubPoint(idx, si)} className="absolute top-2 right-2 text-red-400">
-                        <X size={14}/>
-                    </button>
-                    <input 
-                        type="text" 
-                        value={sp?.title ?? ""} 
-                        onChange={e => updateSubPoint(idx, si, "title", e.target.value)} 
-                        className="w-full bg-transparent border-b border-gray-600 mb-2 text-sm font-bold focus:border-purple-500 outline-none" 
-                    />
-                    <textarea 
-                        value={sp?.content ?? ""} 
-                        onChange={e => updateSubPoint(idx, si, "content", e.target.value)} 
-                        className="w-full bg-transparent text-xs outline-none mb-2" 
-                        rows={1}
-                    />
-                    
-                    {/* Scripture Manager for Sub-points */}
-                    <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-white/10">
-                        {(sp?.scriptures ?? []).map((ref, sci) => (
-                            <span key={sci} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
-                                {ref} 
-                                <X size={10} className="cursor-pointer" onClick={() => {
-                                    const filtered = (sp?.scriptures ?? []).filter((_, i) => i !== sci);
-                                    updateSubPoint(idx, si, "scriptures", filtered);
-                                }}/>
-                            </span>
-                        ))}
-                        <button 
-                            type="button"
-                            onClick={() => {
-                                const val = prompt("Enter Verse");
-                                if(val) {
-                                    const currentScrips = sp?.scriptures ?? [];
-                                    updateSubPoint(idx, si, "scriptures", [...currentScrips, val]);
-                                }
-                            }}
-                            className="text-[9px] font-bold text-blue-400 border border-blue-400/30 px-2 py-0.5 rounded hover:bg-blue-400 hover:text-white transition"
-                        >
-                            + Add Verse
-                        </button>
-                    </div>
-                </>
-            ) : (
-                /* --- NORMAL VIEW MODE (image_2d0892.png) --- */
-                <div className="flex flex-col gap-1">
-                    <div className="flex gap-3">
-                        <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
-                        <div>
-                            <p className="text-sm font-bold text-white">{sp?.title}</p>
-                            <p className="text-sm opacity-80">{sp?.content}</p>
-                        </div>
-                    </div>
-                    
-                    {/* Clickable Buttons in View Mode */}
-                    <div className="flex flex-wrap gap-2 ml-8 mt-1">
-                        {(sp?.scriptures ?? []).map((ss, ssi) => (
-                            <button 
-                                key={ssi} 
-                                onClick={() => showBibleVerse(ss)}
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm transition-transform active:scale-95"
-                            >
-                                {ss}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
-    ))}
-    {isAdmin && editingContent === "lesson" && (
-        <button 
-            type="button"
-            onClick={() => addSubPoint(idx)} 
-            className="mt-2 text-xs font-bold text-purple-500 flex items-center gap-1 hover:bg-purple-50 p-2 rounded-lg transition-colors border border-purple-100 border-dashed"
-        >
-            <Plus size={14}/> New Sub-point
-        </button>
-    )}
-</div>
-                        </>
-                    ) : (
-                        /* --- 2. PUBLIC VIEW MODE --- */
-                        <>
-                            <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
-                            {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
-                            
-                            {/* Main Point Scripture Buttons */}
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                {(section?.scriptures || []).map(s => (
-                                    <button 
-                                        key={s} 
-                                        onClick={() => showBibleVerse(s)} 
-                                        className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
-                                    >
-                                        <BookOpen size={12} /> <span>{s}</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Sub-point List (View Mode) */}
-                            <div className="space-y-4 ml-2 mt-4">
-                                {(section?.subPoints || []).map((sp, si) => (
-                                    <div key={`sub-view-${si}`} className="flex flex-col gap-1">
-                                        <div className="flex gap-3">
-                                            <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-bold text-white">{sp?.title}</p>
-                                                <p className="text-sm opacity-80">{sp?.content}</p>
-                                                
-                                                {/* Sub-point Scripture Buttons (View Mode) */}
-                                                <div className="flex flex-wrap gap-2 mt-2">
-                                                    {(sp?.scriptures || []).map((ss, ssi) => (
-                                                        <button 
-                                                            key={`${si}-${ssi}`} 
-                                                            onClick={() => showBibleVerse(ss)} 
-                                                            className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
-                                                        >
-                                                            {ss}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        ))}
-    </div>
-)}
-
-
-
-
-
-
-
-
-
-
-
-    {/* ── CONCLUSION ── */}
-    {/* {activeTab === "conclusion" && ( */}
-     {!lessonsLoading && activeTab === "conclusion" && (
-        <div className="space-y-6">
-            {editBanner("conclusion")}
-            <h3 className="text-2xl font-bold">Conclusion</h3>
-            
-            {isAdmin && editingContent === "conclusion" ? (
-                <div className="space-y-4">
-                    <textarea 
-                        value={contentData?.conclusion || ""} 
-                        onChange={e => updateContent("conclusion", e.target.value)} 
-                        className={`w-full px-4 py-2 rounded-xl border text-lg ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`} 
-                        rows={6}
-                    />
-                    <div className="p-4 border-2 border-dashed border-blue-500/20 rounded-xl">
-                        <p className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest">Concluding Verses</p>
-                        <div className="flex flex-wrap gap-2">
-                            {(contentData?.conclusionScriptures || []).map((s, i) => (
-                                <span key={i} className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold">
-                                    {s} <X size={12} className="cursor-pointer" onClick={() => {
-                                        const filtered = contentData.conclusionScriptures.filter((_, idx) => idx !== i);
-                                        updateContent("conclusionScriptures", filtered);
-                                    }}/>
-                                </span>
-                            ))}
-                            <button 
-                                onClick={() => {
-                                    const val = prompt("Enter Verse");
-                                    if(val) updateContent("conclusionScriptures", [...(contentData?.conclusionScriptures || []), val]);
-                                }}
-                                className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg text-xs font-bold"
-                            >
-                                + Add Verse
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div className="space-y-6">
-                    <p className="text-lg leading-relaxed opacity-90">{contentData?.conclusion || "No conclusion yet."}</p>
-                    <div className="flex flex-wrap gap-3">
-                        {(contentData?.conclusionScriptures || []).map(s => (
-                            <button key={s} onClick={() => showBibleVerse(s)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
-                                <BookOpen size={16} /> {s}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
-    )}
-
-
-
-
-
-
-
-
-
-
-                    
-
-                        {/* ── PRAYER ── */}
-                    
-
-                        {/* ── MANAGE (scriptures) ── */}
-                        {/* {activeTab==="manage"&&( */}
-                        {!lessonsLoading && activeTab==="manage"&&(
-                            <div className="space-y-5">
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div>
-                                        <h3 className="text-2xl font-bold flex items-center gap-2"><Database className="text-blue-400" size={22}/>Scripture Database</h3>
-                                        <p className="text-xs opacity-50 mt-0.5">{Object.keys(scriptureDB).length} entries ({filteredScriptureKeys.length} shown) · {isAdmin?"Admin — full edit access":"Read-only"}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <button onClick={()=>void loadScripturesFromDB()} disabled={scriptureLoading||scriptureSyncing}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 transition disabled:opacity-40">
-                                            <RefreshCw size={13} className={scriptureLoading?"animate-spin":""}/> Sync DB
-                                        </button>
-                                        {isAdmin&&(<>
-                                            {/* Bulk importer toggle */}
-                                            <button onClick={()=>{setShowImporter(p=>!p);setEditMode(false);}}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${showImporter?"bg-purple-700 hover:bg-purple-800":"bg-purple-600 hover:bg-purple-700"} text-white`}>
-                                                <Upload size={14}/> {showImporter?"Close Importer":"Bulk Import"}
-                                            </button>
-                                            <button onClick={()=>{setEditMode(!editMode);setShowImporter(false);}} disabled={scriptureSyncing}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40 ${editMode?"bg-red-600 hover:bg-red-700":"bg-green-600 hover:bg-green-700"} text-white`}>
-                                                {editMode?<><X size={14}/> Cancel</>:<><Plus size={14}/> Add One</>}
-                                            </button>
-                                        </>)}
-                                    </div>
-                                </div>
-
-                                {scriptureSaved&&(
-                                    <div className="flex items-center gap-2 px-4 py-3 bg-green-600/20 border border-green-500/40 rounded-xl text-green-400 text-sm font-semibold">
-                                        <CheckCircle size={16}/> "{scriptureSaved}" saved to database!
-                                    </div>
-                                )}
-
-                                {/* ── BULK IMPORTER PANEL (admin) ── */}
-                                {isAdmin&&showImporter&&(
-                                    <div className={`${darkMode?"bg-gray-700/60 border-white/10":"bg-gray-50 border-gray-200"} border rounded-2xl p-5`}>
-                                        <ScriptureImporter
-                                            darkMode={darkMode}
-                                            onDone={()=>{
-                                                void loadScripturesFromDB();
-                                                setShowImporter(false);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                {isAdmin&&editMode&&(
-                                    <div className={`${darkMode?"bg-gray-700/70":"bg-blue-50"} p-6 rounded-2xl border ${darkMode?"border-white/10":"border-blue-200"} space-y-4`}>
-                                        <h4 className="font-bold text-lg flex items-center gap-2"><Plus size={16} className="text-green-400"/>New Scripture Entry</h4>
-                                        <div>
-                                            <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Reference *</label>
-                                            <input type="text" value={newVerse.reference} onChange={e=>setNewVerse({...newVerse,reference:e.target.value})}
-                                                placeholder="e.g., John 3:16 or Romans 8:28"
-                                                className={`w-full px-4 py-2.5 rounded-xl border font-semibold ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}/>
-                                        </div>
-                                        {(["KJV","NKJV","NIV","ESV","AMP","NLT","MSG"] as const).map(v=>(
-                                            <div key={v}>
-                                                <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">{v}</label>
-                                                <textarea value={newVerse.versions[v]} onChange={e=>setNewVerse(p=>({...p,versions:{...p.versions,[v]:e.target.value}}))}
-                                                    placeholder={`${v} translation text…`} rows={2}
-                                                    className={`w-full px-4 py-2 rounded-xl border text-sm ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}/>
-                                            </div>
-                                        ))}
-                                        <div className="flex gap-3">
-                                            <button onClick={()=>void addNewScripture()} disabled={scriptureSyncing}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition disabled:opacity-50">
-                                                {scriptureSyncing?<><Loader2 size={15} className="animate-spin"/>Saving…</>:<><Save size={15}/>Save to Database</>}
-                                            </button>
-                                            <button onClick={()=>setEditMode(false)} className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-xl flex items-center gap-2 text-sm transition"><X size={14}/> Cancel</button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40 text-sm">🔍</span>
-                                    <input type="text" value={scriptureSearch} onChange={e=>setScriptureSearch(e.target.value)} placeholder="Search references…"
-                                        className={`w-full pl-9 pr-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500 ${darkMode?"bg-gray-700/60 border-white/10":"bg-white border-gray-300"}`}/>
-                                    {scriptureSearch&&<button onClick={()=>setScriptureSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70"><X size={14}/></button>}
-                                </div>
-
-                                <div className="space-y-3">
-                                    {scriptureLoading&&(
-                                        <div className="flex flex-col items-center py-16 opacity-60">
-                                            <Loader2 size={36} className="animate-spin text-blue-400 mb-3"/>
-                                            <p className="text-sm">Loading scriptures from database…</p>
-                                        </div>
-                                    )}
-                                    {!scriptureLoading&&filteredScriptureKeys.map(ref=>{
-                                        const isEditing=editingRef===ref;
-                                        const isConfirmDel=deleteConfirmRef===ref;
-                                        return (
-                                            <div key={ref} className={`${darkMode?"bg-gray-700/60 border-white/10":"bg-white border-gray-200"} border rounded-2xl overflow-hidden`}>
-                                                <div className={`flex items-center justify-between px-4 py-3 ${isEditing?darkMode?"bg-yellow-500/10":"bg-yellow-50":""}`}>
-                                                    <div>
-                                                        <p className="font-bold text-base">{ref}</p>
-                                                        <p className="text-xs opacity-40 mt-0.5">{Object.values(scriptureDB[ref]).filter(v=>v).length}/7 translations</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <button onClick={()=>showBibleVerse(ref)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"><BookOpen size={12}/> View</button>
-                                                        {isAdmin&&!isEditing&&(<>
-                                                            <button onClick={()=>startEditScripture(ref)} className="px-3 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 text-xs font-semibold flex items-center gap-1 transition"><Edit2 size={12}/> Edit</button>
-                                                            {isConfirmDel
-                                                                ?<div className="flex items-center gap-1">
-                                                                    <span className="text-xs text-red-400 font-semibold">Delete?</span>
-                                                                    <button onClick={()=>void deleteScripture(ref)} disabled={scriptureSyncing} className="px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition">Yes</button>
-                                                                    <button onClick={()=>setDeleteConfirmRef(null)} className="px-2 py-1 rounded-lg bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold transition">No</button>
-                                                                </div>
-                                                                :<button onClick={()=>setDeleteConfirmRef(ref)} className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs font-semibold flex items-center gap-1 transition"><X size={12}/> Del</button>
-                                                            }
-                                                        </>)}
-                                                        {isAdmin&&isEditing&&<button onClick={cancelEditScripture} className="px-3 py-1.5 rounded-lg bg-gray-500/30 hover:bg-gray-500/50 text-gray-300 text-xs font-semibold flex items-center gap-1 transition"><X size={12}/> Cancel</button>}
-                                                    </div>
-                                                </div>
-                                                {isAdmin&&isEditing&&(
-                                                    <div className={`px-4 pb-5 pt-2 space-y-4 border-t ${darkMode?"border-white/10 bg-gray-800/60":"border-gray-100 bg-yellow-50/50"}`}>
-                                                        <div>
-                                                            <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Reference (rename)</label>
-                                                            <input type="text" value={editingRefNew} onChange={e=>setEditingRefNew(e.target.value)} className={`w-full px-4 py-2 rounded-xl border font-semibold text-sm ${darkMode?"bg-gray-700 border-gray-600":"bg-white border-gray-300"}`}/>
-                                                        </div>
-                                                        {(["KJV","NKJV","NIV","ESV","AMP","NLT","MSG"] as const).map(v=>(
-                                                            <div key={v}>
-                                                                <div className="flex items-center justify-between mb-1">
-                                                                    <label className="text-xs font-bold uppercase tracking-widest opacity-60">{v}</label>
-                                                                    {editingVersions[v]&&<span className="text-[10px] opacity-40">{editingVersions[v].length} chars</span>}
-                                                                </div>
-                                                                <textarea value={editingVersions[v]} onChange={e=>updateEditVersion(v,e.target.value)} placeholder={`Enter ${v} translation…`} rows={3}
-                                                                    className={`w-full px-4 py-2 rounded-xl border text-sm leading-relaxed ${darkMode?"bg-gray-700 border-gray-600":"bg-white border-gray-300"} ${!editingVersions[v]?"border-dashed opacity-60":""}`}/>
+                                                {isAdmin && editingContent === "reading" ? (
+                                                    <div className="space-y-2 p-4 rounded-xl border-2 border-dashed border-blue-500/30 bg-blue-500/5 animate-in fade-in slide-in-from-top-1">
+                                                        <p className="text-[10px] font-black uppercase tracking-tighter opacity-60 mb-2">
+                                                            Configure Reading Buttons
+                                                        </p>
+                                                        {(contentData.lessonReadingScriptures || []).map((s, ri) => (
+                                                            <div key={`edit-ref-${ri}`} className="flex items-center gap-2 mb-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={s}
+                                                                    onChange={(e) => updateScriptureRef("reading", e.target.value, ri)}
+                                                                    placeholder="e.g., Matthew 13:24-30"
+                                                                    className={`px-3 py-2 rounded-lg border text-sm flex-1 outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                                                                        darkMode ? "bg-gray-800 border-gray-600 text-white" : "bg-white border-gray-300"
+                                                                    }`}
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeScriptureRef("reading", ri)}
+                                                                    className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
+                                                                >
+                                                                    <X size={14} />
+                                                                </button>
                                                             </div>
                                                         ))}
-                                                        <div className="flex gap-3 pt-1">
-                                                            <button onClick={()=>void saveEditScripture()} disabled={scriptureSyncing} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition disabled:opacity-50">
-                                                                {scriptureSyncing?<><Loader2 size={15} className="animate-spin"/>Saving…</>:<><Save size={15}/>Save to Database</>}
-                                                            </button>
-                                                            <button onClick={cancelEditScripture} className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 transition"><X size={14}/> Cancel</button>
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => addScriptureRef("reading")}
+                                                            className="flex items-center gap-1 text-xs font-bold text-blue-500 hover:text-blue-400 mt-2 p-1"
+                                                        >
+                                                            <Plus size={14} /> Add Reading Reference
+                                                        </button>
                                                     </div>
-                                                )}
-                                                {!isEditing&&(
-                                                    <div className={`px-4 pb-3 border-t ${darkMode?"border-white/5":"border-gray-100"}`}>
-                                                        <p className="text-xs opacity-50 mt-2 leading-relaxed line-clamp-2">
-                                                            <span className="font-bold opacity-70">KJV: </span>
-                                                            {scriptureDB[ref]["KJV"]||<em>Not set</em>}
-                                                        </p>
+                                                ) : (
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        {contentData?.lessonReadingScriptures?.filter(s => s?.trim()).length > 0 ? (
+                                                            contentData.lessonReadingScriptures.filter(s => s?.trim()).map((s, idx) => (
+                                                                <button
+                                                                    key={`read-btn-${idx}`}
+                                                                    onClick={() => showBibleVerse(s)}
+                                                                    className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
+                                                                >
+                                                                    <BookOpen size={16} />
+                                                                    Read {s}
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            <p className="text-sm text-gray-400 italic">No reading references set.</p>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
-                                        );
-                                    })}
-                                    {!scriptureLoading&&filteredScriptureKeys.length===0&&(
-                                        <div className="text-center py-12 opacity-40">
-                                            <BookOpen size={40} className="mx-auto mb-3"/>
-                                            <p>{scriptureSearch?`No scriptures match "${scriptureSearch}"`:"No scriptures yet. Use 'Add New Scripture' above."}</p>
+
+                                            <div>
+                                                <h3 className="text-2xl font-bold mb-3">Introduction</h3>
+                                                {(editingContent==="intro"&&isAdmin)
+                                                    ?(<>
+                                                        <textarea value={contentData.introduction} onChange={e=>updateContent("introduction",e.target.value)} className={`w-full px-4 py-2 rounded-lg border ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={6}/>
+                                                        <div className="mt-3">
+                                                            <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">Scripture Buttons</p>
+                                                            {contentData.lessonIntroScriptures.map((s,ri)=>(
+                                                                <div key={ri} className="flex items-center gap-2 mb-2">
+                                                                    <input type="text" value={s}
+                                                                        onChange={e=>updateScriptureRef("intro", e.target.value, ri)}
+                                                                        placeholder="e.g., Colossians 1:17"
+                                                                        className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}/>
+                                                                    <button onClick={()=>showBibleVerse(s)} disabled={!s.trim()} className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30"><BookOpen size={13}/></button>
+                                                                    <button onClick={()=>removeScriptureRef("intro",ri)} className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"><X size={13}/></button>
+                                                                </div>
+                                                            ))}
+                                                            <button onClick={()=>addScriptureRef("intro")} className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-1"><Plus size={12}/> Add scripture button</button>
+                                                        </div>
+                                                    </>)
+                                                    :(<p className="leading-relaxed">{contentData.introduction}
+                                                        <div className="mt-4 flex flex-wrap gap-2">
+                                                            {contentData.lessonIntroScriptures.map(s=>(
+                                                                <button key={s} onClick={()=>showBibleVerse(s)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"><BookOpen size={13}/>{s}</button>
+                                                            ))}
+                                                        </div>
+                                                    </p>)
+                                                }
+                                            </div>
+
+                                            <div className={`${darkMode?"bg-green-900/30":"bg-green-50"} p-6 rounded-xl`}>
+                                                <h3 className="text-xl font-bold mb-3">Aims & Objectives</h3>
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <strong className="text-green-500">AIMS:</strong>
+                                                        {(editingContent==="intro"&&isAdmin)
+                                                            ?<textarea value={contentData.aims} onChange={e=>updateContent("aims",e.target.value)} className={`w-full px-3 py-2 rounded-lg border mt-2 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={2}/>
+                                                            :<p className="mt-1">{contentData.aims}</p>
+                                                        }
+                                                    </div>
+                                                    <div>
+                                                        <strong className="text-green-500">OBJECTIVES:</strong>
+                                                        {(editingContent==="intro"&&isAdmin)
+                                                            ?<textarea value={contentData.objectives} onChange={e=>updateContent("objectives",e.target.value)} className={`w-full px-3 py-2 rounded-lg border mt-2 ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`} rows={2}/>
+                                                            :<p className="mt-1">{contentData.objectives}</p>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
-                                </div>
-                                {!isAdmin&&<div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${darkMode?"bg-gray-700/40":"bg-gray-100"} text-sm opacity-60`}><Lock size={14}/> Only admins can add, edit or delete scriptures.</div>}
-                            </div>
-                        )}
 
-                        {/* ── ADMIN PANEL ── */}
-                        {/* {activeTab==="admin"&&isAdmin&&<AdminPanel darkMode={darkMode} currentUserId={authUser?.id||""}/>} */}
-                        {!lessonsLoading && activeTab==="admin"&&isAdmin&&<AdminPanel darkMode={darkMode} currentUserId={authUser?.id||""}/>}
-                         {!lessonsLoading && activeTab==="admin"&&!isAdmin&&(
-                            <div className="text-center py-16">
-                                <ShieldCheck size={64} className="mx-auto mb-4 text-purple-400 opacity-30"/>
-                                <h3 className="text-xl font-bold opacity-50">Admin access only</h3>
-                            </div>
-                        )}
+                                    {/* ── LESSON ── */}
+                                    {activeTab==="lesson"&&(
+                                        <div className="space-y-6 animate-in fade-in duration-300">
+                                            {editBanner("lesson")}
+                                            <h3 className="text-2xl font-bold">Lesson Contents</h3>
 
-                    </div>
+                                            {/* Intro Section */}
+                                            {isAdmin && editingContent === "lesson" ? (
+                                                <>
+                                                    <textarea
+                                                        value={contentData?.lessonIntro || ""}
+                                                        onChange={e => updateContent("lessonIntro", e.target.value)}
+                                                        className={`w-full px-4 py-2 rounded-lg border mb-4 outline-none focus:ring-2 focus:ring-purple-500 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+                                                        rows={3}
+                                                        placeholder="Lesson Introduction..."
+                                                    />
+                                                    <div className="mb-4">
+                                                        <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">Lesson Content Scripture Buttons</p>
+                                                        {(contentData.lessonContentScriptures || []).map((s, ri) => (
+                                                            <div key={ri} className="flex items-center gap-2 mb-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={s}
+                                                                    onChange={(e) => {
+                                                                        const updated = [...(contentData.lessonContentScriptures || [])];
+                                                                        updated[ri] = e.target.value;
+                                                                        updateContent("lessonContentScriptures", updated);
+                                                                    }}
+                                                                    placeholder="e.g., Gen. 12:1-5"
+                                                                    className={`px-3 py-1.5 rounded-lg border text-sm flex-1 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+                                                                />
+                                                                <button onClick={() => showBibleVerse(s)} disabled={!s.trim()} className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-30">
+                                                                    <BookOpen size={13} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const updated = (contentData.lessonContentScriptures || []).filter((_, i) => i !== ri);
+                                                                        updateContent("lessonContentScriptures", updated);
+                                                                    }}
+                                                                    className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400"
+                                                                >
+                                                                    <X size={13} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        <button
+                                                            onClick={() => updateContent("lessonContentScriptures", [...(contentData.lessonContentScriptures || []), ""])}
+                                                            className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 mt-1"
+                                                        >
+                                                            <Plus size={12} /> Add lesson content scripture
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="leading-relaxed mb-6 opacity-90">
+                                                        {contentData?.lessonIntro || "No introduction text."}
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {(contentData.lessonContentScriptures || []).filter(s => s?.trim()).map((s, i) => (
+                                                            <button
+                                                                key={i}
+                                                                onClick={() => showBibleVerse(s)}
+                                                                className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
+                                                            >
+                                                                <BookOpen size={13} />{s}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {/* Main Points Loop */}
+                                            {(contentData?.lessonPoints || []).map((section, idx) => (
+                                                <div key={`point-${idx}`} className={`relative ${darkMode ? "bg-gray-700/40" : "bg-gray-50"} p-5 rounded-xl border border-transparent`}>
+                                                    {isAdmin && editingContent === "lesson" && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if(window.confirm(`Delete Point ${idx + 1}?`)) {
+                                                                    const filtered = contentData.lessonPoints.filter((_, i) => i !== idx);
+                                                                    updateContent("lessonPoints", filtered);
+                                                                }
+                                                            }}
+                                                            className="absolute -top-2 -right-2 z-50 bg-red-500 text-white p-2 rounded-full shadow-xl hover:bg-red-600 active:scale-90 transition-all border-2 border-white dark:border-gray-800"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                    <div className="space-y-3">
+                                                        {isAdmin && editingContent === "lesson" ? (
+                                                            <>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-black opacity-30 text-lg">{idx + 1}</span>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={section?.title || ""}
+                                                                        onChange={e => updateLessonPoint(idx, "title", e.target.value)}
+                                                                        className={`w-full px-3 py-2 rounded-lg border font-bold ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+                                                                        placeholder="Main Point Title"
+                                                                    />
+                                                                </div>
+                                                                <textarea
+                                                                    value={section?.content || ""}
+                                                                    onChange={e => updateLessonPoint(idx, "content", e.target.value)}
+                                                                    className={`w-full px-3 py-2 rounded-lg border text-sm ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+                                                                    rows={2}
+                                                                    placeholder="Description..."
+                                                                />
+                                                                <div className="flex flex-wrap gap-2 py-2">
+                                                                    {(section?.scriptures || []).map((s, si) => (
+                                                                        <span key={si} className="border border-blue-500 text-blue-400 px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold">
+                                                                            {s} <X size={10} className="cursor-pointer" onClick={() => {
+                                                                                const filtered = section.scriptures.filter((_, i) => i !== si);
+                                                                                updateLessonPoint(idx, "scriptures", filtered);
+                                                                            }}/>
+                                                                        </span>
+                                                                    ))}
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const val = prompt("Enter Verse (e.g. Romans 13:1)");
+                                                                            if(val) updateLessonPoint(idx, "scriptures", [...(section?.scriptures || []), val]);
+                                                                        }}
+                                                                        className="text-[10px] font-bold text-blue-500 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500 hover:text-white transition"
+                                                                    >
+                                                                        + Add Scripture
+                                                                    </button>
+                                                                </div>
+                                                                <div className="ml-6 space-y-3 border-l-2 border-purple-500/20 pl-4 mt-4">
+                                                                    {(section?.subPoints ?? []).map((sp, si) => (
+                                                                        <div key={`sub-${si}`} className="relative p-3 bg-black/5 rounded-lg mb-3">
+                                                                            <button onClick={() => deleteSubPoint(idx, si)} className="absolute top-2 right-2 text-red-400">
+                                                                                <X size={14}/>
+                                                                            </button>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={sp?.title ?? ""}
+                                                                                onChange={e => updateSubPoint(idx, si, "title", e.target.value)}
+                                                                                className="w-full bg-transparent border-b border-gray-600 mb-2 text-sm font-bold focus:border-purple-500 outline-none"
+                                                                            />
+                                                                            <textarea
+                                                                                value={sp?.content ?? ""}
+                                                                                onChange={e => updateSubPoint(idx, si, "content", e.target.value)}
+                                                                                className="w-full bg-transparent text-xs outline-none mb-2"
+                                                                                rows={1}
+                                                                            />
+                                                                            <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-white/10">
+                                                                                {(sp?.scriptures ?? []).map((ref, sci) => (
+                                                                                    <span key={sci} className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                                                                                        {ref}
+                                                                                        <X size={10} className="cursor-pointer" onClick={() => {
+                                                                                            const filtered = (sp?.scriptures ?? []).filter((_, i) => i !== sci);
+                                                                                            updateSubPoint(idx, si, "scriptures", filtered);
+                                                                                        }}/>
+                                                                                    </span>
+                                                                                ))}
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        const val = prompt("Enter Verse");
+                                                                                        if(val) updateSubPoint(idx, si, "scriptures", [...(sp?.scriptures ?? []), val]);
+                                                                                    }}
+                                                                                    className="text-[9px] font-bold text-blue-400 border border-blue-400/30 px-2 py-0.5 rounded hover:bg-blue-400 hover:text-white transition"
+                                                                                >
+                                                                                    + Add Verse
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => addSubPoint(idx)}
+                                                                        className="mt-2 text-xs font-bold text-purple-500 flex items-center gap-1 hover:bg-purple-50 p-2 rounded-lg transition-colors border border-purple-100 border-dashed"
+                                                                    >
+                                                                        <Plus size={14}/> New Sub-point
+                                                                    </button>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <h4 className="text-xl font-bold mb-2">{idx + 1}. {section?.title || "Untitled Point"}</h4>
+                                                                {section?.content && <p className="leading-relaxed mb-3 opacity-80">{section.content}</p>}
+                                                                <div className="flex flex-wrap gap-2 mb-4">
+                                                                    {(section?.scriptures || []).map(s => (
+                                                                        <button key={s} onClick={() => showBibleVerse(s)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
+                                                                            <BookOpen size={12} /> <span>{s}</span>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="space-y-4 ml-2 mt-4">
+                                                                    {(section?.subPoints || []).map((sp, si) => (
+                                                                        <div key={`sub-view-${si}`} className="flex flex-col gap-1">
+                                                                            <div className="flex gap-3">
+                                                                                <span className="text-purple-500 font-bold">{String.fromCharCode(97 + si)}.</span>
+                                                                                <div className="flex-1">
+                                                                                    <p className="text-sm font-bold">{sp?.title}</p>
+                                                                                    <p className="text-sm opacity-80">{sp?.content}</p>
+                                                                                    <div className="flex flex-wrap gap-2 mt-2">
+                                                                                        {(sp?.scriptures || []).map((ss, ssi) => (
+                                                                                            <button
+                                                                                                key={`${si}-${ssi}`}
+                                                                                                onClick={() => showBibleVerse(ss)}
+                                                                                                className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"
+                                                                                            >
+                                                                                                {ss}
+                                                                                            </button>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Master Add Section button */}
+                                            {isAdmin && editingContent === "lesson" && (
+                                                <div className="mt-10 pt-6 border-t-2 border-dashed border-gray-200 dark:border-gray-800">
+                                                    <button
+                                                        onClick={() => {
+                                                            const newSection = {
+                                                                title: "",
+                                                                content: "",
+                                                                scriptures: [],
+                                                                subPoints: [{ title: "", content: "", scriptures: [] }]
+                                                            };
+                                                            updateContent("lessonPoints", [...(contentData?.lessonPoints || []), newSection]);
+                                                        }}
+                                                        className="w-full py-8 rounded-2xl border-2 border-dashed border-purple-500/30 hover:border-purple-500 hover:bg-purple-500/5 transition-all group flex flex-col items-center justify-center gap-3"
+                                                    >
+                                                        <div className="bg-purple-500 text-white p-3 rounded-full shadow-lg group-hover:scale-110 transition-transform">
+                                                            <Plus size={24} strokeWidth={3} />
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className="font-black uppercase tracking-widest text-purple-500">Add New Lesson Section</p>
+                                                            <p className="text-xs opacity-50">This adds a main point (e.g., Point {(contentData?.lessonPoints?.length || 0) + 1})</p>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* ── CONCLUSION ── */}
+                                    {activeTab==="conclusion"&&(
+                                        <div className="space-y-6">
+                                            {editBanner("conclusion")}
+                                            <h3 className="text-2xl font-bold">Conclusion</h3>
+                                            {isAdmin && editingContent === "conclusion" ? (
+                                                <div className="space-y-4">
+                                                    <textarea
+                                                        value={contentData?.conclusion || ""}
+                                                        onChange={e => updateContent("conclusion", e.target.value)}
+                                                        className={`w-full px-4 py-2 rounded-xl border text-lg ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+                                                        rows={6}
+                                                    />
+                                                    <div className="p-4 border-2 border-dashed border-blue-500/20 rounded-xl">
+                                                        <p className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest">Concluding Verses</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {(contentData?.conclusionScriptures || []).map((s, i) => (
+                                                                <span key={i} className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold">
+                                                                    {s} <X size={12} className="cursor-pointer" onClick={() => {
+                                                                        const filtered = contentData.conclusionScriptures.filter((_, idx) => idx !== i);
+                                                                        updateContent("conclusionScriptures", filtered);
+                                                                    }}/>
+                                                                </span>
+                                                            ))}
+                                                            <button
+                                                                onClick={() => {
+                                                                    const val = prompt("Enter Verse");
+                                                                    if(val) updateContent("conclusionScriptures", [...(contentData?.conclusionScriptures || []), val]);
+                                                                }}
+                                                                className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg text-xs font-bold"
+                                                            >
+                                                                + Add Verse
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-6">
+                                                    <p className="text-lg leading-relaxed opacity-90">{contentData?.conclusion || "No conclusion yet."}</p>
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {(contentData?.conclusionScriptures || []).map(s => (
+                                                            <button key={s} onClick={() => showBibleVerse(s)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95">
+                                                                <BookOpen size={16} /> {s}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* ── MANAGE (scriptures) ── */}
+                                    {activeTab==="manage"&&(
+                                        <div className="space-y-5">
+                                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                                <div>
+                                                    <h3 className="text-2xl font-bold flex items-center gap-2"><Database className="text-blue-400" size={22}/>Scripture Database</h3>
+                                                    <p className="text-xs opacity-50 mt-0.5">{Object.keys(scriptureDB).length} entries ({filteredScriptureKeys.length} shown) · {isAdmin?"Admin — full edit access":"Read-only"}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <button onClick={()=>void loadScripturesFromDB()} disabled={scriptureLoading||scriptureSyncing}
+                                                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 transition disabled:opacity-40">
+                                                        <RefreshCw size={13} className={scriptureLoading?"animate-spin":""}/> Sync DB
+                                                    </button>
+                                                    {isAdmin&&(<>
+                                                        <button onClick={()=>{setShowImporter(p=>!p);setEditMode(false);}}
+                                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${showImporter?"bg-purple-700 hover:bg-purple-800":"bg-purple-600 hover:bg-purple-700"} text-white`}>
+                                                            <Upload size={14}/> {showImporter?"Close Importer":"Bulk Import"}
+                                                        </button>
+                                                        <button onClick={()=>{setEditMode(!editMode);setShowImporter(false);}} disabled={scriptureSyncing}
+                                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40 ${editMode?"bg-red-600 hover:bg-red-700":"bg-green-600 hover:bg-green-700"} text-white`}>
+                                                            {editMode?<><X size={14}/> Cancel</>:<><Plus size={14}/> Add One</>}
+                                                        </button>
+                                                    </>)}
+                                                </div>
+                                            </div>
+
+                                            {scriptureSaved&&(
+                                                <div className="flex items-center gap-2 px-4 py-3 bg-green-600/20 border border-green-500/40 rounded-xl text-green-400 text-sm font-semibold">
+                                                    <CheckCircle size={16}/> "{scriptureSaved}" saved to database!
+                                                </div>
+                                            )}
+
+                                            {isAdmin&&showImporter&&(
+                                                <div className={`${darkMode?"bg-gray-700/60 border-white/10":"bg-gray-50 border-gray-200"} border rounded-2xl p-5`}>
+                                                    <ScriptureImporter
+                                                        darkMode={darkMode}
+                                                        onDone={()=>{
+                                                            void loadScripturesFromDB();
+                                                            setShowImporter(false);
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {isAdmin&&editMode&&(
+                                                <div className={`${darkMode?"bg-gray-700/70":"bg-blue-50"} p-6 rounded-2xl border ${darkMode?"border-white/10":"border-blue-200"} space-y-4`}>
+                                                    <h4 className="font-bold text-lg flex items-center gap-2"><Plus size={16} className="text-green-400"/>New Scripture Entry</h4>
+                                                    <div>
+                                                        <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Reference *</label>
+                                                        <input type="text" value={newVerse.reference} onChange={e=>setNewVerse({...newVerse,reference:e.target.value})}
+                                                            placeholder="e.g., John 3:16 or Romans 8:28"
+                                                            className={`w-full px-4 py-2.5 rounded-xl border font-semibold ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}/>
+                                                    </div>
+                                                    {(["KJV","NKJV","NIV","ESV","AMP","NLT","MSG"] as const).map(v=>(
+                                                        <div key={v}>
+                                                            <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">{v}</label>
+                                                            <textarea value={newVerse.versions[v]} onChange={e=>setNewVerse(p=>({...p,versions:{...p.versions,[v]:e.target.value}}))}
+                                                                placeholder={`${v} translation text…`} rows={2}
+                                                                className={`w-full px-4 py-2 rounded-xl border text-sm ${darkMode?"bg-gray-800 border-gray-600":"bg-white border-gray-300"}`}/>
+                                                        </div>
+                                                    ))}
+                                                    <div className="flex gap-3">
+                                                        <button onClick={()=>void addNewScripture()} disabled={scriptureSyncing}
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition disabled:opacity-50">
+                                                            {scriptureSyncing?<><Loader2 size={15} className="animate-spin"/>Saving…</>:<><Save size={15}/>Save to Database</>}
+                                                        </button>
+                                                        <button onClick={()=>setEditMode(false)} className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-xl flex items-center gap-2 text-sm transition"><X size={14}/> Cancel</button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40 text-sm">🔍</span>
+                                                <input type="text" value={scriptureSearch} onChange={e=>setScriptureSearch(e.target.value)} placeholder="Search references…"
+                                                    className={`w-full pl-9 pr-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500 ${darkMode?"bg-gray-700/60 border-white/10":"bg-white border-gray-300"}`}/>
+                                                {scriptureSearch&&<button onClick={()=>setScriptureSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70"><X size={14}/></button>}
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {scriptureLoading&&(
+                                                    <div className="flex flex-col items-center py-16 opacity-60">
+                                                        <Loader2 size={36} className="animate-spin text-blue-400 mb-3"/>
+                                                        <p className="text-sm">Loading scriptures from database…</p>
+                                                    </div>
+                                                )}
+                                                {!scriptureLoading&&filteredScriptureKeys.map(ref=>{
+                                                    const isEditing=editingRef===ref;
+                                                    const isConfirmDel=deleteConfirmRef===ref;
+                                                    return (
+                                                        <div key={ref} className={`${darkMode?"bg-gray-700/60 border-white/10":"bg-white border-gray-200"} border rounded-2xl overflow-hidden`}>
+                                                            <div className={`flex items-center justify-between px-4 py-3 ${isEditing?darkMode?"bg-yellow-500/10":"bg-yellow-50":""}`}>
+                                                                <div>
+                                                                    <p className="font-bold text-base">{ref}</p>
+                                                                    <p className="text-xs opacity-40 mt-0.5">{Object.values(scriptureDB[ref]).filter(v=>v).length}/7 translations</p>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button onClick={()=>showBibleVerse(ref)} className="border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all active:scale-95"><BookOpen size={12}/> View</button>
+                                                                    {isAdmin&&!isEditing&&(<>
+                                                                        <button onClick={()=>startEditScripture(ref)} className="px-3 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 text-xs font-semibold flex items-center gap-1 transition"><Edit2 size={12}/> Edit</button>
+                                                                        {isConfirmDel
+                                                                            ?<div className="flex items-center gap-1">
+                                                                                <span className="text-xs text-red-400 font-semibold">Delete?</span>
+                                                                                <button onClick={()=>void deleteScripture(ref)} disabled={scriptureSyncing} className="px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition">Yes</button>
+                                                                                <button onClick={()=>setDeleteConfirmRef(null)} className="px-2 py-1 rounded-lg bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold transition">No</button>
+                                                                            </div>
+                                                                            :<button onClick={()=>setDeleteConfirmRef(ref)} className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs font-semibold flex items-center gap-1 transition"><X size={12}/> Del</button>
+                                                                        }
+                                                                    </>)}
+                                                                    {isAdmin&&isEditing&&<button onClick={cancelEditScripture} className="px-3 py-1.5 rounded-lg bg-gray-500/30 hover:bg-gray-500/50 text-gray-300 text-xs font-semibold flex items-center gap-1 transition"><X size={12}/> Cancel</button>}
+                                                                </div>
+                                                            </div>
+                                                            {isAdmin&&isEditing&&(
+                                                                <div className={`px-4 pb-5 pt-2 space-y-4 border-t ${darkMode?"border-white/10 bg-gray-800/60":"border-gray-100 bg-yellow-50/50"}`}>
+                                                                    <div>
+                                                                        <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Reference (rename)</label>
+                                                                        <input type="text" value={editingRefNew} onChange={e=>setEditingRefNew(e.target.value)} className={`w-full px-4 py-2 rounded-xl border font-semibold text-sm ${darkMode?"bg-gray-700 border-gray-600":"bg-white border-gray-300"}`}/>
+                                                                    </div>
+                                                                    {(["KJV","NKJV","NIV","ESV","AMP","NLT","MSG"] as const).map(v=>(
+                                                                        <div key={v}>
+                                                                            <div className="flex items-center justify-between mb-1">
+                                                                                <label className="text-xs font-bold uppercase tracking-widest opacity-60">{v}</label>
+                                                                                {editingVersions[v]&&<span className="text-[10px] opacity-40">{editingVersions[v].length} chars</span>}
+                                                                            </div>
+                                                                            <textarea value={editingVersions[v]} onChange={e=>updateEditVersion(v,e.target.value)} placeholder={`Enter ${v} translation…`} rows={3}
+                                                                                className={`w-full px-4 py-2 rounded-xl border text-sm leading-relaxed ${darkMode?"bg-gray-700 border-gray-600":"bg-white border-gray-300"} ${!editingVersions[v]?"border-dashed opacity-60":""}`}/>
+                                                                        </div>
+                                                                    ))}
+                                                                    <div className="flex gap-3 pt-1">
+                                                                        <button onClick={()=>void saveEditScripture()} disabled={scriptureSyncing} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition disabled:opacity-50">
+                                                                            {scriptureSyncing?<><Loader2 size={15} className="animate-spin"/>Saving…</>:<><Save size={15}/>Save to Database</>}
+                                                                        </button>
+                                                                        <button onClick={cancelEditScripture} className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 transition"><X size={14}/> Cancel</button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {!isEditing&&(
+                                                                <div className={`px-4 pb-3 border-t ${darkMode?"border-white/5":"border-gray-100"}`}>
+                                                                    <p className="text-xs opacity-50 mt-2 leading-relaxed line-clamp-2">
+                                                                        <span className="font-bold opacity-70">KJV: </span>
+                                                                        {scriptureDB[ref]["KJV"]||<em>Not set</em>}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                                {!scriptureLoading&&filteredScriptureKeys.length===0&&(
+                                                    <div className="text-center py-12 opacity-40">
+                                                        <BookOpen size={40} className="mx-auto mb-3"/>
+                                                        <p>{scriptureSearch?`No scriptures match "${scriptureSearch}"`:"No scriptures yet. Use 'Add New Scripture' above."}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {!isAdmin&&<div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${darkMode?"bg-gray-700/40":"bg-gray-100"} text-sm opacity-60`}><Lock size={14}/> Only admins can add, edit or delete scriptures.</div>}
+                                        </div>
+                                    )}
+
+                                    {/* ── ADMIN PANEL ── */}
+                                    {activeTab==="admin"&&isAdmin&&<AdminPanel darkMode={darkMode} currentUserId={authUser?.id||""}/>}
+                                    {activeTab==="admin"&&!isAdmin&&(
+                                        <div className="text-center py-16">
+                                            <ShieldCheck size={64} className="mx-auto mb-4 text-purple-400 opacity-30"/>
+                                            <h3 className="text-xl font-bold opacity-50">Admin access only</h3>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                            {/* END ternary guard */}
+
+                        </div>
                     )}
                 </div>
 
