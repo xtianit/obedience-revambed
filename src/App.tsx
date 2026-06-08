@@ -879,29 +879,26 @@ import logo from "./assets/logo.png";
 
 
 
-      useEffect(() => {
-        // Tight Guard: Quit immediately if we are not on the main application viewport
+    // 🧠 FIXED PRODUCTION INITIALIZATION (Replaces the two startup effects)
+    useEffect(() => {
+        // Guard: Stop immediately if the layout screen is not "app"
         if (screen !== "app") return;
 
         let isMounted = true;
         scriptureSeeded.current = false;
 
-        // Code Clear: Forcefully strip out active loading states on initial screen mount
-        lessonsLoadingRef.current = false;
-        setLessonsLoading(false);
-
         const safeBootstrap = async () => {
-            // Guard: If an execution sequence thread is already mid-flight, step away
+            // Guard: If a network call is already active, stand down
             if (lessonsLoadingRef.current) return;
             
             try {
-                // Execute master collections concurrently in parallel
+                // Fetch lessons and scriptures concurrently in parallel
                 await Promise.all([
                     loadLessons(),
                     loadScripturesFromDB()
                 ]);
             } catch (err) {
-                console.error("Application initialization process failure:", err);
+                console.error("System bootstrap execution anomaly:", err);
             }
         };
 
@@ -920,13 +917,13 @@ import logo from "./assets/logo.png";
                     const updatedLesson = payload.new as LessonRow;
                     
                     if (profile?.role === "admin") {
-                        // Admin updates specific entries within their master inventory list
+                        // Admins preserve their entire lesson management inventory list
                         setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
                         if (updatedLesson.id === activeLessonIdRef.current) {
                             setContentData(hydrateLessonData(updatedLesson.content));
                         }
                     } else if (updatedLesson.is_active) {
-                        // Regular students switch cleanly to the new live broadcast
+                        // Standard students seamlessly switch onto the new live broadcast targets
                         setActiveLessonId(updatedLesson.id);
                         setContentData(hydrateLessonData(updatedLesson.content));
                         setLessons([updatedLesson]);
@@ -939,7 +936,7 @@ import logo from "./assets/logo.png";
             isMounted = false;
             void supabase.removeChannel(channel);
         };
-        // 🧠 FIXED: Locking this array to [screen] halts infinite execution loops for live mobile users
+        // ⚡ CRITICAL: Track ONLY [screen] to break the infinite rendering loops for mobile users
     }, [screen]);
 
 
