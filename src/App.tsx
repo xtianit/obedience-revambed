@@ -589,11 +589,22 @@ import logo from "./assets/logo.png";
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
     // 🧠 PROFILE-GATED SYSTEM LOADING BOOTSTRAP (Fixes mobile "Welcome Back" trap)
+    // ─────────────────────────────────────────────────────────────────────────
+    //  LESSON HELPERS (UPDATED WITH MOBILE BYPASS VALVE)
+    // ─────────────────────────────────────────────────────────────────────────
     const loadLessons = useCallback(async () => {
-        // Guard: If an execution thread is already fetching, stand down
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
+
+        // Mobile Safety Fallback: Force-clear the loader if the network hangs for more than 2.5 seconds
+        const networkTimeout = setTimeout(() => {
+            if (lessonsLoadingRef.current) {
+                console.warn("Mobile network latency bypass activated.");
+                setLessonsLoading(false);
+                lessonsLoadingRef.current = false;
+            }
+        }, 2500);
 
         try {
             const { data, error } = await supabase
@@ -606,34 +617,32 @@ import logo from "./assets/logo.png";
             const rows = (data ?? []) as LessonRow[];
             
             if (rows.length > 0) {
-                // Find whichever lesson is currently toggled as broadcast-active
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
                 if (profile?.role === "admin") {
-                    // Admin retains all fetched entries intact (Obedience, Disobedience, etc.)
                     setLessons(rows);
                     const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
                     setActiveLessonId(currentActive.id);
                     setContentData(hydrateLessonData(currentActive.content));
                 } else {
-                    // Standard users narrow focus strictly onto the broadcast window target
                     setLessons([liveLesson]);
                     setActiveLessonId(liveLesson.id);
                     setContentData(hydrateLessonData(liveLesson.content));
                 }
             } else {
-                // FALLBACK: Only fire if the database is genuinely, 100% empty
                 setLessons([]);
                 setActiveLessonId(null);
-                setContentData(makeDefaultContent("OBEDIENCE", new Date().toLocaleDateString()));
+                setContentData(makeDefaultContent());
             }
         } catch (err) {
             console.error("loadLessons internal pipeline processing failure:", err);
         } finally {
+            clearTimeout(networkTimeout); // Clear timeout safely if database responds fast
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, [profile]); // Lock memory identity explicitly to the complete profile lifecycle
+    }, [profile?.role]);
+  // Lock memory identity explicitly to the complete profile lifecycle
 
     // ⚡ PROTECTED INITIALIZATION MOUNT
     useEffect(() => {
