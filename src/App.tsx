@@ -826,6 +826,48 @@
     // }, [profile?.role, setActiveLesson]);
 
 
+    // const loadLessons = useCallback(async () => {
+    //     if (lessonsLoadingRef.current) return;
+    //     lessonsLoadingRef.current = true;
+    //     setLessonsLoading(true);
+
+    //     try {
+    //         const { data, error } = await supabase
+    //             .from("lessons")
+    //             .select("*")
+    //             .order("created_at", { ascending: false });
+
+    //         if (error) throw error;
+
+    //         const rows = (data ?? []) as LessonRow[];
+            
+    //         // 🧠 CRITICAL: Admins need the full database array to manage everything!
+    //         if (profile?.role === "admin") {
+    //             setLessons(rows);
+    //             if (rows.length > 0) {
+    //                 const currentActive = rows.find(l => l.id === activeLessonIdRef.current) || rows.find(l => l.is_active) || rows[0];
+    //                 setActiveLesson(currentActive.id);
+    //                 setContentData(hydrateLessonData(currentActive.content));
+    //             }
+    //         } else {
+    //             // Regular users only see the designated single active broadcast target
+    //             const liveLesson = rows.find(l => l.is_active) ?? rows[0];
+    //             if (liveLesson) {
+    //                 setLessons([liveLesson]);
+    //                 setActiveLesson(liveLesson.id);
+    //                 setContentData(hydrateLessonData(liveLesson.content));
+    //             } else {
+    //                 setLessons([]);
+    //             }
+    //         }
+    //     } catch (err) {
+    //         console.error("loadLessons execution error:", err);
+    //     } finally {
+    //         setLessonsLoading(false);
+    //         lessonsLoadingRef.current = false;
+    //     }
+    // }, [profile?.role, setActiveLesson]);
+    // Load all lessons from DB. Fixes empty arrays & continuous array evaluations on mobile view ports.
     const loadLessons = useCallback(async () => {
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
@@ -841,24 +883,25 @@
 
             const rows = (data ?? []) as LessonRow[];
             
-            // 🧠 CRITICAL: Admins need the full database array to manage everything!
-            if (profile?.role === "admin") {
-                setLessons(rows);
-                if (rows.length > 0) {
-                    const currentActive = rows.find(l => l.id === activeLessonIdRef.current) || rows.find(l => l.is_active) || rows[0];
+            if (rows.length > 0) {
+                const liveLesson = rows.find(l => l.is_active) ?? rows[0];
+
+                if (profile?.role === "admin") {
+                    // CRITICAL FIX: Admin must see ALL fetched rows (Obedience, Disobedience, etc.)
+                    setLessons(rows);
+                    const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
                     setActiveLesson(currentActive.id);
                     setContentData(hydrateLessonData(currentActive.content));
-                }
-            } else {
-                // Regular users only see the designated single active broadcast target
-                const liveLesson = rows.find(l => l.is_active) ?? rows[0];
-                if (liveLesson) {
+                } else {
+                    // Regular users observe only the designated single active broadcast target
                     setLessons([liveLesson]);
                     setActiveLesson(liveLesson.id);
                     setContentData(hydrateLessonData(liveLesson.content));
-                } else {
-                    setLessons([]);
                 }
+            } else {
+                setLessons([]);
+                setActiveLesson(null);
+                setContentData(makeDefaultContent());
             }
         } catch (err) {
             console.error("loadLessons execution error:", err);
@@ -986,7 +1029,48 @@
         //     }
         // };
 
-        const createNewLesson = async () => {
+    //     const createNewLesson = async () => {
+    //     if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
+    //     setCreatingLesson(true);
+        
+    //     const newContent = makeDefaultContent(
+    //         newLessonTitle.trim(), 
+    //         newLessonDate.trim() || new Date().toLocaleDateString()
+    //     );
+
+    //     try {
+    //         const { data, error } = await supabase
+    //             .from("lessons")
+    //             .insert({ 
+    //                 title: newLessonTitle.trim(), 
+    //                 is_active: false, //  Saves cleanly as a background draft!
+    //                 content: newContent 
+    //             })
+    //             .select()
+    //             .single();
+
+    //         if (error) throw error;
+
+    //         const row = data as LessonRow;
+
+    //         // Prepend directly into the admin list array
+    //         setLessons(prev => [row, ...prev]);
+            
+    //         // Focus on it locally
+    //         setActiveLesson(row.id);
+    //         setContentData(hydrateLessonData(row.content));
+
+    //         setShowNewLesson(false);
+    //         setNewLessonTitle(""); 
+    //         setNewLessonDate("");
+            
+    //     } catch (error: any) {
+    //         alert("Failed to create lesson: " + (error.message || error));
+    //     } finally {
+    //         setCreatingLesson(false);
+    //     }
+    // };
+    const createNewLesson = async () => {
         if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
         setCreatingLesson(true);
         
@@ -996,11 +1080,13 @@
         );
 
         try {
+            // Fix: Create the new lesson as a regular background draft (is_active: false)
+            // This stops it from instantly interrupting users or hiding your admin inventory list
             const { data, error } = await supabase
                 .from("lessons")
                 .insert({ 
                     title: newLessonTitle.trim(), 
-                    is_active: false, //  Saves cleanly as a background draft!
+                    is_active: false, 
                     content: newContent 
                 })
                 .select()
@@ -1010,18 +1096,19 @@
 
             const row = data as LessonRow;
 
-            // Prepend directly into the admin list array
+            // Update the admin's list state array immediately
             setLessons(prev => [row, ...prev]);
             
-            // Focus on it locally
+            // Explicitly map local view content without triggering the switchLesson await deadlock
             setActiveLesson(row.id);
             setContentData(hydrateLessonData(row.content));
 
+            // Reset modal layout views
             setShowNewLesson(false);
             setNewLessonTitle(""); 
             setNewLessonDate("");
             
-        } catch (error: any) {
+        } catch (error: unknown) {
             alert("Failed to create lesson: " + (error.message || error));
         } finally {
             setCreatingLesson(false);
@@ -1205,61 +1292,61 @@
         //     void loadScripturesFromDB();
         // REPLACE WITH:
         useEffect(() => {
-            if (screen !== "app") return;
+        if (screen !== "app") return;
 
-            // Always reset before loading so refresh never gets stuck
-            lessonsLoadingRef.current = false;
-            scriptureSeeded.current = false;
-            setLessonsLoading(false); // ← clear any stale spinner state
+        let isMounted = true;
+        scriptureSeeded.current = false;
 
-            void loadLessons();
-            void loadScripturesFromDB();
+        const initializeData = async () => {
+            // Mobile Guard: If already running an execution frame, back off instantly
+            if (lessonsLoadingRef.current) return;
 
-            // ── Realtime: push new active lesson to ALL connected devices ──────────
-            const channel = supabase
-                .channel("lessons-realtime")
-                .on(
-                    "postgres_changes",
-                    { event: "UPDATE", schema: "public", table: "lessons" },
-                     (payload) => {
-                        if (payload.new?.is_active === true) {
-                            const newLesson = payload.new as LessonRow;
-                            setActiveLesson(newLesson.id);
-                            setContentData(hydrateLessonData(newLesson.content));
-                            setLessons(prev =>
-                                prev.map(l => ({ ...l, is_active: l.id === newLesson.id }))
-                            );
+            try {
+                // Execute database synchronization hooks in parallel safely
+                await Promise.all([
+                    loadLessons(),
+                    loadScripturesFromDB()
+                ]);
+            } catch (err) {
+                console.error("App startup initialization failed:", err);
+            }
+        };
+
+        if (isMounted) {
+            void initializeData();
+        }
+
+        // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
+        const channel = supabase
+            .channel("lessons-realtime")
+            .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "lessons" },
+                (payload) => {
+                    const updatedLesson = payload.new as LessonRow;
+                    
+                    if (profile?.role === "admin") {
+                        // Admin safely updates that specific row inside their full master list array
+                        setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
+                        if (updatedLesson.id === activeLessonIdRef.current) {
+                            setContentData(hydrateLessonData(updatedLesson.content));
                         }
+                    } else if (updatedLesson.is_active) {
+                        // Standard users shift immediately to the updated active view context
+                        setActiveLesson(updatedLesson.id);
+                        setContentData(hydrateLessonData(updatedLesson.content));
+                        setLessons([updatedLesson]);
                     }
-                )
-                .subscribe();
-                
+                }
+            )
+            .subscribe();
 
-                 const handleVisibility = async () => {
-                    if (document.visibilityState !== "visible") return;
-                    const { data, error } = await supabase
-                        .from("lessons")
-                        .select("*")
-                        .order("created_at", { ascending: false });
-                    if (!error && data && data.length > 0) {
-                        const rows = data as LessonRow[];
-                        setLessons(rows);
-                        // ✅ use ref — avoids stale closure bug
-                        const active = rows.find(l => l.is_active)
-                            ?? rows.find(l => l.id === activeLessonIdRef.current)
-                            ?? rows[0];
-                        setActiveLesson(active.id);
-                        setContentData(hydrateLessonData(active.content));
-                    }
-                };
-                document.addEventListener("visibilitychange", handleVisibility);
-                // ───────────────────────────────────────────────────────────────
+        return () => {
+            isMounted = false;
+            void supabase.removeChannel(channel);
+        };
+    }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson, profile?.role]);
 
-                return () => {
-                    void supabase.removeChannel(channel);
-                    document.removeEventListener("visibilitychange", handleVisibility); // ← add this too
-                };
-            }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson]);
 
 
 
