@@ -680,7 +680,7 @@
         const [activeLessonId,   setActiveLessonId]   = useState<string|null>(null);
         const [contentData,      setContentData]      = useState<LessonContent>(makeDefaultContent());
         // const [lessonsLoading,   setLessonsLoading]   = useState(false);
-        const [lessonsLoading,   setLessonsLoading]   = useState(true);
+        const [lessonsLoading,   setLessonsLoading]   = useState(false);
         const lessonsLoadingRef = useRef(false);
         const [lessonSaving,     setLessonSaving]     = useState(false);
         const [showLessonPicker, setShowLessonPicker] = useState(false);
@@ -1035,13 +1035,15 @@
         // ─────────────────────────────────────────────────────────────────────────
         //  AUTH
         // ─────────────────────────────────────────────────────────────────────────
+        // const resolveUser = useCallback(async (user:User|null) => {
         const resolveUser = useCallback(async (user:User|null) => {
+            // if (resolvingRef.current) return;
             if (resolvingRef.current) return;
             resolvingRef.current = true;
             try {
-                if (!user) { setScreen("auth"); return; }
-                setAuthUser(user);
-                setSubChecking(true);
+                if (!user) { resolvingRef.current = false; setScreen("auth"); return; }
+                    setAuthUser(user);
+                    setSubChecking(true);
                 if (readSubCache(user.id)) setScreen("app");
                 const [prof,sub] = await Promise.all([
                     withRetry(()=>getProfile(user.id)),
@@ -1069,12 +1071,14 @@
 
         //     void loadLessons();
         //     void loadScripturesFromDB();
+        // REPLACE WITH:
         useEffect(() => {
             if (screen !== "app") return;
 
-            // Reset guards so lessons always reload fresh on every login
+            // Always reset before loading so refresh never gets stuck
             lessonsLoadingRef.current = false;
             scriptureSeeded.current = false;
+            setLessonsLoading(false); // ← clear any stale spinner state
 
             void loadLessons();
             void loadScripturesFromDB();
