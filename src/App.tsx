@@ -814,37 +814,39 @@
             //     }
             // }, [setActiveLesson]);
             const loadLessons = useCallback(async () => {
-            // 1. Safety check to prevent double-calls
-            if (lessonsLoadingRef.current) return;
-            
-            lessonsLoadingRef.current = true;
-            setLessonsLoading(true);
+                if (lessonsLoadingRef.current) return;
+                lessonsLoadingRef.current = true;
+                setLessonsLoading(true);
 
-            try {
-                const { data, error } = await supabase
-                    .from("lessons")
-                    .select("*")
-                    .order("created_at", { ascending: false });
+                try {
+                    const { data, error } = await supabase
+                        .from("lessons")
+                        .select("*")
+                        .order("created_at", { ascending: false });
 
-                if (error) throw error;
+                    if (error) throw error;
 
-                const rows = (data ?? []) as LessonRow[];
-                setLessons(rows); // Always set the list, even if empty
+                    const rows = (data ?? []) as LessonRow[];
+                    
+                    // CRITICAL FIX: Always update the state list, even if it's empty!
+                    setLessons(rows);
 
-                if (rows.length > 0) {
-                    const active = rows.find(l => l.is_active) ?? rows[0];
-                    setActiveLesson(active.id);
-                    setContentData(hydrateLessonData(active.content));
+                    if (rows.length > 0) {
+                        const active = rows.find(l => l.is_active) ?? rows[0];
+                        setActiveLesson(active.id);
+                        setContentData(hydrateLessonData(active.content));
+                    } else {
+                        // No lessons exist in Supabase yet. Set a clean layout state:
+                        setActiveLesson(null);
+                        setContentData(makeDefaultContent());
+                    }
+                } catch (err) {
+                    console.error("Error loading lessons from Supabase:", err);
+                } finally {
+                    lessonsLoadingRef.current = false;
+                    setLessonsLoading(false);
                 }
-            } catch (err) {
-                console.error("Error loading lessons:", err);
-                // On mobile, you might want to show an alert here
-            } finally {
-                // 2. CRITICAL: This must be outside the 'if' to stop the spinner
-                lessonsLoadingRef.current = false;
-                setLessonsLoading(false);
-            }
-        }, [setActiveLesson]);
+            }, [setActiveLesson]);
 
 
 
@@ -1149,31 +1151,29 @@
         // }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson]);
 
         //  UPDATED ROBUST CODE
+      
+        
         useEffect(() => {
             if (screen !== "app") return;
 
             let isMounted = true;
-
-            // Reset initial states safely
             scriptureSeeded.current = false;
 
-            const initializeAppData = async () => {
-                // Prevent concurrent triggers if already fetching
+            const initializeData = async () => {
+                // Prevent concurrent double executions on immediate mobile refresh
                 if (lessonsLoadingRef.current) return;
                 
                 lessonsLoadingRef.current = true;
                 setLessonsLoading(true);
 
                 try {
-                    // Load both datasets concurrently to improve mobile load speed
                     await Promise.all([
                         loadLessons(),
                         loadScripturesFromDB()
                     ]);
                 } catch (error) {
-                    console.error("Failed to load app data on refresh:", error);
+                    console.error("Initialization failed:", error);
                 } finally {
-                    // Only toggle states if the user hasn't refreshed/unmounted again mid-request
                     if (isMounted) {
                         lessonsLoadingRef.current = false;
                         setLessonsLoading(false);
@@ -1181,9 +1181,9 @@
                 }
             };
 
-            void initializeAppData();
+            void initializeData();
 
-            // ── Realtime: push new active lesson to ALL connected devices ──────────
+            // ── Realtime Sync ──────────────────────────────────────────────────
             const channel = supabase
                 .channel("lessons-realtime")
                 .on(
@@ -1200,12 +1200,11 @@
                 )
                 .subscribe();
 
-            // Cleanup hook returns
             return () => {
                 isMounted = false;
                 void supabase.removeChannel(channel);
             };
-        }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson]); // Make sure dependencies match your hook context
+        }, [screen, loadLessons, loadScripturesFromDB, setActiveLesson]);
 
 
 
