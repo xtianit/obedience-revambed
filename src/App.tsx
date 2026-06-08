@@ -1334,40 +1334,61 @@
         //     void loadLessons();
         //     void loadScripturesFromDB();
         // REPLACE WITH:
-        // REPLACE WITH:
-        useEffect(() => {
-            if (screen !== "app") return;
+       useEffect(() => {
+        if (screen !== "app") return;
 
-            // Data is loaded by resolveUser — this effect only manages realtime
-            const channel = supabase
-                .channel("lessons-realtime")
-                .on(
-                    "postgres_changes",
-                    { event: "UPDATE", schema: "public", table: "lessons" },
-                    (payload) => {
-                        const updatedLesson = payload.new as LessonRow;
-                        const role = profileRoleRef.current;
+        let isMounted = true;
+        scriptureSeeded.current = false;
 
-                        if (role === "admin") {
-                            setLessons(prev => prev.map(l =>
-                                l.id === updatedLesson.id ? updatedLesson : l
-                            ));
-                            if (updatedLesson.id === activeLessonIdRef.current) {
-                                setContentData(hydrateLessonData(updatedLesson.content));
-                            }
-                        } else if (updatedLesson.is_active) {
-                            setActiveLesson(updatedLesson.id);
+        const initializeData = async () => {
+            // Mobile Guard: If already running an execution frame, back off instantly
+            if (lessonsLoadingRef.current) return;
+
+            try {
+                // Execute database synchronization hooks in parallel safely
+                await Promise.all([
+                    loadLessons(),
+                    loadScripturesFromDB()
+                ]);
+            } catch (err) {
+                console.error("App startup initialization failed:", err);
+            }
+        };
+
+        if (isMounted) {
+            void initializeData();
+        }
+
+        // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
+        const channel = supabase
+            .channel("lessons-realtime")
+            .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "lessons" },
+                (payload) => {
+                    const updatedLesson = payload.new as LessonRow;
+                    
+                    if (profile?.role === "admin") {
+                        // Admin safely updates that specific row inside their full master list array
+                        setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
+                        if (updatedLesson.id === activeLessonIdRef.current) {
                             setContentData(hydrateLessonData(updatedLesson.content));
-                            setLessons([updatedLesson]);
                         }
+                    } else if (updatedLesson.is_active) {
+                        // Standard users shift immediately to the updated active view context
+                        setActiveLesson(updatedLesson.id);
+                        setContentData(hydrateLessonData(updatedLesson.content));
+                        setLessons([updatedLesson]);
                     }
-                )
-                .subscribe();
+                }
+            )
+            .subscribe();
 
-            return () => {
-                void supabase.removeChannel(channel);
-            };
-        }, [screen, setActiveLesson, loadLessons, loadScripturesFromDB]);
+        return () => {
+            isMounted = false;
+            void supabase.removeChannel(channel);
+        };
+    }, [screen, loadLessons, loadScripturesFromDB, profile?.role, setActiveLesson]);
         // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
         
 
