@@ -589,46 +589,47 @@ import logo from "./assets/logo.png";
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
         const loadLessons = useCallback(async () => {
-            if (lessonsLoadingRef.current) return;
-            lessonsLoadingRef.current = true;
-            setLessonsLoading(true);
+        // Gated reference check to absolutely stop mobile rendering deadlocks
+        if (lessonsLoadingRef.current) return;
+        lessonsLoadingRef.current = true;
+        setLessonsLoading(true);
 
+        try {
             const { data, error } = await supabase
                 .from("lessons")
                 .select("*")
                 .order("created_at", { ascending: false });
 
-            if (error) {
-                console.error("loadLessons:", error);
-                setLessonsLoading(false);
-                lessonsLoadingRef.current = false;
-                return;
-            }
+            if (error) throw error;
 
-            if (data && data.length > 0) {
-                const rows = data as LessonRow[];
-                setLessons(rows);
-                const active = rows[0];
-                setActiveLessonId(active.id);
-                setContentData(hydrateLessonData(active.content));
-            } else if (!scriptureSeeded.current) {
-                scriptureSeeded.current = true;
-                const def = makeDefaultContent();
-                const { data: ins, error: insErr } = await supabase
-                    .from("lessons")
-                    .insert({ title: "OBEDIENCE", is_active: true, content: def })
-                    .select()
-                    .single();
-                if (!insErr && ins) {
-                    setLessons([ins as LessonRow]);
-                    setActiveLessonId(ins.id);
-                    setContentData(hydrateLessonData(def));
+            const rows = (data ?? []) as LessonRow[];
+            
+            if (rows.length > 0) {
+                const liveLesson = rows.find(l => l.is_active) ?? rows[0];
+
+                // FIX: Separates Admin inventory arrays from single row visibility constraints
+                if (profile?.role === "admin") {
+                    setLessons(rows); // Admin retains all lessons (Obedience, Disobedience, etc.)
+                    const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
+                    setActiveLessonId(currentActive.id);
+                    setContentData(hydrateLessonData(currentActive.content));
+                } else {
+                    setLessons([liveLesson]); // Regular user sees only the live broadcast row
+                    setActiveLessonId(liveLesson.id);
+                    setContentData(hydrateLessonData(liveLesson.content));
                 }
+            } else {
+                setLessons([]);
+                setActiveLessonId(null);
+                setContentData(makeDefaultContent());
             }
-
+        } catch (err) {
+            console.error("loadLessons execution error:", err);
+        } finally {
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
-        }, []);
+        }
+    }, [profile?.role, setActiveLessonId]);
 
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
@@ -657,22 +658,64 @@ import logo from "./assets/logo.png";
             setActiveTab("intro");
         }, [activeLessonId]);
 
+        // const createNewLesson = async () => {
+        //     if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
+        //     setCreatingLesson(true);
+        //     const newContent = makeDefaultContent(newLessonTitle.trim(), newLessonDate.trim() || new Date().toLocaleDateString());
+        //     const { data, error } = await supabase
+        //         .from("lessons")
+        //         .insert({ title:newLessonTitle.trim(), is_active:true, content:newContent })
+        //         .select().single();
+        //     if (error) { alert("Failed to create lesson: "+error.message); setCreatingLesson(false); return; }
+        //     const row = data as LessonRow;
+        //     setLessons(prev => [row, ...prev]);
+        //     setCreatingLesson(false);
+        //     setShowNewLesson(false);
+        //     setNewLessonTitle(""); setNewLessonDate("");
+        //     await switchLesson(row);
+        // };
+
+        
         const createNewLesson = async () => {
-            if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
-            setCreatingLesson(true);
-            const newContent = makeDefaultContent(newLessonTitle.trim(), newLessonDate.trim() || new Date().toLocaleDateString());
+        if (!newLessonTitle.trim()) { alert("Please enter a lesson title."); return; }
+        setCreatingLesson(true);
+        
+        const newContent = makeDefaultContent(
+            newLessonTitle.trim(), 
+            newLessonDate.trim() || new Date().toLocaleDateString()
+        );
+
+        try {
             const { data, error } = await supabase
                 .from("lessons")
-                .insert({ title:newLessonTitle.trim(), is_active:true, content:newContent })
-                .select().single();
-            if (error) { alert("Failed to create lesson: "+error.message); setCreatingLesson(false); return; }
+                .insert({ 
+                    title: newLessonTitle.trim(), 
+                    is_active: false, // Saves as draft option to avoid cascading lockups
+                    content: newContent 
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
             const row = data as LessonRow;
+
+            // Direct local layout injections bypass rendering pipeline lockups
             setLessons(prev => [row, ...prev]);
-            setCreatingLesson(false);
+            setActiveLessonId(row.id);
+            setContentData(hydrateLessonData(row.content));
+
             setShowNewLesson(false);
-            setNewLessonTitle(""); setNewLessonDate("");
-            await switchLesson(row);
-        };
+            setNewLessonTitle(""); 
+            setNewLessonDate("");
+            
+        } catch (error: unknown) {
+            alert("Failed to create lesson: " + (error as Error).message);
+        } finally {
+            setCreatingLesson(false);
+        }
+    };
+
 
         const deleteLesson = async (lessonId:string) => {
             if (!confirm("Delete this lesson permanently?")) return;
@@ -830,56 +873,60 @@ import logo from "./assets/logo.png";
         }, [resolveUser]);
 
         useEffect(() => {
-            if (screen !== "app") return;
+        if (screen !== "app") return;
 
-            void loadLessons();
-            void loadScripturesFromDB();
+        let isMounted = true;
+        scriptureSeeded.current = false;
 
-            // ── Realtime: push new active lesson to ALL connected devices ──────────
-            const channel = supabase
-                .channel("lessons-realtime")
-                .on(
-                    "postgres_changes",
-                    { event: "UPDATE", schema: "public", table: "lessons" },
-                    (payload) => {
-                        if (payload.new?.is_active === true) {
-                            const newLesson = payload.new as LessonRow;
-                            setActiveLessonId(newLesson.id);
-                            setContentData(hydrateLessonData(newLesson.content));
-                            setLessons(prev =>
-                                prev.map(l => ({ ...l, is_active: l.id === newLesson.id }))
-                            );
+        const initializeData = async () => {
+            // Mobile Guard: Skip call if an active request thread is mid-flight
+            if (lessonsLoadingRef.current) return;
+
+            try {
+                // Execute database synchronization requests in parallel cleanly
+                await Promise.all([
+                    loadLessons(),
+                    loadScripturesFromDB()
+                ]);
+            } catch (err) {
+                console.error("App startup initialization failed:", err);
+            }
+        };
+
+        if (isMounted) {
+            void initializeData();
+        }
+
+        // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
+        const channel = supabase
+            .channel("lessons-realtime")
+            .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "lessons" },
+                (payload) => {
+                    const updatedLesson = payload.new as LessonRow;
+                    
+                    if (profile?.role === "admin") {
+                        // Safely replace the target item record without wiping out the admin state table list
+                        setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
+                        if (updatedLesson.id === activeLessonIdRef.current) {
+                            setContentData(hydrateLessonData(updatedLesson.content));
                         }
+                    } else if (updatedLesson.is_active) {
+                        // Automatically update interface maps for normal students
+                        setActiveLessonId(updatedLesson.id);
+                        setContentData(hydrateLessonData(updatedLesson.content));
+                        setLessons([updatedLesson]);
                     }
-                )
-                .subscribe();
-
-            // ── FIX: Silent background refresh on tab focus — no spinner ──────────
-            // Does NOT call loadLessons() (which sets lessonsLoading=true).
-            // Instead, fetches quietly and only updates state, keeping the UI stable.
-            const handleVisibility = async () => {
-                if (document.visibilityState !== "visible") return;
-                const { data, error } = await supabase
-                    .from("lessons")
-                    .select("*")
-                    .order("created_at", { ascending: false });
-                if (!error && data && data.length > 0) {
-                    const rows = data as LessonRow[];
-                    setLessons(rows);
-                    // Only refresh content for whichever lesson is currently active
-                    const currentId = activeLessonIdRef.current;
-                    const active = currentId ? rows.find(l => l.id === currentId) : rows[0];
-                    if (active) setContentData(hydrateLessonData(active.content));
                 }
-            };
+            )
+            .subscribe();
 
-            document.addEventListener("visibilitychange", handleVisibility);
-
-            return () => {
-                void supabase.removeChannel(channel);
-                document.removeEventListener("visibilitychange", handleVisibility);
-            };
-        }, [screen, loadLessons, loadScripturesFromDB]);
+        return () => {
+            isMounted = false;
+            void supabase.removeChannel(channel);
+        };
+    }, [screen, loadLessons, loadScripturesFromDB, profile?.role]);
 
         useEffect(() => {
             const h=(e:KeyboardEvent)=>{ if(e.ctrlKey&&e.shiftKey&&e.key==="E"&&isAdmin){e.preventDefault();setEditingContent(p=>p?null:activeTab);} };
