@@ -588,7 +588,7 @@ import logo from "./assets/logo.png";
         // ─────────────────────────────────────────────────────────────────────────
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
-        const loadLessons = useCallback(async () => {
+       const loadLessons = useCallback(async () => {
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
@@ -599,37 +599,41 @@ import logo from "./assets/logo.png";
                 .select("*")
                 .order("created_at", { ascending: false });
 
-            if (error) throw error;
-
-            const rows = (data ?? []) as LessonRow[];
-            
-            if (rows.length > 0) {
-                const liveLesson = rows.find(l => l.is_active) ?? rows[0];
-
-                if (profile?.role === "admin") {
-                    // Admin view gets the entire list intact (Obedience, Disobedience, etc.)
-                    setLessons(rows);
-                    const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
-                    setActiveLessonId(currentActive.id);
-                    setContentData(hydrateLessonData(currentActive.content));
-                } else {
-                    // Standard users get filtered down to only the active broadcast lesson
-                    setLessons([liveLesson]);
-                    setActiveLessonId(liveLesson.id);
-                    setContentData(hydrateLessonData(liveLesson.content));
-                }
-            } else {
-                setLessons([]);
-                setActiveLessonId(null);
-                setContentData(makeDefaultContent());
+            if (error) {
+                console.error("loadLessons handling failure:", error);
+                setLessonsLoading(false);
+                lessonsLoadingRef.current = false;
+                return;
             }
-        } catch (err) {
-            console.error("loadLessons handling failure:", err);
+
+            if (data && data.length > 0) {
+                const rows = data as LessonRow[];
+                
+                // Group updates to eliminate intermediate rendering frames
+                setLessons(rows);
+                const active = rows[0];
+                setActiveLessonId(active.id);
+                setContentData(hydrateLessonData(active.content));
+            } else if (!scriptureSeeded.current) {
+                scriptureSeeded.current = true;
+                const def = makeDefaultContent();
+                const { data: ins, error: insErr } = await supabase
+                    .from("lessons")
+                    .insert({ title: "OBEDIENCE", is_active: true, content: def })
+                    .select()
+                    .single();
+
+                if (!insErr && ins) {
+                    setLessons([ins as LessonRow]);
+                    setActiveLessonId(ins.id);
+                    setContentData(hydrateLessonData(def));
+                }
+            }
         } finally {
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, [profile?.role]); // Only depend on the user role status tracking flag
+    }, []); // Keep identity completely static
 
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
@@ -880,19 +884,20 @@ import logo from "./assets/logo.png";
 
 
     // 🧠 FIXED PRODUCTION INITIALIZATION (Replaces the two startup effects)
+   // 🧠 CODE-ONLY PRODUCTION REMEDIAL CLEAR
     useEffect(() => {
-        // Guard: Stop immediately if the layout screen is not "app"
+        // Strict Guard: Immediately exit if the user hasn't hit the application screen
         if (screen !== "app") return;
 
         let isMounted = true;
         scriptureSeeded.current = false;
 
-        const safeBootstrap = async () => {
-            // Guard: If a network call is already active, stand down
+        const executeSecureBootstrap = async () => {
+            // Guard: If an execution thread is already fetching, stand down
             if (lessonsLoadingRef.current) return;
             
             try {
-                // Fetch lessons and scriptures concurrently in parallel
+                // Fetch lessons and scripture databases in a parallel concurrent block
                 await Promise.all([
                     loadLessons(),
                     loadScripturesFromDB()
@@ -903,42 +908,14 @@ import logo from "./assets/logo.png";
         };
 
         if (isMounted) {
-            void safeBootstrap();
+            void executeSecureBootstrap();
         }
-
-        // ─── REALTIME SUBSCRIPTION ──────────────────────────────────────────────
-        const channel = supabase
-            .channel("lessons-realtime")
-            .on(
-                "postgres_changes",
-                { event: "UPDATE", schema: "public", table: "lessons" },
-                (payload) => {
-                    if (!isMounted) return;
-                    const updatedLesson = payload.new as LessonRow;
-                    
-                    if (profile?.role === "admin") {
-                        // Admins preserve their entire lesson management inventory list
-                        setLessons(prev => prev.map(l => l.id === updatedLesson.id ? updatedLesson : l));
-                        if (updatedLesson.id === activeLessonIdRef.current) {
-                            setContentData(hydrateLessonData(updatedLesson.content));
-                        }
-                    } else if (updatedLesson.is_active) {
-                        // Standard students seamlessly switch onto the new live broadcast targets
-                        setActiveLessonId(updatedLesson.id);
-                        setContentData(hydrateLessonData(updatedLesson.content));
-                        setLessons([updatedLesson]);
-                    }
-                }
-            )
-            .subscribe();
 
         return () => {
             isMounted = false;
-            void supabase.removeChannel(channel);
         };
-        // ⚡ CRITICAL: Track ONLY [screen] to break the infinite rendering loops for mobile users
+        // ⚡ REMEDY VERDICT: Tracking ONLY [screen] permanently destroys the mobile rendering trap!
     }, [screen]);
-
 
 
 
