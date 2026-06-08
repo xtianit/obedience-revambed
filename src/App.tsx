@@ -588,7 +588,9 @@ import logo from "./assets/logo.png";
         // ─────────────────────────────────────────────────────────────────────────
         //  LESSON HELPERS
         // ─────────────────────────────────────────────────────────────────────────
+    // 🧠 PROFILE-GATED SYSTEM LOADING BOOTSTRAP (Fixes mobile "Welcome Back" trap)
     const loadLessons = useCallback(async () => {
+        // Guard: If an execution thread is already fetching, stand down
         if (lessonsLoadingRef.current) return;
         lessonsLoadingRef.current = true;
         setLessonsLoading(true);
@@ -604,6 +606,7 @@ import logo from "./assets/logo.png";
             const rows = (data ?? []) as LessonRow[];
             
             if (rows.length > 0) {
+                // Find whichever lesson is currently toggled as broadcast-active
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
                 if (profile?.role === "admin") {
@@ -619,18 +622,27 @@ import logo from "./assets/logo.png";
                     setContentData(hydrateLessonData(liveLesson.content));
                 }
             } else {
+                // FALLBACK: Only fire if the database is genuinely, 100% empty
                 setLessons([]);
                 setActiveLessonId(null);
-                setContentData(makeDefaultContent());
+                setContentData(makeDefaultContent("OBEDIENCE", new Date().toLocaleDateString()));
             }
         } catch (err) {
             console.error("loadLessons internal pipeline processing failure:", err);
         } finally {
-            // Tightly lock baseline thread parameters
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, [profile?.role]); // Drop secondary hooks from tracking arrays to enforce static compilation signatures
+    }, [profile]); // Lock memory identity explicitly to the complete profile lifecycle
+
+    // ⚡ PROTECTED INITIALIZATION MOUNT
+    useEffect(() => {
+        // CRITICAL MOBILE RECOVERY: Exit early if the profile payload has not yet arrived.
+        // This stops the app from rendering a premature layout frame before it knows who the user is!
+        if (!profile) return;
+
+        void loadLessons();
+    }, [profile, loadLessons]);
 
     // Ensure lessons are loaded on mount and when profile role changes
     useEffect(() => { void loadLessons(); }, [loadLessons]);
@@ -1251,6 +1263,18 @@ import logo from "./assets/logo.png";
                         <p className="text-white/60 text-sm">{loadingPct}%</p>
                     </div>
                     <style>{`@keyframes wave{0%,100%{transform:translateY(0)}25%{transform:translateY(-10px)}50%{transform:translateY(6px)}75%{transform:translateY(-4px)}}`}</style>
+                </div>
+            );
+        }
+
+        if (screen === "app" && (!profile || (lessonsLoading && lessons.length === 0))) {
+            return (
+                <div className="fixed inset-0 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 flex flex-col items-center justify-center z-50">
+                    <div className="text-center px-4">
+                        <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-4 mx-auto" />
+                        <h1 className="text-2xl font-bold text-white mb-1">Life Gate Ministries Worldwide</h1>
+                        <p className="text-blue-200 text-sm font-medium tracking-wide animate-pulse opacity-80">Synchronizing lesson records safely...</p>
+                    </div>
                 </div>
             );
         }
