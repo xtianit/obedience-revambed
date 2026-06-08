@@ -563,11 +563,13 @@ import logo from "./assets/logo.png";
         const [editingContent, setEditingContent] = useState<string|null>(null);
 
         // ── Refs ──────────────────────────────────────────────────────────────────
+        // REPLACE WITH:
         const resolvingRef    = useRef(false);
         const loadingPctRef   = useRef(0);
         const scriptureSeeded = useRef(false);
         const scriptureOpRef  = useRef(false);
         const lessonSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
+        const profileRoleRef  = useRef<string>("user");
 
         // Keep a stable ref to activeLessonId so the visibility handler can read it
         // without being re-created on every render
@@ -606,14 +608,13 @@ import logo from "./assets/logo.png";
             if (rows.length > 0) {
                 const liveLesson = rows.find(l => l.is_active) ?? rows[0];
 
-                if (profile?.role === "admin") {
-                    // Admin retains all fetched entries intact (Obedience, Disobedience, etc.)
+               // REPLACE WITH:
+                if (profileRoleRef.current === "admin") {
                     setLessons(rows);
                     const currentActive = rows.find(l => l.id === activeLessonIdRef.current) ?? liveLesson;
                     setActiveLessonId(currentActive.id);
                     setContentData(hydrateLessonData(currentActive.content));
                 } else {
-                    // Standard users narrow focus strictly onto the broadcast window target
                     setLessons([liveLesson]);
                     setActiveLessonId(liveLesson.id);
                     setContentData(hydrateLessonData(liveLesson.content));
@@ -630,10 +631,10 @@ import logo from "./assets/logo.png";
             setLessonsLoading(false);
             lessonsLoadingRef.current = false;
         }
-    }, [profile?.role]); // Drop secondary hooks from tracking arrays to enforce static compilation signatures
+    }, []); // Drop secondary hooks from tracking arrays to enforce static compilation signatures
 
     // Ensure lessons are loaded on mount and when profile role changes
-    useEffect(() => { void loadLessons(); }, [loadLessons]);
+    
 
         const debouncedSaveLesson = useCallback((content:LessonContent, lessonId:string) => {
             if (lessonSaveTimer.current) clearTimeout(lessonSaveTimer.current);
@@ -855,31 +856,47 @@ import logo from "./assets/logo.png";
         // ─────────────────────────────────────────────────────────────────────────
         //  AUTH
         // ─────────────────────────────────────────────────────────────────────────
+       // REPLACE WITH:
         const resolveUser = useCallback(async (user:User|null) => {
             if (resolvingRef.current) return;
             resolvingRef.current = true;
             try {
-                if (!user) { setScreen("auth"); return; }
+                if (!user) {
+                    resolvingRef.current = false;
+                    setScreen("auth");
+                    return;
+                }
                 setAuthUser(user);
                 setSubChecking(true);
-                if (readSubCache(user.id)) setScreen("app");
-                const [prof,sub] = await Promise.all([
+                const [prof, sub] = await Promise.all([
                     withRetry(()=>getProfile(user.id)),
                     withRetry(()=>getActiveSubscription(user.id)),
                 ]);
-                setProfile(prof); setSubscription(sub); setIsAdmin(prof?.role==="admin"); setSubChecking(false);
-                if (sub) { writeSubCache(user.id,sub.end_date); setScreen("app"); }
-                else     { clearSubCache(); setScreen("payment"); }
-            } finally { resolvingRef.current = false; }
-        }, []);
+                // Store role on ref BEFORE loadLessons is called
+                profileRoleRef.current = prof?.role ?? "user";
+                setProfile(prof);
+                setSubscription(sub);
+                setIsAdmin(prof?.role === "admin");
+                setSubChecking(false);
+                if (sub) {
+                    writeSubCache(user.id, sub.end_date);
+                    // Reset loading guards
+                    lessonsLoadingRef.current = false;
+                    setLessonsLoading(false);
+                    setScreen("app");
+                    // Load with correct role now confirmed
+                    void loadLessons();
+                    void loadScripturesFromDB();
+                } else {
+                    clearSubCache();
+                    setScreen("payment");
+                }
+            } finally {
+                resolvingRef.current = false;
+            }
+        }, [loadLessons, loadScripturesFromDB]);
 
-        useEffect(() => {
-            const { data:{subscription:listener} } = supabase.auth.onAuthStateChange(async(_ev,session) => {
-                if (loadingPctRef.current<100) await new Promise(r=>setTimeout(r,2000));
-                await resolveUser(session?.user??null);
-            });
-            return () => listener.unsubscribe();
-        }, [resolveUser]);
+       
 
 
 
@@ -888,29 +905,7 @@ import logo from "./assets/logo.png";
     // 🧠 FIXED PRODUCTION ARCHITECTURE (Halts recursive mobile loops)
     // 🧠 LIVE PRODUCTION CIRCUIT BREAKER: Clears infinite loading loops WITHOUT browser refresh
     // 🧠 SMART PRODUCTION CIRCUIT BREAKER: Prevents premature "Welcome Back" overrides
-    useEffect(() => {
-        if (screen !== "app") return;
-
-        // Give mobile networks a solid 5-second window to resolve the database flight safely
-        const circuitBreaker = setTimeout(() => {
-            if (lessonsLoading) {
-                console.warn("Mobile network latency handled. Safe-disarming loader state...");
-                
-                // ⚡ Drop loading flag to reveal the screen interface layout
-                lessonsLoadingRef.current = false;
-                setLessonsLoading(false);
-                
-                // CRITICAL SEPARATION: Only inject "Welcome Back" if the database is truly empty 
-                // AND we are certain no background network flight is currently running.
-                if (lessons.length === 0 && !lessonsLoadingRef.current) {
-                    const fallbackContent = makeDefaultContent("Welcome Back", new Date().toLocaleDateString());
-                    setContentData(hydrateLessonData(fallbackContent));
-                }
-            }
-        }, 5000); // 5 Seconds maximum limit optimized for standard mobile data connections
-
-        return () => clearTimeout(circuitBreaker);
-    }, [screen, lessonsLoading, lessons.length]);
+    
 
 
 
